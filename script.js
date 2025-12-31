@@ -9,6 +9,8 @@ const mainApp = document.getElementById('mainApp');
 const listaProductos = document.getElementById('listaProductos');
 const userEmailDisplay = document.getElementById('user-email');
 
+
+
 // Elementos de Auth
 const authEmail = document.getElementById('authEmail');
 const authPassword = document.getElementById('authPassword');
@@ -19,7 +21,9 @@ const btnLogout = document.getElementById('btn-logout'); // El nuevo botón rojo
 // Elementos de Inventario
 const inputNombre = document.getElementById('nombreProducto');
 const inputCantidad = document.getElementById('cantidadProducto');
+const inputPrecio = document.getElementById('precioProducto');
 const btnAgregar = document.getElementById('btnAgregar');
+
 
 // 3. CONTROL DE ACCESO (LOGIN / LOGOUT)
 
@@ -84,12 +88,10 @@ function renderizarTabla(productos) {
         const fila = document.createElement('tr');
         fila.className = "border-b hover:bg-gray-50";
         fila.innerHTML = `
-            <td class="py-3 px-2 text-gray-700">${prod.nombre}</td>
-            <td class="py-3 px-2 text-gray-700 font-medium">${prod.cantidad}</td>
+            <td class="py-3 px-2">${prod.nombre}</td>
+            <td class="py-3 px-2 font-bold text-blue-600">$${prod.precio || '0.00'}</td> <td class="py-3 px-2">${prod.cantidad}</td>
             <td class="py-3 px-2 text-center">
-                <button onclick="eliminarProducto(${prod.id})" class="text-red-500 hover:font-bold transition">
-                    Eliminar
-                </button>
+                <button onclick="eliminarProducto(${prod.id})" class="text-red-500 hover:font-bold">Eliminar</button>
             </td>
         `;
         listaProductos.appendChild(fila);
@@ -108,14 +110,16 @@ btnAgregar.addEventListener('click', async () => {
         .insert([{ 
             nombre: nombre, 
             cantidad: cantidad, 
+            precio: precio,
             user_id: user.id 
         }]);
 
     if (!error) {
-        inputNombre.value = '';
-        inputCantidad.value = '';
-        obtenerProductos(user.id);
-    }
+            inputNombre.value = '';
+            inputCantidad.value = '';
+            inputPrecio.value = ''; // Limpiamos el input
+            obtenerProductos(user.id);
+        }
 });
 
 window.eliminarProducto = async (id) => {
