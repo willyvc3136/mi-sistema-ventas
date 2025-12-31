@@ -131,10 +131,10 @@ async function mostrarUsuario() {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (user) {
-        // Si hay un usuario, mostramos el correo y la barra
-        document.getElementById('user-email').textContent = user.email;
-        document.getElementById('user-bar').classList.remove('hidden');
-    }
+    document.getElementById('mainApp').classList.remove('hidden'); // Muestra la app
+    document.getElementById('authSection').classList.add('hidden'); // Oculta el login
+    document.getElementById('user-email').textContent = user.email; // <--- ESTO ES LO QUE FALTA
+}
 }
 
 // 2. Función para Cerrar Sesión
