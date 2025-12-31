@@ -1,4 +1,4 @@
-// 1. Configuración de conexión
+// 1. Configuración de conexión (Asegúrate de que tus credenciales sean correctas)
 const supabaseUrl = 'https://ijyhkbiukiqiqjabpubm.supabase.co';
 const supabaseKey = 'sb_publishable_EpJx4G5egW9GZdj8P7oudw_kDWWsj6p';
 const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
@@ -7,13 +7,14 @@ const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 const authSection = document.getElementById('authSection');
 const mainApp = document.getElementById('mainApp');
 const listaProductos = document.getElementById('listaProductos');
+const userEmailDisplay = document.getElementById('user-email');
 
 // Elementos de Auth
 const authEmail = document.getElementById('authEmail');
 const authPassword = document.getElementById('authPassword');
 const btnRegistro = document.getElementById('btnRegistro');
 const btnLogin = document.getElementById('btnLogin');
-const btnSalir = document.getElementById('btnSalir');
+const btnLogout = document.getElementById('btn-logout'); // El nuevo botón rojo
 
 // Elementos de Inventario
 const inputNombre = document.getElementById('nombreProducto');
@@ -22,15 +23,17 @@ const btnAgregar = document.getElementById('btnAgregar');
 
 // 3. CONTROL DE ACCESO (LOGIN / LOGOUT)
 
-// Función para verificar el estado del usuario
 async function checkUser() {
     const { data: { user } } = await _supabase.auth.getUser();
 
     if (user) {
+        // Mostrar la App y el Email, ocultar el Login
         authSection.classList.add('hidden');
         mainApp.classList.remove('hidden');
-        obtenerProductos(user.id); // Cargar solo sus productos
+        userEmailDisplay.textContent = user.email; // Mostramos el email en la barra azul
+        obtenerProductos(user.id);
     } else {
+        // Mostrar Login, ocultar la App
         authSection.classList.remove('hidden');
         mainApp.classList.add('hidden');
     }
@@ -56,26 +59,25 @@ btnLogin.addEventListener('click', async () => {
     else checkUser();
 });
 
-// Cerrar Sesión
-btnSalir.addEventListener('click', async () => {
-    await _supabase.auth.signOut();
-    checkUser();
+// Cerrar Sesión (Ahora usando el nuevo botón btn-logout)
+btnLogout.addEventListener('click', async () => {
+    const { error } = await _supabase.auth.signOut();
+    if (error) alert("Error al cerrar sesión");
+    else window.location.reload(); 
 });
 
-// 4. LÓGICA DEL INVENTARIO PRIVADO
+// 4. LÓGICA DEL INVENTARIO
 
-// Obtener productos del usuario logueado
 async function obtenerProductos(userId) {
     const { data, error } = await _supabase
         .from('productos')
         .select('*')
-        .eq('user_id', userId) // Filtro de privacidad
+        .eq('user_id', userId)
         .order('id', { ascending: true });
 
     if (!error) renderizarTabla(data);
 }
 
-// Dibujar la tabla en el HTML
 function renderizarTabla(productos) {
     listaProductos.innerHTML = '';
     productos.forEach(prod => {
@@ -85,20 +87,21 @@ function renderizarTabla(productos) {
             <td class="py-3 px-2 text-gray-700">${prod.nombre}</td>
             <td class="py-3 px-2 text-gray-700 font-medium">${prod.cantidad}</td>
             <td class="py-3 px-2 text-center">
-                <button onclick="eliminarProducto(${prod.id})" class="text-red-500 hover:font-bold">Eliminar</button>
+                <button onclick="eliminarProducto(${prod.id})" class="text-red-500 hover:font-bold transition">
+                    Eliminar
+                </button>
             </td>
         `;
         listaProductos.appendChild(fila);
     });
 }
 
-// Agregar producto con user_id
 btnAgregar.addEventListener('click', async () => {
     const { data: { user } } = await _supabase.auth.getUser();
     const nombre = inputNombre.value;
     const cantidad = parseInt(inputCantidad.value);
 
-    if (!nombre || isNaN(cantidad)) return alert("Datos inválidos");
+    if (!nombre || isNaN(cantidad)) return alert("Por favor, completa los datos.");
 
     const { error } = await _supabase
         .from('productos')
@@ -115,37 +118,11 @@ btnAgregar.addEventListener('click', async () => {
     }
 });
 
-// Eliminar producto
 window.eliminarProducto = async (id) => {
     const { data: { user } } = await _supabase.auth.getUser();
     const { error } = await _supabase.from('productos').delete().eq('id', id);
-    
     if (!error) obtenerProductos(user.id);
 };
 
-// Iniciar la app
+// Iniciar la app al cargar
 checkUser();
-
-// 1. Función para mostrar la información del usuario
-async function mostrarUsuario() {
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (user) {
-    document.getElementById('mainApp').classList.remove('hidden'); // Muestra la app
-    document.getElementById('authSection').classList.add('hidden'); // Oculta el login
-    document.getElementById('user-email').textContent = user.email; // <--- ESTO ES LO QUE FALTA
-}
-}
-
-// 2. Función para Cerrar Sesión
-document.getElementById('btn-logout').addEventListener('click', async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-        alert("Error al cerrar sesión");
-    } else {
-        window.location.reload(); // Recarga la página para volver al login
-    }
-});
-
-// 3. Ejecutar al cargar la página
-mostrarUsuario();
