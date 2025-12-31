@@ -125,3 +125,27 @@ window.eliminarProducto = async (id) => {
 
 // Iniciar la app
 checkUser();
+
+// 1. Función para mostrar la información del usuario
+async function mostrarUsuario() {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (user) {
+        // Si hay un usuario, mostramos el correo y la barra
+        document.getElementById('user-email').textContent = user.email;
+        document.getElementById('user-bar').classList.remove('hidden');
+    }
+}
+
+// 2. Función para Cerrar Sesión
+document.getElementById('btn-logout').addEventListener('click', async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+        alert("Error al cerrar sesión");
+    } else {
+        window.location.reload(); // Recarga la página para volver al login
+    }
+});
+
+// 3. Ejecutar al cargar la página
+mostrarUsuario();
