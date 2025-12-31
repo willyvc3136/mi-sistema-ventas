@@ -124,5 +124,21 @@ window.eliminarProducto = async (id) => {
     if (!error) obtenerProductos(user.id);
 };
 
+function actualizarDashboard(productos) {
+    let valorTotal = 0;
+    let totalItems = productos.length;
+    let stockBajo = 0;
+
+    productos.forEach(p => {
+        // Asumiendo que añadiremos la columna precio después
+        valorTotal += (p.precio || 0) * p.cantidad;
+        if (p.cantidad < 5) stockBajo++;
+    });
+
+    document.getElementById('stat-valor').textContent = `$${valorTotal.toFixed(2)}`;
+    document.getElementById('stat-cantidad').textContent = totalItems;
+    document.getElementById('stat-alerta').textContent = stockBajo;
+}
+
 // Iniciar la app al cargar
 checkUser();

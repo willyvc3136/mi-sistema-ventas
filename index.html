@@ -27,29 +27,45 @@
             </button>
         </div>
 
-        <div class="flex justify-between items-center mb-6 border-b pb-4">
-            <h1 class="text-2xl font-bold text-gray-800">📦 Gestión de Inventario Privado</h1>
-        </div>
+    <div id="dashboard" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div class="bg-white p-6 rounded-xl border border-blue-100 shadow-sm">
+                <p class="text-sm text-gray-500 font-medium uppercase">Valor Total</p>
+                <h3 id="stat-valor" class="text-3xl font-bold text-blue-600">$0.00</h3>
+            </div>
+            <div class="bg-white p-6 rounded-xl border border-green-100 shadow-sm">
+                <p class="text-sm text-gray-500 font-medium uppercase">Productos en Total</p>
+                <h3 id="stat-cantidad" class="text-3xl font-bold text-green-600">0</h3>
+            </div>
+            <div class="bg-white p-6 rounded-xl border border-red-100 shadow-sm">
+                <p class="text-sm text-gray-500 font-medium uppercase">Stock Bajo (< 5)</p>
+                <h3 id="stat-alerta" class="text-3xl font-bold text-red-600">0</h3>
+            </div>
+    </div>
+
+    <div class="flex justify-between items-center mb-6 border-b pb-4">
+        <h1 class="text-2xl font-bold text-gray-800">📦 Gestión de Inventario Privado</h1>
+    </div>
         
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <input type="text" id="nombreProducto" placeholder="Nombre producto" class="border p-2 rounded">
             <input type="number" id="cantidadProducto" placeholder="Cantidad" class="border p-2 rounded">
+            <input type="number" id="precioProducto" placeholder="Precio $" step="0.01" class="border p-2 rounded focus:ring-2 focus:ring-blue-400">
             <button id="btnAgregar" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
                 Agregar
             </button>
-        </div>
+    </div>
 
-        <table class="w-full text-left border-collapse">
-            <thead>
-                <tr class="border-b bg-gray-50">
-                    <th class="py-2 px-2">Producto</th>
-                    <th class="py-2 px-2">Stock</th>
-                    <th class="py-2 px-2 text-center">Acciones</th>
-                </tr>
-            </thead>
+    <table class="w-full text-left border-collapse">
+        <thead>
+            <tr class="border-b bg-gray-50">
+                <th class="py-2 px-2">Producto</th>
+                <th class="py-2 px-2">Stock</th>
+                <th class="py-2 px-2 text-center">Acciones</th>
+            </tr>
+        </thead>
             <tbody id="listaProductos">
-                </tbody>
-        </table>
+            </tbody>
+    </table>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
