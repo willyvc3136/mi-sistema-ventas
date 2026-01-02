@@ -7,6 +7,7 @@ const authSection = document.getElementById('authSection');
 const mainApp = document.getElementById('mainApp');
 const listaProductos = document.getElementById('listaProductos');
 const userEmailDisplay = document.getElementById('user-email');
+const modalEditar = document.getElementById('modalEditar');
 
 const authEmail = document.getElementById('authEmail');
 const authPassword = document.getElementById('authPassword');
@@ -19,7 +20,8 @@ const inputCantidad = document.getElementById('cantidadProducto');
 const inputPrecio = document.getElementById('precioProducto');
 const btnAgregar = document.getElementById('btnAgregar');
 
-// Lógica de Autenticación
+// --- Lógica de Autenticación ---
+
 async function checkUser() {
     const { data: { user } } = await _supabase.auth.getUser();
     if (user) {
@@ -52,7 +54,8 @@ btnLogout.addEventListener('click', async () => {
     window.location.reload();
 });
 
-// Lógica de Inventario
+// --- Lógica de Inventario ---
+
 async function obtenerProductos(userId) {
     const { data, error } = await _supabase
         .from('productos')
@@ -71,13 +74,14 @@ function renderizarTabla(productos) {
     productos.forEach(prod => {
         const fila = document.createElement('tr');
         fila.className = "border-b hover:bg-gray-50";
-        // CORRECCIÓN: prod.cantidad va en Stock y prod.precio va en Precio
+        
+        // CORRECCIÓN: Usamos argumentos individuales en abrirModal para evitar errores de JSON
         fila.innerHTML = `
             <td class="py-3 px-2">${prod.nombre}</td>
             <td class="py-3 px-2 font-bold ${prod.cantidad < 5 ? 'text-red-600' : 'text-gray-700'}">${prod.cantidad}</td>
             <td class="py-3 px-2 text-blue-600 font-medium">$${parseFloat(prod.precio || 0).toFixed(2)}</td>
             <td class="py-3 px-2 text-center space-x-3">
-                <button onclick='abrirModal(${JSON.stringify(prod)})' class="text-blue-500 hover:underline">Editar</button>
+                <button onclick="prepararEdicion(${prod.id}, '${prod.nombre}', ${prod.cantidad}, ${prod.precio})" class="text-blue-500 hover:underline">Editar</button>
                 <button onclick="eliminarProducto(${prod.id})" class="text-red-400 text-sm hover:underline">Eliminar</button>
             </td>
         `;
@@ -115,23 +119,25 @@ btnAgregar.addEventListener('click', async () => {
     if (!error) {
         inputNombre.value = ''; inputCantidad.value = ''; inputPrecio.value = '';
         obtenerProductos(user.id);
+    } else {
+        alert("Error al agregar: " + error.message);
     }
 });
 
 window.eliminarProducto = async (id) => {
+    if(!confirm("¿Estás seguro de eliminar este producto?")) return;
     const { data: { user } } = await _supabase.auth.getUser();
     await _supabase.from('productos').delete().eq('id', id);
     obtenerProductos(user.id);
 };
 
-// Funciones para el Modal
-    const modalEditar = document.getElementById('modalEditar');
+// --- Funciones del Modal Corregidas ---
 
-window.abrirModal = (prod) => {
-    document.getElementById('editId').value = prod.id;
-    document.getElementById('editNombre').value = prod.nombre;
-    document.getElementById('editCantidad').value = prod.cantidad;
-    document.getElementById('editPrecio').value = prod.precio;
+window.prepararEdicion = (id, nombre, cantidad, precio) => {
+    document.getElementById('editId').value = id;
+    document.getElementById('editNombre').value = nombre;
+    document.getElementById('editCantidad').value = cantidad;
+    document.getElementById('editPrecio').value = precio;
     modalEditar.classList.remove('hidden');
 };
 
@@ -139,13 +145,11 @@ window.cerrarModal = () => {
     modalEditar.classList.add('hidden');
 };
 
-// Guardar cambios en Supabase
 document.getElementById('btnGuardarCambios').addEventListener('click', async () => {
     const id = document.getElementById('editId').value;
     const nombre = document.getElementById('editNombre').value;
     const cantidad = parseInt(document.getElementById('editCantidad').value);
     const precio = parseFloat(document.getElementById('editPrecio').value);
-    const { data: { user } } = await _supabase.auth.getUser();
 
     const { error } = await _supabase
         .from('productos')
@@ -154,10 +158,12 @@ document.getElementById('btnGuardarCambios').addEventListener('click', async () 
 
     if (!error) {
         cerrarModal();
-        obtenerProductos(user.id); // Recarga la tabla y el dashboard
+        const { data: { user } } = await _supabase.auth.getUser();
+        obtenerProductos(user.id);
     } else {
         alert("Error al actualizar: " + error.message);
     }
 });
 
+// Inicialización
 checkUser();
