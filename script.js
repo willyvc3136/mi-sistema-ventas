@@ -76,7 +76,8 @@ function renderizarTabla(productos) {
             <td class="py-3 px-2">${prod.nombre}</td>
             <td class="py-3 px-2 font-bold ${prod.cantidad < 5 ? 'text-red-600' : 'text-gray-700'}">${prod.cantidad}</td>
             <td class="py-3 px-2 text-blue-600 font-medium">$${parseFloat(prod.precio || 0).toFixed(2)}</td>
-            <td class="py-3 px-2 text-center">
+            <td class="py-3 px-2 text-center space-x-3">
+                <button onclick='abrirModal(${JSON.stringify(prod)})' class="text-blue-500 hover:underline">Editar</button>
                 <button onclick="eliminarProducto(${prod.id})" class="text-red-400 text-sm hover:underline">Eliminar</button>
             </td>
         `;
@@ -122,5 +123,41 @@ window.eliminarProducto = async (id) => {
     await _supabase.from('productos').delete().eq('id', id);
     obtenerProductos(user.id);
 };
+
+// Funciones para el Modal
+    const modalEditar = document.getElementById('modalEditar');
+
+window.abrirModal = (prod) => {
+    document.getElementById('editId').value = prod.id;
+    document.getElementById('editNombre').value = prod.nombre;
+    document.getElementById('editCantidad').value = prod.cantidad;
+    document.getElementById('editPrecio').value = prod.precio;
+    modalEditar.classList.remove('hidden');
+};
+
+window.cerrarModal = () => {
+    modalEditar.classList.add('hidden');
+};
+
+// Guardar cambios en Supabase
+document.getElementById('btnGuardarCambios').addEventListener('click', async () => {
+    const id = document.getElementById('editId').value;
+    const nombre = document.getElementById('editNombre').value;
+    const cantidad = parseInt(document.getElementById('editCantidad').value);
+    const precio = parseFloat(document.getElementById('editPrecio').value);
+    const { data: { user } } = await _supabase.auth.getUser();
+
+    const { error } = await _supabase
+        .from('productos')
+        .update({ nombre, cantidad, precio })
+        .eq('id', id);
+
+    if (!error) {
+        cerrarModal();
+        obtenerProductos(user.id); // Recarga la tabla y el dashboard
+    } else {
+        alert("Error al actualizar: " + error.message);
+    }
+});
 
 checkUser();
