@@ -132,12 +132,16 @@ window.eliminarProducto = async (id) => {
 };
 
 // --- Funciones del Modal Corregidas ---
+// --- Funciones del Modal Mejoradas con Debug ---
 
 window.prepararEdicion = (id, nombre, cantidad, precio) => {
+    console.log("Abriendo modal para ID:", id); // Mensaje en consola
+    
     document.getElementById('editId').value = id;
     document.getElementById('editNombre').value = nombre;
     document.getElementById('editCantidad').value = cantidad;
     document.getElementById('editPrecio').value = precio;
+    
     modalEditar.classList.remove('hidden');
 };
 
@@ -146,22 +150,48 @@ window.cerrarModal = () => {
 };
 
 document.getElementById('btnGuardarCambios').addEventListener('click', async () => {
+    console.log("Botón Guardar presionado"); // Debug
+    
     const id = document.getElementById('editId').value;
     const nombre = document.getElementById('editNombre').value;
     const cantidad = parseInt(document.getElementById('editCantidad').value);
     const precio = parseFloat(document.getElementById('editPrecio').value);
 
-    const { error } = await _supabase
-        .from('productos')
-        .update({ nombre, cantidad, precio })
-        .eq('id', id);
+    if (!id) {
+        alert("Error: No se encontró el ID del producto");
+        return;
+    }
 
-    if (!error) {
-        cerrarModal();
-        const { data: { user } } = await _supabase.auth.getUser();
-        obtenerProductos(user.id);
-    } else {
-        alert("Error al actualizar: " + error.message);
+    try {
+        console.log("Enviando a Supabase...", { id, nombre, cantidad, precio }); // Debug
+        
+        const { error } = await _supabase
+            .from('productos')
+            .update({ 
+                nombre: nombre, 
+                cantidad: cantidad, 
+                precio: precio 
+            })
+            .eq('id', id);
+
+        if (error) {
+            console.error("Error de Supabase:", error);
+            alert("Error al actualizar en la base de datos: " + error.message);
+        } else {
+            console.log("¡Actualización exitosa!");
+            alert("¡Producto actualizado correctamente!"); // Confirmación visual
+            
+            cerrarModal();
+            
+            // Refrescar datos
+            const { data: { user } } = await _supabase.auth.getUser();
+            if (user) {
+                obtenerProductos(user.id);
+            }
+        }
+    } catch (err) {
+        console.error("Error crítico:", err);
+        alert("Ocurrió un error inesperado al guardar.");
     }
 });
 
