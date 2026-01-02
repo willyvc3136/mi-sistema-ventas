@@ -150,35 +150,25 @@ window.cerrarModal = () => {
 };
 
 document.getElementById('btnGuardarCambios').addEventListener('click', async () => {
-    console.log("Botón Guardar presionado");
+    console.log("Intentando guardar cambios...");
     
     const id = document.getElementById('editId').value;
     const nombre = document.getElementById('editNombre').value;
     const cantidad = parseInt(document.getElementById('editCantidad').value);
     const precio = parseFloat(document.getElementById('editPrecio').value);
 
-    try {
-        const { error } = await _supabase
-            .from('productos')
-            .update({ nombre, cantidad, precio })
-            .eq('id', id);
+    const { error } = await _supabase
+        .from('productos')
+        .update({ nombre, cantidad, precio })
+        .eq('id', id);
 
-        if (error) {
-            alert("Error al actualizar: " + error.message);
-        } else {
-            console.log("¡Actualización exitosa!");
-            
-            // 1. Cerramos el modal
-            cerrarModal();
-            
-            // 2. REFRESCAR LA PÁGINA (Forma infalible)
-            // Esto forzará a la app a leer todo de nuevo y actualizar el Dashboard
-            location.reload(); 
-            
-            alert("¡Producto actualizado correctamente!");
-        }
-    } catch (err) {
-        console.error("Error crítico:", err);
+    if (error) {
+        alert("Error de Supabase: " + error.message);
+    } else {
+        alert("✅ ¡Producto actualizado con éxito!");
+        cerrarModal();
+        // El true fuerza a recargar desde el servidor, no desde el caché
+        window.location.href = window.location.href.split('?')[0] + '?update=' + new Date().getTime();
     }
 });
 
