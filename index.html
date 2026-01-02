@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Inventario</title>
+    <title>Mi Inventario Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 p-8">
+<body class="bg-gray-100 p-4 md:p-8">
 
     <div id="authSection" class="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md mb-8">
-        <h2 class="text-xl font-bold mb-4">Iniciar Sesión / Registro</h2>
-        <input type="email" id="authEmail" placeholder="Correo electrónico" class="w-full border p-2 mb-2 rounded">
+        <h2 class="text-xl font-bold mb-4 text-center">Iniciar Sesión</h2>
+        <input type="email" id="authEmail" placeholder="Correo" class="w-full border p-2 mb-2 rounded">
         <input type="password" id="authPassword" placeholder="Contraseña" class="w-full border p-2 mb-4 rounded">
         <div class="flex gap-2">
             <button id="btnRegistro" class="bg-gray-500 text-white px-4 py-2 rounded w-full">Registrarse</button>
@@ -20,53 +20,48 @@
 
     <div id="mainApp" class="hidden max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-md">
         
-        <div id="user-bar" class="flex justify-between items-center bg-blue-50 p-4 mb-6 rounded-lg border border-blue-100">
+        <div class="flex justify-between items-center bg-blue-50 p-4 mb-6 rounded-lg border border-blue-100">
             <p class="text-gray-700 font-medium">👤 Usuario: <span id="user-email" class="font-bold text-blue-600"></span></p>
-            <button id="btn-logout" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition font-bold">
-                Cerrar Sesión
-            </button>
+            <button id="btn-logout" class="bg-red-500 text-white px-4 py-2 rounded text-sm font-bold">Cerrar Sesión</button>
         </div>
 
-    <div id="dashboard" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div id="dashboard" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <div class="bg-white p-6 rounded-xl border border-blue-100 shadow-sm">
-                <p class="text-sm text-gray-500 font-medium uppercase">Valor Total</p>
+                <p class="text-xs text-gray-500 font-bold uppercase">Valor Total</p>
                 <h3 id="stat-valor" class="text-3xl font-bold text-blue-600">$0.00</h3>
             </div>
             <div class="bg-white p-6 rounded-xl border border-green-100 shadow-sm">
-                <p class="text-sm text-gray-500 font-medium uppercase">Productos en Total</p>
+                <p class="text-xs text-gray-500 font-bold uppercase">Prod. Únicos</p>
                 <h3 id="stat-cantidad" class="text-3xl font-bold text-green-600">0</h3>
             </div>
             <div class="bg-white p-6 rounded-xl border border-red-100 shadow-sm">
-                <p class="text-sm text-gray-500 font-medium uppercase">Stock Bajo (< 5)</p>
+                <p class="text-xs text-gray-500 font-bold uppercase">Stock Bajo (< 5)</p>
                 <h3 id="stat-alerta" class="text-3xl font-bold text-red-600">0</h3>
             </div>
-    </div>
+        </div>
 
-    <div class="flex justify-between items-center mb-6 border-b pb-4">
-        <h1 class="text-2xl font-bold text-gray-800">📦 Gestión de Inventario Privado</h1>
-    </div>
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">📦 Gestión de Inventario</h1>
         
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <input type="text" id="nombreProducto" placeholder="Nombre producto" class="border p-2 rounded">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <input type="text" id="nombreProducto" placeholder="Producto" class="border p-2 rounded">
             <input type="number" id="cantidadProducto" placeholder="Cantidad" class="border p-2 rounded">
-            <input type="number" id="precioProducto" placeholder="Precio $" step="0.01" class="border p-2 rounded focus:ring-2 focus:ring-blue-400">
-            <button id="btnAgregar" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
-                Agregar
-            </button>
-    </div>
+            <input type="number" id="precioProducto" placeholder="Precio $" step="0.01" class="border p-2 rounded">
+            <button id="btnAgregar" class="bg-blue-600 text-white px-4 py-2 rounded font-bold">Agregar</button>
+        </div>
 
-    <table class="w-full text-left border-collapse">
-        <thead>
-            <tr class="border-b bg-gray-50">
-                <th class="py-2 px-2">Producto</th>
-                <th class="py-2 px-2">Stock</th>
-                <th class="py-3 px-2">Precio</th>
-                <th class="py-2 px-2 text-center">Acciones</th>
-            </tr>
-        </thead>
-            <tbody id="listaProductos">
-            </tbody>
-    </table>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="border-b bg-gray-50 text-gray-600">
+                        <th class="py-3 px-2">Producto</th>
+                        <th class="py-3 px-2">Stock</th>
+                        <th class="py-3 px-2">Precio Unit.</th>
+                        <th class="py-3 px-2 text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="listaProductos"></tbody>
+            </table>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
