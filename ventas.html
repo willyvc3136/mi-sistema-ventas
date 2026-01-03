@@ -3,66 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Punto de Venta - Minimarket</title>
+    <title>Ventas - Minimarket Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 p-4 md:p-8">
 
     <div class="max-w-6xl mx-auto">
-        <div class="flex justify-between items-center mb-8">
-            <a href="index.html" class="text-blue-600 font-bold flex items-center gap-2 hover:underline">
-                ← Volver al Menú
-            </a>
-            <h1 class="text-2xl font-extrabold text-gray-800">🛒 PUNTO DE VENTA</h1>
-            <div class="text-sm text-gray-500" id="user-display">Cargando usuario...</div>
+        <div class="flex justify-between items-center mb-8 bg-white p-4 rounded-2xl shadow-sm border-l-8 border-green-500">
+            <div>
+                <a href="index.html" class="text-green-600 font-bold flex items-center gap-2 hover:underline mb-1">
+                    ← Regresar al Menú
+                </a>
+                <p class="text-xs text-gray-400 font-bold uppercase" id="user-display">Verificando sesión...</p>
+            </div>
+            <h1 class="text-xl font-black text-gray-800 tracking-tighter">CAJA RÁPIDA</h1>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
             <div class="lg:col-span-2 space-y-6">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                    <label class="block text-sm font-bold text-gray-600 mb-2">Buscar Producto</label>
-                    <input type="text" id="inputBusqueda" placeholder="Escribe el nombre del producto..." 
-                        class="w-full p-4 border-2 border-blue-100 rounded-xl focus:border-blue-500 outline-none text-lg">
+                    <label class="block text-xs font-black text-gray-400 mb-2 uppercase">Escribe para buscar</label>
+                    <input type="text" id="inputBusqueda" placeholder="Nombre del producto (ej: Coca Cola)..." 
+                        class="w-full p-4 border-2 border-gray-100 rounded-2xl focus:border-green-500 outline-none text-lg transition-all font-medium">
                 </div>
 
                 <div class="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-200">
                     <table class="w-full text-left">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="p-4 text-xs font-bold text-gray-500 uppercase">Producto</th>
-                                <th class="p-4 text-xs font-bold text-gray-500 uppercase">Precio</th>
-                                <th class="p-4 text-xs font-bold text-gray-500 uppercase">Stock</th>
-                                <th class="p-4 text-xs font-bold text-gray-500 uppercase text-center">Acción</th>
+                        <thead class="bg-gray-50 border-b">
+                            <tr class="text-[10px] font-black text-gray-400 uppercase">
+                                <th class="p-4">Descripción</th>
+                                <th class="p-4">Precio</th>
+                                <th class="p-4">Stock</th>
+                                <th class="p-4 text-center">Acción</th>
                             </tr>
                         </thead>
-                        <tbody id="tablaResultados" class="divide-y divide-gray-100">
+                        <tbody id="tablaResultados" class="divide-y divide-gray-50 text-gray-700">
                             </tbody>
                     </table>
                 </div>
             </div>
 
-            <div class="bg-white p-6 rounded-2xl shadow-xl border-t-8 border-blue-600 flex flex-col h-fit sticky top-8">
-                <h2 class="text-xl font-bold mb-4 text-gray-800">Detalle de Venta</h2>
+            <div class="bg-white p-6 rounded-3xl shadow-xl border border-gray-100 flex flex-col h-fit sticky top-8">
+                <div class="flex items-center gap-2 mb-6">
+                    <span class="text-2xl">📝</span>
+                    <h2 class="text-xl font-black text-gray-800">Resumen de Venta</h2>
+                </div>
                 
-                <div id="carritoItems" class="space-y-4 mb-6 max-h-96 overflow-y-auto">
-                    <p class="text-center text-gray-400 py-10 italic">No hay productos en la venta</p>
+                <div id="carritoItems" class="space-y-4 mb-6 max-h-[400px] overflow-y-auto scrollbar-hide">
+                    <div class="text-center py-10">
+                        <p class="text-gray-300 text-sm italic italic">El carrito está vacío</p>
+                    </div>
                 </div>
 
-                <div class="border-t pt-4 space-y-2">
-                    <div class="flex justify-between text-gray-600">
-                        <span>Subtotal:</span>
-                        <span id="subtotalVenta">$0.00</span>
+                <div class="border-t-2 border-dashed pt-6 space-y-3">
+                    <div class="flex justify-between text-gray-500 font-bold">
+                        <span>Items:</span>
+                        <span id="contadorItems">0</span>
                     </div>
-                    <div class="flex justify-between text-2xl font-black text-blue-700">
-                        <span>TOTAL:</span>
-                        <span id="totalVenta">$0.00</span>
+                    <div class="flex justify-between items-end">
+                        <span class="text-gray-800 font-black uppercase text-sm">Total a pagar:</span>
+                        <span id="totalVenta" class="text-4xl font-black text-green-600">$0.00</span>
                     </div>
                 </div>
 
                 <button id="btnFinalizarVenta" disabled 
-                    class="w-full mt-6 bg-green-500 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-green-600 disabled:bg-gray-300 disabled:shadow-none transition-all">
-                    FINALIZAR VENTA (F2)
+                    class="w-full mt-8 bg-green-500 text-white font-black py-5 rounded-2xl shadow-lg shadow-green-100 hover:bg-green-600 disabled:bg-gray-200 disabled:shadow-none transition-all flex justify-center items-center gap-2 uppercase tracking-widest text-sm">
+                    Finalizar Venta (F2)
                 </button>
             </div>
         </div>
