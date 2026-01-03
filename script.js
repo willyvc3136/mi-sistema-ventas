@@ -63,6 +63,9 @@ function renderizarTabla(productos) {
     productos.forEach(prod => {
         const fila = document.createElement('tr');
         fila.className = "border-b hover:bg-blue-50 transition-colors";
+
+        // Calculamos la ganancia por unidad para que la veas tú
+        const ganancia = (prod.precio || 0) - (prod.precio_costo || 0);
         
         fila.innerHTML = `
             <td class="py-4 px-4 border-b">
@@ -86,16 +89,27 @@ function renderizarTabla(productos) {
     });
 }
 
+// --- Actualizar Dashboard ---
+
 function actualizarDashboard(productos) {
     let valorVentaTotal = 0;
+    let inversionTotal = 0;
     let stockBajo = 0;
 
     productos.forEach(prod => {
-        valorVentaTotal += (parseFloat(prod.precio) || 0) * (parseInt(prod.cantidad) || 0);
-        if (prod.cantidad < 5) stockBajo++;
+        const cant = parseInt(prod.cantidad) || 0;
+        valorVentaTotal += (parseFloat(prod.precio) || 0) * cant;
+        inversionTotal += (parseFloat(prod.precio_costo) || 0) * cant;
+        if (cant < 5) stockBajo++;
     });
 
-    document.getElementById('stat-valor').textContent = `$${valorVentaTotal.toFixed(2)}`;
+    const gananciaPotencial = valorVentaTotal - inversionTotal;
+
+    // Actualizamos los textos (Asegúrate de tener estos IDs en tu HTML o usa el de stat-valor)
+    document.getElementById('stat-valor').innerHTML = `
+        <div class="text-2xl">$${valorVentaTotal.toFixed(2)}</div>
+        <div class="text-xs text-green-500 font-normal">Ganancia estimada: $${gananciaPotencial.toFixed(2)}</div>
+    `;
     document.getElementById('stat-cantidad').textContent = productos.length;
     document.getElementById('stat-alerta').textContent = stockBajo;
 }
