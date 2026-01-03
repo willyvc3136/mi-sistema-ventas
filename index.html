@@ -3,133 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventario Minimarket Pro</title>
+    <title>Minimarket Pro - Inicio</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 p-4 md:p-8">
-
-    <div id="authSection" class="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md mb-8">
-        <h2 class="text-xl font-bold mb-4 text-center">Sistema de Inventario</h2>
-        <input type="email" id="authEmail" placeholder="Correo" class="w-full border p-2 mb-2 rounded">
-        <input type="password" id="authPassword" placeholder="Contraseña" class="w-full border p-2 mb-4 rounded">
-        <div class="flex gap-2">
-            <button id="btnRegistro" class="bg-gray-500 text-white px-4 py-2 rounded w-full">Registrarse</button>
-            <button id="btnLogin" class="bg-green-600 text-white px-4 py-2 rounded w-full">Entrar</button>
-        </div>
-    </div>
-
-    <div id="mainApp" class="hidden max-w-6xl mx-auto">
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-6">
+    <div class="max-w-4xl w-full text-center">
+        <h1 class="text-4xl font-extrabold text-gray-800 mb-10">Gestión de Minimarket</h1>
         
-        <div class="flex justify-between items-center bg-white p-4 mb-6 rounded-lg shadow-sm border-l-4 border-blue-500">
-            <p class="text-gray-700 font-medium">👤 Usuario: <span id="user-email" class="font-bold text-blue-600"></span></p>
-            <button id="btn-logout" class="bg-red-500 text-white px-4 py-2 rounded text-sm font-bold hover:bg-red-600 transition">Cerrar Sesión</button>
-        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <a href="ventas.html" class="bg-white p-10 rounded-3xl shadow-xl border-t-8 border-green-500 hover:shadow-2xl transition-all transform hover:-translate-y-2">
+                <div class="text-6xl mb-4">🛒</div>
+                <h2 class="text-2xl font-bold text-gray-700">Punto de Venta</h2>
+                <p class="text-gray-500 mt-2">Cobrar a clientes y descontar stock</p>
+                <div class="mt-6 inline-block bg-green-500 text-white px-8 py-3 rounded-xl font-bold">Vender Ahora</div>
+            </a>
 
-        <div id="dashboard" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <div class="bg-white p-6 rounded-xl border border-blue-100 shadow-sm">
-                <p class="text-xs text-gray-500 font-bold uppercase">Valor de Venta Total</p>
-                <h3 id="stat-valor" class="text-3xl font-bold text-blue-600">$0.00</h3>
-            </div>
-            <div class="bg-white p-6 rounded-xl border border-green-100 shadow-sm">
-                <p class="text-xs text-gray-500 font-bold uppercase">Productos Únicos</p>
-                <h3 id="stat-cantidad" class="text-3xl font-bold text-green-600">0</h3>
-            </div>
-            <div class="bg-white p-6 rounded-xl border border-red-100 shadow-sm">
-                <p class="text-xs text-gray-500 font-bold uppercase">Stock Bajo (< 5)</p>
-                <h3 id="stat-alerta" class="text-3xl font-bold text-red-600">0</h3>
-            </div>
-        </div>
-
-        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
-            <h2 class="text-lg font-bold text-gray-800 mb-4">📦 Agregar Nuevo Producto</h2>
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
-                <input type="text" id="nombreProducto" placeholder="Nombre del producto" class="border p-2 rounded focus:ring-2 focus:ring-blue-300 outline-none">
-                
-                <select id="categoriaProducto" class="border p-2 rounded bg-white focus:ring-2 focus:ring-blue-300 outline-none">
-                    <option value="Abarrotes">Abarrotes</option>
-                    <option value="Bebidas">Bebidas</option>
-                    <option value="Lácteos">Lácteos</option>
-                    <option value="Limpieza">Limpieza</option>
-                    <option value="Snacks">Snacks</option>
-                    <option value="Otros">Otros</option>
-                </select>
-
-                <input type="number" id="cantidadProducto" placeholder="Stock Inicial" class="border p-2 rounded focus:ring-2 focus:ring-blue-300 outline-none">
-                <input type="number" id="precioCosto" placeholder="Costo $" step="0.01" class="border p-2 rounded focus:ring-2 focus:ring-blue-300 outline-none">
-                <input type="number" id="precioProducto" placeholder="Venta $" step="0.01" class="border p-2 rounded focus:ring-2 focus:ring-blue-300 outline-none">
-                
-                <button id="btnAgregar" class="bg-blue-600 text-white px-4 py-2 rounded font-bold hover:bg-blue-700 transition md:col-span-5">
-                    Guardar en Inventario
-                </button>
-            </div>
-        </div>
-
-        <div class="bg-white p-6 rounded-lg shadow-md">
-            <div class="mb-4">
-                <input type="text" id="buscador" placeholder="🔍 Buscar por nombre de producto..." class="w-full border p-3 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-400 outline-none">
-            </div>
-
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-gray-50 text-gray-600 uppercase text-xs">
-                            <th class="py-3 px-4 border-b">Producto / Categoría</th>
-                            <th class="py-3 px-4 border-b text-center">Stock</th>
-                            <th class="py-3 px-4 border-b">Precio Venta</th>
-                            <th class="py-3 px-4 border-b text-center">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="listaProductos" class="text-gray-700">
-                        </tbody>
-                </table>
-            </div>
+            <a href="inventario.html" class="bg-white p-10 rounded-3xl shadow-xl border-t-8 border-blue-500 hover:shadow-2xl transition-all transform hover:-translate-y-2">
+                <div class="text-6xl mb-4">📦</div>
+                <h2 class="text-2xl font-bold text-gray-700">Inventario</h2>
+                <p class="text-gray-500 mt-2">Administrar productos y precios</p>
+                <div class="mt-6 inline-block bg-blue-500 text-white px-8 py-3 rounded-xl font-bold">Gestionar Almacén</div>
+            </a>
         </div>
     </div>
-
-    <div id="modalEditar" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 z-50">
-        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-lg">
-            <h2 class="text-2xl font-bold mb-6 text-gray-800 border-b pb-2">Editar Producto</h2>
-            
-            <input type="hidden" id="editId"> 
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="md:col-span-2">
-                    <label class="block text-sm font-bold text-gray-700 mb-1">Nombre</label>
-                    <input type="text" id="editNombre" class="w-full border p-2 rounded">
-                </div>
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-1">Categoría</label>
-                    <select id="editCategoria" class="w-full border p-2 rounded">
-                        <option value="Abarrotes">Abarrotes</option>
-                        <option value="Bebidas">Bebidas</option>
-                        <option value="Lácteos">Lácteos</option>
-                        <option value="Limpieza">Limpieza</option>
-                        <option value="Snacks">Snacks</option>
-                        <option value="Otros">Otros</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-1">Stock</label>
-                    <input type="number" id="editCantidad" class="w-full border p-2 rounded">
-                </div>
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-1">Precio Costo ($)</label>
-                    <input type="number" id="editPrecioCosto" step="0.01" class="w-full border p-2 rounded text-red-600 font-bold">
-                </div>
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-1">Precio Venta ($)</label>
-                    <input type="number" id="editPrecio" step="0.01" class="w-full border p-2 rounded text-green-600 font-bold">
-                </div>
-            </div>
-
-            <div class="flex justify-end gap-3 mt-8">
-                <button onclick="cerrarModal()" class="px-6 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium">Cancelar</button>
-                <button id="btnGuardarCambios" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold shadow-lg">Guardar Cambios</button>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="script.js"></script>
 </body>
 </html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Punto de Venta - Minimarket</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto">
+        <div class="flex justify-between items-center mb-8">
+            <a href="index.html" class="text-blue-600 font-bold flex items-center gap-2 hover:underline">
+                ← Volver al Menú
+            </a>
+            <h1 class="text-2xl font-extrabold text-gray-800">🛒 PUNTO DE VENTA</h1>
+            <div class="text-sm text-gray-500" id="user-display">Cargando usuario...</div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <div class="lg:col-span-2 space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                    <label class="block text-sm font-bold text-gray-600 mb-2">Buscar Producto</label>
+                    <input type="text" id="inputBusqueda" placeholder="Escribe el nombre del producto..." 
+                        class="w-full p-4 border-2 border-blue-100 rounded-xl focus:border-blue-500 outline-none text-lg">
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-200">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="p-4 text-xs font-bold text-gray-500 uppercase">Producto</th>
+                                <th class="p-4 text-xs font-bold text-gray-500 uppercase">Precio</th>
+                                <th class="p-4 text-xs font-bold text-gray-500 uppercase">Stock</th>
+                                <th class="p-4 text-xs font-bold text-gray-500 uppercase text-center">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaResultados" class="divide-y divide-gray-100">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-xl border-t-8 border-blue-600 flex flex-col h-fit sticky top-8">
+                <h2 class="text-xl font-bold mb-4 text-gray-800">Detalle de Venta</h2>
+                
+                <div id="carritoItems" class="space-y-4 mb-6 max-h-96 overflow-y-auto">
+                    <p class="text-center text-gray-400 py-10 italic">No hay productos en la venta</p>
+                </div>
+
+                <div class="border-t pt-4 space-y-2">
+                    <div class="flex justify-between text-gray-600">
+                        <span>Subtotal:</span>
+                        <span id="subtotalVenta">$0.00</span>
+                    </div>
+                    <div class="flex justify-between text-2xl font-black text-blue-700">
+                        <span>TOTAL:</span>
+                        <span id="totalVenta">$0.00</span>
+                    </div>
+                </div>
+
+                <button id="btnFinalizarVenta" disabled 
+                    class="w-full mt-6 bg-green-500 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-green-600 disabled:bg-gray-300 disabled:shadow-none transition-all">
+                    FINALIZAR VENTA (F2)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="ventas.js"></script>
+</body>
+</html>
