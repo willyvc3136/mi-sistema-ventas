@@ -7,24 +7,68 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-6">
-    <div class="max-w-4xl w-full text-center">
-        <h1 class="text-4xl font-extrabold text-gray-800 mb-10">Gestión de Minimarket</h1>
+
+    <div id="authSection" class="max-w-md w-full bg-white p-8 rounded-2xl shadow-xl border-t-8 border-blue-600">
+        <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Iniciar Sistema</h2>
+        <input type="email" id="authEmail" placeholder="Correo" class="w-full border p-3 mb-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+        <input type="password" id="authPassword" placeholder="Contraseña" class="w-full border p-3 mb-6 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+        <div class="flex gap-3">
+            <button id="btnLogin" class="bg-blue-600 text-white px-4 py-3 rounded-xl w-full font-bold hover:bg-blue-700 transition">Entrar</button>
+        </div>
+        <p class="text-center text-gray-400 text-xs mt-4">Acceso solo personal autorizado</p>
+    </div>
+
+    <div id="mainApp" class="hidden max-w-4xl w-full text-center">
+        <div class="flex justify-between items-center mb-10">
+            <h1 class="text-4xl font-extrabold text-gray-800">Gestión Minimarket</h1>
+            <button id="btn-logout" class="bg-red-100 text-red-600 px-4 py-2 rounded-lg font-bold hover:bg-red-200 transition">Salir</button>
+        </div>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <a href="ventas.html" class="bg-white p-10 rounded-3xl shadow-xl border-t-8 border-green-500 hover:shadow-2xl transition-all transform hover:-translate-y-2">
+            <a href="ventas.html" class="bg-white p-10 rounded-3xl shadow-xl border-t-8 border-green-500 hover:scale-105 transition-all">
                 <div class="text-6xl mb-4">🛒</div>
                 <h2 class="text-2xl font-bold text-gray-700">Punto de Venta</h2>
-                <p class="text-gray-500 mt-2">Cobrar a clientes y descontar stock</p>
                 <div class="mt-6 inline-block bg-green-500 text-white px-8 py-3 rounded-xl font-bold">Vender Ahora</div>
             </a>
 
-            <a href="inventario.html" class="bg-white p-10 rounded-3xl shadow-xl border-t-8 border-blue-500 hover:shadow-2xl transition-all transform hover:-translate-y-2">
+            <a href="inventario.html" class="bg-white p-10 rounded-3xl shadow-xl border-t-8 border-blue-500 hover:scale-105 transition-all">
                 <div class="text-6xl mb-4">📦</div>
                 <h2 class="text-2xl font-bold text-gray-700">Inventario</h2>
-                <p class="text-gray-500 mt-2">Administrar productos y precios</p>
-                <div class="mt-6 inline-block bg-blue-500 text-white px-8 py-3 rounded-xl font-bold">Gestionar Almacén</div>
+                <div class="mt-6 inline-block bg-blue-500 text-white px-8 py-3 rounded-xl font-bold">Ver Almacén</div>
             </a>
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const supabaseUrl = 'https://ijyhkbiukiqiqjabpubm.supabase.co';
+        const supabaseKey = 'sb_publishable_EpJx4G5egW9GZdj8P7oudw_kDWWsj6p';
+        const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+        async function checkUser() {
+            const { data: { user } } = await _supabase.auth.getUser();
+            if (user) {
+                document.getElementById('authSection').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+            } else {
+                document.getElementById('authSection').classList.remove('hidden');
+                document.getElementById('mainApp').classList.add('hidden');
+            }
+        }
+
+        document.getElementById('btnLogin').addEventListener('click', async () => {
+            const email = document.getElementById('authEmail').value;
+            const password = document.getElementById('authPassword').value;
+            const { error } = await _supabase.auth.signInWithPassword({ email, password });
+            if (error) alert("Error: " + error.message); else checkUser();
+        });
+
+        document.getElementById('btn-logout').addEventListener('click', async () => {
+            await _supabase.auth.signOut();
+            window.location.reload();
+        });
+
+        checkUser();
+    </script>
 </body>
 </html>
