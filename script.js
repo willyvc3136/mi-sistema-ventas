@@ -172,5 +172,19 @@ document.getElementById('btnGuardarCambios').addEventListener('click', async () 
     }
 });
 
+document.getElementById('buscador').addEventListener('input', (e) => {
+    const texto = e.target.value.toLowerCase();
+    const filas = listaProductos.getElementsByTagName('tr');
+
+    Array.from(filas).forEach(fila => {
+        const nombreProducto = fila.cells[0].textContent.toLowerCase();
+        if (nombreProducto.includes(texto)) {
+            fila.style.display = "";
+        } else {
+            fila.style.display = "none";
+        }
+    });
+});
+
 // Inicialización
 checkUser();
