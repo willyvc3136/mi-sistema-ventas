@@ -2,23 +2,12 @@ const supabaseUrl = 'https://ijyhkbiukiqiqjabpubm.supabase.co';
 const supabaseKey = 'sb_publishable_EpJx4G5egW9GZdj8P7oudw_kDWWsj6p';
 const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-// Referencias
+// Referencias HTML
 const authSection = document.getElementById('authSection');
 const mainApp = document.getElementById('mainApp');
 const listaProductos = document.getElementById('listaProductos');
 const userEmailDisplay = document.getElementById('user-email');
 const modalEditar = document.getElementById('modalEditar');
-
-const authEmail = document.getElementById('authEmail');
-const authPassword = document.getElementById('authPassword');
-const btnRegistro = document.getElementById('btnRegistro');
-const btnLogin = document.getElementById('btnLogin');
-const btnLogout = document.getElementById('btn-logout');
-
-const inputNombre = document.getElementById('nombreProducto');
-const inputCantidad = document.getElementById('cantidadProducto');
-const inputPrecio = document.getElementById('precioProducto');
-const btnAgregar = document.getElementById('btnAgregar');
 
 // --- Lógica de Autenticación ---
 
@@ -35,33 +24,33 @@ async function checkUser() {
     }
 }
 
-btnLogin.addEventListener('click', async () => {
-    const { error } = await _supabase.auth.signInWithPassword({
-        email: authEmail.value, password: authPassword.value
-    });
+document.getElementById('btnLogin').addEventListener('click', async () => {
+    const email = document.getElementById('authEmail').value;
+    const password = document.getElementById('authPassword').value;
+    const { error } = await _supabase.auth.signInWithPassword({ email, password });
     if (error) alert(error.message); else checkUser();
 });
 
-btnRegistro.addEventListener('click', async () => {
-    const { error } = await _supabase.auth.signUp({
-        email: authEmail.value, password: authPassword.value
-    });
-    if (error) alert(error.message); else alert("Revisa tu correo");
+document.getElementById('btnRegistro').addEventListener('click', async () => {
+    const email = document.getElementById('authEmail').value;
+    const password = document.getElementById('authPassword').value;
+    const { error } = await _supabase.auth.signUp({ email, password });
+    if (error) alert(error.message); else alert("Revisa tu correo para confirmar el registro");
 });
 
-btnLogout.addEventListener('click', async () => {
+document.getElementById('btn-logout').addEventListener('click', async () => {
     await _supabase.auth.signOut();
     window.location.reload();
 });
 
-// --- Lógica de Inventario ---
+// --- Lógica de Inventario Pro ---
 
 async function obtenerProductos(userId) {
     const { data, error } = await _supabase
         .from('productos')
         .select('*')
         .eq('user_id', userId)
-        .order('id', { ascending: true });
+        .order('id', { ascending: false });
 
     if (!error) {
         renderizarTabla(data);
@@ -73,16 +62,24 @@ function renderizarTabla(productos) {
     listaProductos.innerHTML = '';
     productos.forEach(prod => {
         const fila = document.createElement('tr');
-        fila.className = "border-b hover:bg-gray-50";
+        fila.className = "border-b hover:bg-blue-50 transition-colors";
         
-        // CORRECCIÓN: Usamos argumentos individuales en abrirModal para evitar errores de JSON
         fila.innerHTML = `
-            <td class="py-3 px-2">${prod.nombre}</td>
-            <td class="py-3 px-2 font-bold ${prod.cantidad < 5 ? 'text-red-600' : 'text-gray-700'}">${prod.cantidad}</td>
-            <td class="py-3 px-2 text-blue-600 font-medium">$${parseFloat(prod.precio || 0).toFixed(2)}</td>
-            <td class="py-3 px-2 text-center space-x-3">
-                <button onclick="prepararEdicion(${prod.id}, '${prod.nombre}', ${prod.cantidad}, ${prod.precio})" class="text-blue-500 hover:underline">Editar</button>
-                <button onclick="eliminarProducto(${prod.id})" class="text-red-400 text-sm hover:underline">Eliminar</button>
+            <td class="py-4 px-4 border-b">
+                <span class="text-[10px] font-bold text-blue-500 uppercase block">${prod.categoria || 'Otros'}</span>
+                <span class="font-medium text-gray-800">${prod.nombre}</span>
+            </td>
+            <td class="py-4 px-4 border-b text-center">
+                <span class="px-3 py-1 rounded-full text-xs font-bold ${prod.cantidad < 5 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}">
+                    ${prod.cantidad} und.
+                </span>
+            </td>
+            <td class="py-4 px-4 border-b font-bold text-gray-700">
+                $${parseFloat(prod.precio || 0).toFixed(2)}
+            </td>
+            <td class="py-4 px-4 border-b text-center space-x-3">
+                <button onclick="prepararEdicion(${prod.id}, '${prod.nombre}', ${prod.cantidad}, ${prod.precio}, '${prod.categoria}', ${prod.precio_costo})" class="text-blue-600 hover:underline font-bold text-sm">Editar</button>
+                <button onclick="eliminarProducto(${prod.id})" class="text-red-400 hover:underline text-xs">Eliminar</button>
             </td>
         `;
         listaProductos.appendChild(fila);
@@ -90,101 +87,96 @@ function renderizarTabla(productos) {
 }
 
 function actualizarDashboard(productos) {
-    let valorTotal = 0;
-    let totalUnicos = productos.length;
+    let valorVentaTotal = 0;
     let stockBajo = 0;
 
     productos.forEach(prod => {
-        valorTotal += (parseFloat(prod.precio) || 0) * (parseInt(prod.cantidad) || 0);
+        valorVentaTotal += (parseFloat(prod.precio) || 0) * (parseInt(prod.cantidad) || 0);
         if (prod.cantidad < 5) stockBajo++;
     });
 
-    document.getElementById('stat-valor').textContent = `$${valorTotal.toFixed(2)}`;
-    document.getElementById('stat-cantidad').textContent = totalUnicos;
+    document.getElementById('stat-valor').textContent = `$${valorVentaTotal.toFixed(2)}`;
+    document.getElementById('stat-cantidad').textContent = productos.length;
     document.getElementById('stat-alerta').textContent = stockBajo;
 }
 
-btnAgregar.addEventListener('click', async () => {
-    const { data: { user } } = await _supabase.auth.getUser();
-    const nombre = inputNombre.value;
-    const cantidad = parseInt(inputCantidad.value);
-    const precio = parseFloat(inputPrecio.value);
+// --- Agregar Producto ---
 
-    if (!nombre || isNaN(cantidad) || isNaN(precio)) return alert("Completa todos los campos correctamente");
+document.getElementById('btnAgregar').addEventListener('click', async () => {
+    const { data: { user } } = await _supabase.auth.getUser();
+    const nombre = document.getElementById('nombreProducto').value;
+    const categoria = document.getElementById('categoriaProducto').value;
+    const cantidad = parseInt(document.getElementById('cantidadProducto').value);
+    const precio_costo = parseFloat(document.getElementById('precioCosto').value) || 0;
+    const precio = parseFloat(document.getElementById('precioProducto').value) || 0;
+
+    if (!nombre || isNaN(cantidad)) return alert("Nombre y Stock son campos obligatorios");
 
     const { error } = await _supabase.from('productos').insert([{ 
-        nombre, cantidad, precio, user_id: user.id 
+        nombre, categoria, cantidad, precio_costo, precio, user_id: user.id 
     }]);
 
     if (!error) {
-        inputNombre.value = ''; inputCantidad.value = ''; inputPrecio.value = '';
-        obtenerProductos(user.id);
+        // Limpiar campos y recargar
+        location.reload(); 
     } else {
-        alert("Error al agregar: " + error.message);
+        alert("Error al guardar: " + error.message);
     }
 });
 
-window.eliminarProducto = async (id) => {
-    if(!confirm("¿Estás seguro de eliminar este producto?")) return;
-    const { data: { user } } = await _supabase.auth.getUser();
-    await _supabase.from('productos').delete().eq('id', id);
-    obtenerProductos(user.id);
-};
+// --- Modal de Edición ---
 
-// --- Funciones del Modal Corregidas ---
-// --- Funciones del Modal Mejoradas con Debug ---
-
-window.prepararEdicion = (id, nombre, cantidad, precio) => {
-    console.log("Abriendo modal para ID:", id); // Mensaje en consola
-    
+window.prepararEdicion = (id, nombre, cantidad, precio, categoria, costo) => {
     document.getElementById('editId').value = id;
     document.getElementById('editNombre').value = nombre;
     document.getElementById('editCantidad').value = cantidad;
     document.getElementById('editPrecio').value = precio;
+    document.getElementById('editCategoria').value = categoria || 'Otros';
+    document.getElementById('editPrecioCosto').value = costo || 0;
     
     modalEditar.classList.remove('hidden');
 };
 
-window.cerrarModal = () => {
-    modalEditar.classList.add('hidden');
-};
+window.cerrarModal = () => modalEditar.classList.add('hidden');
 
 document.getElementById('btnGuardarCambios').addEventListener('click', async () => {
-    console.log("Intentando guardar cambios...");
-    
     const id = document.getElementById('editId').value;
     const nombre = document.getElementById('editNombre').value;
+    const categoria = document.getElementById('editCategoria').value;
     const cantidad = parseInt(document.getElementById('editCantidad').value);
+    const precio_costo = parseFloat(document.getElementById('editPrecioCosto').value);
     const precio = parseFloat(document.getElementById('editPrecio').value);
 
     const { error } = await _supabase
         .from('productos')
-        .update({ nombre, cantidad, precio })
+        .update({ nombre, categoria, cantidad, precio_costo, precio })
         .eq('id', id);
 
     if (error) {
-        alert("Error de Supabase: " + error.message);
+        alert("Error al actualizar: " + error.message);
     } else {
-        alert("✅ ¡Producto actualizado con éxito!");
-        cerrarModal();
-        // El true fuerza a recargar desde el servidor, no desde el caché
-        window.location.href = window.location.href.split('?')[0] + '?update=' + new Date().getTime();
+        alert("✅ Producto actualizado correctamente");
+        location.reload();
     }
 });
 
+window.eliminarProducto = async (id) => {
+    if(!confirm("¿Estás seguro de eliminar este producto del inventario?")) return;
+    const { error } = await _supabase.from('productos').delete().eq('id', id);
+    if (error) alert(error.message); else location.reload();
+};
+
+// --- Buscador en Tiempo Real ---
+
 document.getElementById('buscador').addEventListener('input', (e) => {
-    const texto = e.target.value.toLowerCase();
+    const filtro = e.target.value.toLowerCase();
     const filas = listaProductos.getElementsByTagName('tr');
 
     Array.from(filas).forEach(fila => {
-        const nombreProducto = fila.cells[0].textContent.toLowerCase();
-        if (nombreProducto.includes(texto)) {
-            fila.style.display = "";
-        } else {
-            fila.style.display = "none";
-        }
+        const textoFila = fila.innerText.toLowerCase();
+        fila.style.display = textoFila.includes(filtro) ? "" : "none";
     });
 });
 
-// Inicialización
+// Inicializar app
 checkUser();
