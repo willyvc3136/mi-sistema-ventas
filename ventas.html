@@ -22,11 +22,23 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
             <div class="lg:col-span-2 space-y-6">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                    <label class="block text-xs font-black text-gray-400 mb-2 uppercase">Escribe para buscar</label>
-                    <input type="text" id="inputBusqueda" placeholder="Nombre del producto (ej: Coca Cola)..." 
-                        class="w-full p-4 border-2 border-gray-100 rounded-2xl focus:border-green-500 outline-none text-lg transition-all font-medium">
-                </div>
+                <script src="https://unpkg.com/html5-qrcode"></script>
+
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="block text-xs font-black text-gray-400 uppercase">Buscador o Escáner</label>
+                            <button onclick="toggleCamara()" class="text-xs bg-blue-500 text-white px-3 py-1 rounded-lg font-bold hover:bg-blue-600 transition">
+                                📷 Usar Cámara
+                            </button>
+                        </div>
+                        
+                        <div id="reader" class="hidden w-full mb-4 overflow-hidden rounded-xl border-2 border-blue-500"></div>
+
+                        <input type="text" id="inputBusqueda" placeholder="Escanea el código o escribe nombre..." 
+                            class="w-full p-4 border-2 border-blue-100 rounded-xl focus:border-green-500 outline-none text-lg font-medium" autofocus>
+                        
+                        <p class="text-[10px] text-gray-400 mt-2 italic">Tip: Si usas pistola, solo escanea el producto y se agregará solo.</p>
+                    </div>
 
                 <div class="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-200">
                     <table class="w-full text-left">

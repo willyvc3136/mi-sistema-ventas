@@ -169,4 +169,63 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
+let html5QrCode;
+
+// --- Lógica para Cámara del Celular ---
+async function toggleCamara() {
+    const readerDiv = document.getElementById('reader');
+    
+    if (readerDiv.classList.contains('hidden')) {
+        readerDiv.classList.remove('hidden');
+        html5QrCode = new Html5Qrcode("reader");
+        const config = { fps: 10, qrbox: { width: 250, height: 150 } };
+
+        html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
+            // Cuando detecta un código
+            procesarEscaneo(decodedText);
+            // Opcional: Detener cámara tras éxito
+            detenerCamara();
+        });
+    } else {
+        detenerCamara();
+    }
+}
+
+function detenerCamara() {
+    if (html5QrCode) {
+        html5QrCode.stop().then(() => {
+            document.getElementById('reader').classList.add('hidden');
+        });
+    }
+}
+
+// --- Lógica para Pistola de Código de Barras ---
+// La pistola escribe el código y presiona "Enter" automáticamente
+document.getElementById('inputBusqueda').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        const valor = e.target.value.trim();
+        if (valor.length > 3) {
+            procesarEscaneo(valor);
+            e.target.value = ''; // Limpiar para el siguiente escaneo
+        }
+    }
+});
+
+// --- Procesar el código (Cámara o Pistola) ---
+function procesarEscaneo(codigo) {
+    // Buscamos en nuestra lista local de productos por la columna codigo_barras
+    const producto = productosBaseDeDatos.find(p => p.codigo_barras === codigo);
+    
+    if (producto) {
+        agregarAlCarrito(producto.id);
+        // Feedback visual o sonido (opcional)
+        const totalElem = document.getElementById('totalVenta');
+        totalElem.classList.add('scale-110', 'text-blue-500');
+        setTimeout(() => totalElem.classList.remove('scale-110', 'text-blue-500'), 200);
+    } else {
+        // Si no lo encuentra por código, quizás es una búsqueda por nombre (no hace nada)
+        console.log("Código no encontrado: " + codigo);
+    }
+}
+
 inicializar();
