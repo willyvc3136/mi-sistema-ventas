@@ -42,7 +42,9 @@
                 <span class="bg-blue-600 text-white w-7 h-7 flex items-center justify-center rounded-full text-xs">+</span>
                 Nuevo Registro de Producto
             </h2>
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
+                <input type="text" id="codigoProducto" placeholder="Código de Barras" class="border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono text-sm">
+                
                 <input type="text" id="nombreProducto" placeholder="Nombre" class="border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all">
                 
                 <select id="categoriaProducto" class="border p-3 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all text-gray-600 font-medium">
@@ -58,7 +60,7 @@
                 <input type="number" id="precioCosto" placeholder="Costo $" step="0.01" class="border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all">
                 <input type="number" id="precioProducto" placeholder="Venta $" step="0.01" class="border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all">
                 
-                <button id="btnAgregar" class="bg-blue-600 text-white p-3 rounded-xl font-bold hover:bg-blue-700 transition-all md:col-span-5 shadow-lg shadow-blue-100">
+                <button id="btnAgregar" class="bg-blue-600 text-white p-3 rounded-xl font-bold hover:bg-blue-700 transition-all md:col-span-6 shadow-lg shadow-blue-100">
                     Guardar Producto en Base de Datos
                 </button>
             </div>
@@ -80,7 +82,7 @@
                         </tr>
                     </thead>
                     <tbody id="listaProductos" class="text-gray-700 divide-y divide-gray-50">
-                        </tbody>
+                    </tbody>
                 </table>
             </div>
         </div>
@@ -89,8 +91,14 @@
     <div id="modalEditar" class="hidden fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex justify-center items-center p-4 z-50">
         <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-lg transform transition-all border border-gray-100">
             <h2 class="text-2xl font-bold mb-6 text-gray-800 flex items-center gap-2">📝 Editar Información</h2>
+            
             <input type="hidden" id="editId"> 
+            
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="md:col-span-2">
+                    <label class="text-xs font-bold text-gray-400 uppercase">Código de Barras</label>
+                    <input type="text" id="editCodigo" class="w-full border p-3 rounded-xl mt-1 font-mono">
+                </div>
                 <div class="md:col-span-2">
                     <label class="text-xs font-bold text-gray-400 uppercase">Nombre</label>
                     <input type="text" id="editNombre" class="w-full border p-3 rounded-xl mt-1">
@@ -119,6 +127,7 @@
                     <input type="number" id="editPrecio" step="0.01" class="w-full border p-3 rounded-xl mt-1 text-green-600 font-bold">
                 </div>
             </div>
+            
             <div class="flex justify-end gap-3 mt-8">
                 <button onclick="cerrarModal()" class="px-6 py-3 text-gray-400 font-bold hover:text-gray-600">Cancelar</button>
                 <button id="btnGuardarCambios" class="px-8 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-100">Aplicar Cambios</button>

@@ -1,23 +1,32 @@
+// ==========================================
+// CONFIGURACIÓN DE CONEXIÓN (SUPABASE)
+// ==========================================
 const supabaseUrl = 'https://ijyhkbiukiqiqjabpubm.supabase.co';
 const supabaseKey = 'sb_publishable_EpJx4G5egW9GZdj8P7oudw_kDWWsj6p';
 const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-let carrito = [];
-let productosBaseDeDatos = [];
+// VARIABLES GLOBALES
+let carrito = []; // Almacena los productos que se van a vender
+let productosBaseDeDatos = []; // Copia local del inventario para búsquedas rápidas
+let html5QrCode; // Variable para controlar la cámara
 
-// --- Seguridad: Verificar Sesión e Inicializar ---
+// ==========================================
+// SEGURIDAD: VERIFICAR SESIÓN E INICIALIZAR
+// ==========================================
 async function inicializar() {
     const { data: { user } } = await _supabase.auth.getUser();
     if (user) {
         document.getElementById('user-display').textContent = `Vendedor: ${user.email}`;
-        cargarProductos(user.id);
+        cargarProductos(user.id); // Descarga el inventario del usuario
     } else {
-        // Bloqueo de seguridad: Si no hay usuario, regresa al index
+        // Bloqueo: Si no hay usuario, regresa al login
         window.location.href = 'index.html';
     }
 }
 
-// --- Cargar productos de Supabase ---
+// ==========================================
+// DESCARGAR PRODUCTOS (PARA BÚSQUEDA RÁPIDA)
+// ==========================================
 async function cargarProductos(userId) {
     const { data, error } = await _supabase
         .from('productos')
@@ -28,7 +37,9 @@ async function cargarProductos(userId) {
     if (!error) productosBaseDeDatos = data;
 }
 
-// --- Buscador en tiempo real ---
+// ==========================================
+// BUSCADOR MANUAL (POR NOMBRE O CATEGORÍA)
+// ==========================================
 document.getElementById('inputBusqueda').addEventListener('input', (e) => {
     const busqueda = e.target.value.toLowerCase();
     const tabla = document.getElementById('tablaResultados');
@@ -36,11 +47,13 @@ document.getElementById('inputBusqueda').addEventListener('input', (e) => {
 
     if (busqueda.length < 1) return;
 
+    // Filtra productos que coincidan con el texto escrito
     const filtrados = productosBaseDeDatos.filter(p => 
         p.nombre.toLowerCase().includes(busqueda) || 
         (p.categoria && p.categoria.toLowerCase().includes(busqueda))
     );
 
+    // Dibuja los resultados en la tabla de búsqueda
     filtrados.forEach(prod => {
         const fila = document.createElement('tr');
         fila.className = "hover:bg-gray-50 transition-all";
@@ -66,27 +79,34 @@ document.getElementById('inputBusqueda').addEventListener('input', (e) => {
     });
 });
 
-// --- Lógica del Carrito ---
+// ==========================================
+// LÓGICA DEL CARRITO (AÑADIR PRODUCTOS)
+// ==========================================
 window.agregarAlCarrito = (id) => {
     const producto = productosBaseDeDatos.find(p => p.id === id);
     const itemEnCarrito = carrito.find(item => item.id === id);
 
     if (itemEnCarrito) {
+        // Si ya está en el carrito, aumenta la cantidad si hay stock
         if (itemEnCarrito.cantidadSeleccionada < producto.cantidad) {
             itemEnCarrito.cantidadSeleccionada++;
         } else {
             alert("⚠️ Stock insuficiente en almacén");
         }
     } else {
+        // Si es nuevo, lo añade al carrito
         if (producto.cantidad > 0) {
             carrito.push({ ...producto, cantidadSeleccionada: 1 });
         } else {
             alert("⚠️ Este producto no tiene stock");
         }
     }
-    renderizarCarrito();
+    renderizarCarrito(); // Actualiza la vista del ticket
 };
 
+// ==========================================
+// RENDERIZAR TICKET (RESUMEN DE VENTA)
+// ==========================================
 function renderizarCarrito() {
     const contenedor = document.getElementById('carritoItems');
     const totalElem = document.getElementById('totalVenta');
@@ -105,6 +125,7 @@ function renderizarCarrito() {
         return;
     }
 
+    // Crea visualmente cada item en el ticket
     carrito.forEach((item, index) => {
         const subtotal = item.precio * item.cantidadSeleccionada;
         total += subtotal;
@@ -130,19 +151,22 @@ function renderizarCarrito() {
     btnVenta.disabled = false;
 }
 
+// Quita un producto del ticket
 window.quitarDelCarrito = (index) => {
     carrito.splice(index, 1);
     renderizarCarrito();
 };
 
-// --- Procesar Venta en Supabase ---
+// ==========================================
+// PROCESAR VENTA (ACTUALIZAR NUBE)
+// ==========================================
 document.getElementById('btnFinalizarVenta').addEventListener('click', finalizarVenta);
 
 async function finalizarVenta() {
     if (!confirm("¿Confirmar cobro y actualizar inventario?")) return;
 
     try {
-        // Actualizamos cada producto en la base de datos
+        // Descuenta el stock de cada producto vendido en Supabase
         for (const item of carrito) {
             const nuevoStock = item.cantidad - item.cantidadSeleccionada;
             
@@ -155,23 +179,23 @@ async function finalizarVenta() {
         }
 
         alert("🎯 Venta realizada con éxito");
-        carrito = [];
-        location.reload(); 
+        carrito = []; // Limpia el carrito
+        location.reload(); // Recarga para actualizar el stock local
     } catch (error) {
         alert("Error al descontar stock: " + error.message);
     }
 }
 
-// Atajo de teclado
+// Atajo de teclado: F2 para cobrar rápido
 document.addEventListener('keydown', (e) => {
     if (e.key === "F2" && !document.getElementById('btnFinalizarVenta').disabled) {
         finalizarVenta();
     }
 });
 
-let html5QrCode;
-
-// --- Lógica para Cámara del Celular ---
+// ==========================================
+// ESCÁNER: CÁMARA DEL CELULAR
+// ==========================================
 async function toggleCamara() {
     const readerDiv = document.getElementById('reader');
     
@@ -180,11 +204,10 @@ async function toggleCamara() {
         html5QrCode = new Html5Qrcode("reader");
         const config = { fps: 10, qrbox: { width: 250, height: 150 } };
 
+        // Inicia el lector usando la cámara trasera (environment)
         html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
-            // Cuando detecta un código
-            procesarEscaneo(decodedText);
-            // Opcional: Detener cámara tras éxito
-            detenerCamara();
+            procesarEscaneo(decodedText); // Acción al leer un código
+            detenerCamara(); // Cierra la cámara automáticamente tras leer
         });
     } else {
         detenerCamara();
@@ -199,33 +222,39 @@ function detenerCamara() {
     }
 }
 
-// --- Lógica para Pistola de Código de Barras ---
-// La pistola escribe el código y presiona "Enter" automáticamente
+// ==========================================
+// ESCÁNER: PISTOLA DE CÓDIGO DE BARRAS
+// ==========================================
+// Detecta el "Enter" que envían las pistolas al terminar de leer
 document.getElementById('inputBusqueda').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
         const valor = e.target.value.trim();
         if (valor.length > 3) {
             procesarEscaneo(valor);
-            e.target.value = ''; // Limpiar para el siguiente escaneo
+            e.target.value = ''; // Limpia el campo para el siguiente producto
         }
     }
 });
 
-// --- Procesar el código (Cámara o Pistola) ---
+// ==========================================
+// FUNCIÓN MAESTRA DE ESCANEO
+// ==========================================
 function procesarEscaneo(codigo) {
-    // Buscamos en nuestra lista local de productos por la columna codigo_barras
+    // Busca el producto en nuestra lista local usando la columna 'codigo_barras'
     const producto = productosBaseDeDatos.find(p => p.codigo_barras === codigo);
     
     if (producto) {
-        agregarAlCarrito(producto.id);
-        // Feedback visual o sonido (opcional)
+        agregarAlCarrito(producto.id); // Si existe, lo mete al ticket
+        
+        // Efecto visual de parpadeo en el total para avisar que se agregó
         const totalElem = document.getElementById('totalVenta');
         totalElem.classList.add('scale-110', 'text-blue-500');
         setTimeout(() => totalElem.classList.remove('scale-110', 'text-blue-500'), 200);
     } else {
-        // Si no lo encuentra por código, quizás es una búsqueda por nombre (no hace nada)
         console.log("Código no encontrado: " + codigo);
+        // Aquí podrías poner un sonido de error o un alert pequeño
     }
 }
 
+// Inicia el proceso de autenticación al cargar el archivo
 inicializar();
