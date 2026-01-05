@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inventario - Minimarket Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
 </head>
-<body class="bg-gray-100 p-4 md:p-8">
+<body class="bg-gray-100 p-4 md:p-8 font-sans">
 
     <div id="mainApp" class="max-w-6xl mx-auto">
         
@@ -21,17 +22,17 @@
         </div>
 
         <div id="dashboard" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="bg-white p-6 rounded-2xl border border-blue-100 shadow-sm">
+            <div class="bg-white p-6 rounded-2xl border border-blue-100 shadow-sm transition-hover hover:shadow-md">
                 <p class="text-[10px] text-gray-400 font-black uppercase mb-1">Valor Venta e Inversión</p>
                 <div id="stat-valor">
                     <h3 class="text-3xl font-bold text-blue-600">$0.00</h3>
                 </div>
             </div>
-            <div class="bg-white p-6 rounded-2xl border border-green-100 shadow-sm">
+            <div class="bg-white p-6 rounded-2xl border border-green-100 shadow-sm transition-hover hover:shadow-md">
                 <p class="text-[10px] text-gray-400 font-black uppercase mb-1">Productos Registrados</p>
                 <h3 id="stat-cantidad" class="text-3xl font-bold text-green-600">0</h3>
             </div>
-            <div class="bg-white p-6 rounded-2xl border border-red-100 shadow-sm">
+            <div class="bg-white p-6 rounded-2xl border border-red-100 shadow-sm transition-hover hover:shadow-md">
                 <p class="text-[10px] text-gray-400 font-black uppercase mb-1">Alertas de Stock (< 5)</p>
                 <h3 id="stat-alerta" class="text-3xl font-bold text-red-600">0</h3>
             </div>
@@ -42,12 +43,23 @@
                 <span class="bg-blue-600 text-white w-7 h-7 flex items-center justify-center rounded-full text-xs">+</span>
                 Nuevo Registro de Producto
             </h2>
+            
+            <div id="lectorContainer" class="hidden mb-6 bg-black rounded-2xl overflow-hidden relative">
+                <div id="reader" class="w-full"></div>
+                <button onclick="cerrarCamara()" class="absolute top-2 right-2 bg-red-600 text-white px-4 py-2 rounded-xl text-xs font-black z-10 shadow-lg">
+                    CERRAR CÁMARA X
+                </button>
+            </div>
+
             <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
-                <input type="text" id="codigoProducto" placeholder="Código de Barras" class="border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono text-sm">
+                <div class="relative md:col-span-1">
+                    <input type="text" id="codigoProducto" placeholder="Código" class="w-full border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-mono text-sm pr-10">
+                    <button onclick="encenderCamara('codigoProducto')" class="absolute right-2 top-2 text-xl hover:scale-110 transition-transform">📷</button>
+                </div>
                 
-                <input type="text" id="nombreProducto" placeholder="Nombre" class="border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                <input type="text" id="nombreProducto" placeholder="Nombre del producto" class="md:col-span-2 border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
                 
-                <select id="categoriaProducto" class="border p-3 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all text-gray-600 font-medium">
+                <select id="categoriaProducto" class="border p-3 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none text-gray-600 font-medium">
                     <option value="Abarrotes">Abarrotes</option>
                     <option value="Bebidas">Bebidas</option>
                     <option value="Lácteos">Lácteos</option>
@@ -56,19 +68,25 @@
                     <option value="Otros">Otros</option>
                 </select>
 
-                <input type="number" id="cantidadProducto" placeholder="Stock" class="border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all">
-                <input type="number" id="precioCosto" placeholder="Costo $" step="0.01" class="border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all">
-                <input type="number" id="precioProducto" placeholder="Venta $" step="0.01" class="border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                <input type="number" id="cantidadProducto" placeholder="Stock" class="border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
                 
-                <button id="btnAgregar" class="bg-blue-600 text-white p-3 rounded-xl font-bold hover:bg-blue-700 transition-all md:col-span-6 shadow-lg shadow-blue-100">
+                <div class="grid grid-cols-2 gap-2 md:col-span-1">
+                    <input type="number" id="precioCosto" placeholder="Costo" step="0.01" class="border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
+                    <input type="number" id="precioProducto" placeholder="Venta" step="0.01" class="border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                
+                <button id="btnAgregar" class="bg-blue-600 text-white p-3 rounded-xl font-bold hover:bg-blue-700 transition-all md:col-span-6 shadow-lg shadow-blue-100 uppercase text-xs tracking-widest">
                     Guardar Producto en Base de Datos
                 </button>
             </div>
         </div>
 
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-            <div class="mb-6">
-                <input type="text" id="buscador" placeholder="🔍 Buscar por nombre o categoría..." class="w-full border-2 border-gray-100 p-4 rounded-2xl focus:border-blue-500 outline-none transition-all font-medium">
+            <div class="mb-6 flex gap-2">
+                <div class="relative flex-1">
+                    <input type="text" id="buscador" placeholder="🔍 Buscar por nombre, categoría o escanea código..." class="w-full border-2 border-gray-100 p-4 rounded-2xl focus:border-blue-500 outline-none transition-all font-medium pr-14">
+                    <button onclick="encenderCamara('buscador')" class="absolute right-4 top-4 text-2xl hover:scale-110 transition-all">📷</button>
+                </div>
             </div>
 
             <div class="overflow-x-auto">
@@ -81,8 +99,8 @@
                             <th class="py-4 px-4 text-center">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody id="listaProductos" class="text-gray-700 divide-y divide-gray-50">
-                    </tbody>
+                    <tbody id="listaProductos" class="text-gray-700 divide-y divide-gray-50 text-sm font-medium">
+                        </tbody>
                 </table>
             </div>
         </div>
@@ -96,16 +114,16 @@
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="md:col-span-2">
-                    <label class="text-xs font-bold text-gray-400 uppercase">Código de Barras</label>
-                    <input type="text" id="editCodigo" class="w-full border p-3 rounded-xl mt-1 font-mono">
+                    <label class="text-[10px] font-black text-gray-400 uppercase">Código de Barras</label>
+                    <input type="text" id="editCodigo" class="w-full border p-3 rounded-xl mt-1 font-mono bg-gray-50">
                 </div>
                 <div class="md:col-span-2">
-                    <label class="text-xs font-bold text-gray-400 uppercase">Nombre</label>
+                    <label class="text-[10px] font-black text-gray-400 uppercase">Nombre del Producto</label>
                     <input type="text" id="editNombre" class="w-full border p-3 rounded-xl mt-1">
                 </div>
                 <div>
-                    <label class="text-xs font-bold text-gray-400 uppercase">Categoría</label>
-                    <select id="editCategoria" class="w-full border p-3 rounded-xl mt-1">
+                    <label class="text-[10px] font-black text-gray-400 uppercase">Categoría</label>
+                    <select id="editCategoria" class="w-full border p-3 rounded-xl mt-1 bg-white">
                         <option value="Abarrotes">Abarrotes</option>
                         <option value="Bebidas">Bebidas</option>
                         <option value="Lácteos">Lácteos</option>
@@ -115,27 +133,78 @@
                     </select>
                 </div>
                 <div>
-                    <label class="text-xs font-bold text-gray-400 uppercase">Stock</label>
+                    <label class="text-[10px] font-black text-gray-400 uppercase">Stock Actual</label>
                     <input type="number" id="editCantidad" class="w-full border p-3 rounded-xl mt-1">
                 </div>
                 <div>
-                    <label class="text-xs font-bold text-gray-400 uppercase">Costo ($)</label>
+                    <label class="text-[10px] font-black text-gray-400 uppercase">Costo Inversión ($)</label>
                     <input type="number" id="editPrecioCosto" step="0.01" class="w-full border p-3 rounded-xl mt-1 text-red-500 font-bold">
                 </div>
                 <div>
-                    <label class="text-xs font-bold text-gray-400 uppercase">Venta ($)</label>
+                    <label class="text-[10px] font-black text-gray-400 uppercase">Precio Público ($)</label>
                     <input type="number" id="editPrecio" step="0.01" class="w-full border p-3 rounded-xl mt-1 text-green-600 font-bold">
                 </div>
             </div>
             
             <div class="flex justify-end gap-3 mt-8">
-                <button onclick="cerrarModal()" class="px-6 py-3 text-gray-400 font-bold hover:text-gray-600">Cancelar</button>
-                <button id="btnGuardarCambios" class="px-8 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-100">Aplicar Cambios</button>
+                <button onclick="cerrarModal()" class="px-6 py-3 text-gray-400 font-bold hover:text-gray-600 uppercase text-xs">Cancelar</button>
+                <button id="btnGuardarCambios" class="px-8 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 uppercase text-xs tracking-widest">
+                    Aplicar Cambios
+                </button>
             </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="inventario.js"></script>
+    
+    <script>
+        let html5QrCode;
+
+        // Función universal para encender cámara y mandar el resultado a un input específico
+        async function encenderCamara(targetInputId) {
+            const container = document.getElementById('lectorContainer');
+            container.classList.remove('hidden');
+
+            html5QrCode = new Html5Qrcode("reader");
+            const config = { fps: 10, qrbox: { width: 250, height: 150 } };
+
+            try {
+                await html5QrCode.start(
+                    { facingMode: "environment" }, 
+                    config, 
+                    (decodedText) => {
+                        // Enviamos el código al input (buscador o registro)
+                        const input = document.getElementById(targetInputId);
+                        input.value = decodedText;
+                        
+                        // Si es el buscador, disparamos la búsqueda automática
+                        if(targetInputId === 'buscador') {
+                            input.dispatchEvent(new Event('input')); 
+                        }
+
+                        cerrarCamara();
+                        
+                        // Feedback visual
+                        input.classList.add('bg-green-100');
+                        setTimeout(() => input.classList.remove('bg-green-100'), 1000);
+                    }
+                );
+            } catch (err) {
+                alert("Error: Asegúrate de dar permisos de cámara.");
+                container.classList.add('hidden');
+            }
+        }
+
+        function cerrarCamara() {
+            if (html5QrCode) {
+                html5QrCode.stop().then(() => {
+                    document.getElementById('lectorContainer').classList.add('hidden');
+                }).catch(() => {
+                    document.getElementById('lectorContainer').classList.add('hidden');
+                });
+            }
+        }
+    </script>
 </body>
 </html>

@@ -11,6 +11,7 @@ const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 const listaProductos = document.getElementById('listaProductos');
 const userEmailDisplay = document.getElementById('user-email');
 const modalEditar = document.getElementById('modalEditar');
+let html5QrCode; // Variable global para el control de la cámara
 
 // ==========================================
 // SEGURIDAD: VERIFICAR SI EL USUARIO ESTÁ LOGUEADO
@@ -18,10 +19,9 @@ const modalEditar = document.getElementById('modalEditar');
 async function checkAuth() {
     const { data: { user } } = await _supabase.auth.getUser();
     if (user) {
-        userEmailDisplay.textContent = user.email; // Muestra el correo en la cabecera
-        obtenerProductos(user.id);                // Carga la lista de productos
+        userEmailDisplay.textContent = user.email; 
+        obtenerProductos(user.id);                
     } else {
-        // Bloqueo: si no hay sesión iniciada, redirige al inicio
         window.location.href = 'index.html';
     }
 }
@@ -34,11 +34,11 @@ async function obtenerProductos(userId) {
         .from('productos')
         .select('*')
         .eq('user_id', userId)
-        .order('nombre', { ascending: true }); // Orden alfabético
+        .order('nombre', { ascending: true });
 
     if (!error) {
-        renderizarTabla(data);      // Dibuja los productos en la tabla
-        actualizarDashboard(data);  // Calcula los totales y alertas
+        renderizarTabla(data);      
+        actualizarDashboard(data);  
     }
 }
 
@@ -49,7 +49,7 @@ function renderizarTabla(productos) {
     listaProductos.innerHTML = '';
     productos.forEach(prod => {
         const fila = document.createElement('tr');
-        fila.className = "hover:bg-blue-50 transition-colors group";
+        fila.className = "hover:bg-blue-50 transition-colors group text-sm";
         
         fila.innerHTML = `
             <td class="py-4 px-4">
@@ -67,9 +67,9 @@ function renderizarTabla(productos) {
             </td>
             <td class="py-4 px-4 text-center space-x-2">
                 <button onclick="prepararEdicion(${prod.id}, '${prod.nombre}', ${prod.cantidad}, ${prod.precio}, '${prod.categoria}', ${prod.precio_costo}, '${prod.codigo_barras || ''}')" 
-                    class="bg-gray-100 text-gray-600 px-3 py-1 rounded-md hover:bg-blue-600 hover:text-white transition-all text-xs font-bold">Editar</button>
+                    class="bg-gray-100 text-gray-600 px-3 py-1 rounded-md hover:bg-blue-600 hover:text-white transition-all text-[10px] font-bold uppercase tracking-tighter">Editar</button>
                 <button onclick="eliminarProducto(${prod.id})" 
-                    class="text-red-300 hover:text-red-600 transition-colors text-xs font-bold">Eliminar</button>
+                    class="text-red-300 hover:text-red-600 transition-colors text-[10px] font-bold uppercase">Borrar</button>
             </td>
         `;
         listaProductos.appendChild(fila);
@@ -93,10 +93,9 @@ function actualizarDashboard(productos) {
 
     const gananciaPotencial = valorVentaTotal - inversionTotal;
 
-    // Actualiza las tarjetas superiores con los cálculos
     document.getElementById('stat-valor').innerHTML = `
-        <h3 class="text-3xl font-bold text-blue-600">$${valorVentaTotal.toFixed(2)}</h3>
-        <p class="text-xs text-green-600 font-bold mt-1">Ganancia Esperada: $${gananciaPotencial.toFixed(2)}</p>
+        <h3 class="text-3xl font-bold text-blue-600 tracking-tighter">$${valorVentaTotal.toFixed(2)}</h3>
+        <p class="text-[10px] text-green-600 font-black mt-1 uppercase tracking-widest">Utilidad: $${gananciaPotencial.toFixed(2)}</p>
     `;
     document.getElementById('stat-cantidad').textContent = productos.length;
     document.getElementById('stat-alerta').textContent = stockBajo;
@@ -108,17 +107,15 @@ function actualizarDashboard(productos) {
 document.getElementById('btnAgregar').addEventListener('click', async () => {
     const { data: { user } } = await _supabase.auth.getUser();
     
-    // Captura de valores de los inputs
     const nombre = document.getElementById('nombreProducto').value;
-    const codigo_barras = document.getElementById('codigoProducto').value; // NUEVO CAMPO
+    const codigo_barras = document.getElementById('codigoProducto').value;
     const categoria = document.getElementById('categoriaProducto').value;
     const cantidad = parseInt(document.getElementById('cantidadProducto').value);
     const precio_costo = parseFloat(document.getElementById('precioCosto').value) || 0;
     const precio = parseFloat(document.getElementById('precioProducto').value) || 0;
 
-    if (!nombre || isNaN(cantidad)) return alert("El nombre y el stock son obligatorios");
+    if (!nombre || isNaN(cantidad)) return alert("Error: El nombre y el stock son obligatorios");
 
-    // Inserción en Supabase incluyendo la nueva columna
     const { error } = await _supabase.from('productos').insert([{ 
         nombre, 
         codigo_barras, 
@@ -142,7 +139,7 @@ window.prepararEdicion = (id, nombre, cantidad, precio, categoria, costo, codigo
     document.getElementById('editPrecio').value = precio;
     document.getElementById('editCategoria').value = categoria || 'Otros';
     document.getElementById('editPrecioCosto').value = costo || 0;
-    document.getElementById('editCodigo').value = codigo || ''; // CARGA EL CÓDIGO EN EL MODAL
+    document.getElementById('editCodigo').value = codigo || ''; 
     modalEditar.classList.remove('hidden');
 };
 
@@ -154,10 +151,9 @@ window.cerrarModal = () => modalEditar.classList.add('hidden');
 document.getElementById('btnGuardarCambios').addEventListener('click', async () => {
     const id = document.getElementById('editId').value;
     
-    // Objeto con los datos actualizados
     const updates = {
         nombre: document.getElementById('editNombre').value,
-        codigo_barras: document.getElementById('editCodigo').value, // ACTUALIZA EL CÓDIGO
+        codigo_barras: document.getElementById('editCodigo').value,
         categoria: document.getElementById('editCategoria').value,
         cantidad: parseInt(document.getElementById('editCantidad').value),
         precio_costo: parseFloat(document.getElementById('editPrecioCosto').value),
@@ -172,7 +168,7 @@ document.getElementById('btnGuardarCambios').addEventListener('click', async () 
 // CRUD: ELIMINAR PRODUCTO
 // ==========================================
 window.eliminarProducto = async (id) => {
-    if(!confirm("¿Eliminar este producto permanentemente?")) return;
+    if(!confirm("¿Eliminar este producto permanentemente del inventario?")) return;
     const { error } = await _supabase.from('productos').delete().eq('id', id);
     if (!error) location.reload();
 };
@@ -185,10 +181,60 @@ document.getElementById('buscador').addEventListener('input', (e) => {
     const filas = listaProductos.getElementsByTagName('tr');
     
     Array.from(filas).forEach(fila => {
-        // Muestra u oculta filas basándose en si coinciden con el texto buscado
+        // Mejoramos el filtro para buscar en nombre, categoría y código de barras
         fila.style.display = fila.innerText.toLowerCase().includes(filtro) ? "" : "none";
     });
 });
+
+// ==========================================
+// LÓGICA DEL LECTOR DE CÁMARA (NUEVO)
+// ==========================================
+
+// Función para encender la cámara y dirigir el resultado a un input
+async function encenderCamara(targetInputId) {
+    const container = document.getElementById('lectorContainer');
+    container.classList.remove('hidden');
+
+    html5QrCode = new Html5Qrcode("reader");
+    const config = { fps: 10, qrbox: { width: 250, height: 150 } };
+
+    try {
+        await html5QrCode.start(
+            { facingMode: "environment" }, 
+            config, 
+            (decodedText) => {
+                const input = document.getElementById(targetInputId);
+                input.value = decodedText;
+                
+                // Si escaneamos en el buscador, disparamos el evento de filtrado
+                if(targetInputId === 'buscador') {
+                    input.dispatchEvent(new Event('input'));
+                }
+
+                cerrarCamara();
+                
+                // Efecto visual de lectura exitosa
+                input.classList.add('bg-green-100');
+                setTimeout(() => input.classList.remove('bg-green-100'), 800);
+            }
+        );
+    } catch (err) {
+        alert("Error de cámara: Asegúrate de otorgar los permisos necesarios.");
+        container.classList.add('hidden');
+    }
+}
+
+// Función para detener y ocultar la cámara
+function cerrarCamara() {
+    if (html5QrCode && html5QrCode.isScanning) {
+        html5QrCode.stop().then(() => {
+            document.getElementById('lectorContainer').classList.add('hidden');
+            html5QrCode.clear();
+        });
+    } else {
+        document.getElementById('lectorContainer').classList.add('hidden');
+    }
+}
 
 // ==========================================
 // INICIALIZACIÓN
