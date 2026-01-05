@@ -282,5 +282,15 @@ function procesarEscaneo(codigo) {
     }
 }
 
+// ==========================================
+// FUNCIÓN PARA QUITAR TODO EL ITEM DEL CARRITO
+// ==========================================
+window.quitarDelCarrito = (index) => {
+    // Eliminamos el producto del array usando su posición
+    carrito.splice(index, 1);
+    // Volvemos a dibujar el carrito actualizado
+    renderizarCarrito();
+};
+
 // Inicia el proceso de autenticación al cargar el archivo
 inicializar();
