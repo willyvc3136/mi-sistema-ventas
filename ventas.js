@@ -191,26 +191,48 @@ document.getElementById('btnFinalizarVenta').addEventListener('click', finalizar
 async function finalizarVenta() {
     if (carrito.length === 0) return alert("El carrito está vacío");
     
+    const esFiado = document.getElementById('esFiado').checked;
+    const clienteId = document.getElementById('selectCliente').value;
+
+    if (esFiado && !clienteId) {
+        return alert("⚠️ Debes seleccionar a un cliente para registrar el fiado.");
+    }
+
     try {
         const { data: { user } } = await _supabase.auth.getUser();
         const totalVenta = parseFloat(document.getElementById('totalVenta').textContent.replace('$', ''));
 
-        // === PASO A: REGISTRAR LA VENTA (Haz esto primero) ===
-        const { data, error: errorVenta } = await _supabase
+        // 1. REGISTRAR LA VENTA
+        const { data: ventaRealizada, error: errorVenta } = await _supabase
             .from('ventas')
             .insert([{
                 total: totalVenta,
-                metodo_pago: metodoSeleccionado, // Asegúrate que esta variable tenga 'Yape', 'Plin' o 'Efectivo'
+                metodo_pago: esFiado ? 'Fiado' : metodoSeleccionado,
+                estado_pago: esFiado ? 'pendiente' : 'pagado',
+                cliente_id: esFiado ? clienteId : null,
                 vendedor_id: user.id,
                 productos_vendidos: carrito 
-            }]);
+            }]).select();
 
-        if (errorVenta) {
-            console.error("Error al insertar venta:", errorVenta);
-            throw errorVenta;
+        if (errorVenta) throw errorVenta;
+
+        // 2. SI ES FIADO: ACTUALIZAR LA DEUDA DEL CLIENTE
+        if (esFiado) {
+            const { data: cliente } = await _supabase
+                .from('clientes')
+                .select('deuda')
+                .eq('id', clienteId)
+                .single();
+
+            const nuevaDeuda = (cliente.deuda || 0) + totalVenta;
+
+            await _supabase
+                .from('clientes')
+                .update({ deuda: nuevaDeuda })
+                .eq('id', clienteId);
         }
 
-        // === PASO B: ACTUALIZAR EL STOCK ===
+        // 3. ACTUALIZAR EL STOCK
         for (const item of carrito) {
             const nuevoStock = item.cantidad - item.cantidadSeleccionada;
             await _supabase
@@ -219,7 +241,7 @@ async function finalizarVenta() {
                 .eq('id', item.id);
         }
 
-        alert("🎯 ¡Venta Registrada!");
+        alert(esFiado ? "📝 Venta registrada como FIADO" : "🎯 ¡Venta Exitosa!");
         location.reload(); 
 
     } catch (error) {
@@ -358,5 +380,44 @@ window.seleccionarMetodo = (metodo) => {
     const panelVuelto = document.getElementById('pagaCon').closest('.bg-blue-50');
     panelVuelto.style.display = (metodo === 'Efectivo') ? 'block' : 'none';
 };
+
+// ==========================================
+// LÓGICA DE CLIENTES (FIADOS)
+// ==========================================
+window.toggleSelectorCliente = function() {
+    const contenedor = document.getElementById('contenedorCliente');
+    const esFiado = document.getElementById('esFiado').checked;
+    
+    if (esFiado) {
+        contenedor.classList.remove('hidden');
+        cargarClientesVentas(); 
+    } else {
+        contenedor.classList.add('hidden');
+    }
+};
+
+async function cargarClientesVentas() {
+    const select = document.getElementById('selectCliente');
+    const { data: { user } } = await _supabase.auth.getUser();
+    
+    const { data, error } = await _supabase
+        .from('clientes')
+        .select('id, nombre')
+        .eq('user_id', user.id);
+
+    if (!error) {
+        select.innerHTML = '<option value="">-- ¿Quién debe? Selecciona --</option>';
+        data.forEach(cliente => {
+            const opt = document.createElement('option');
+            opt.value = cliente.id;
+            opt.textContent = cliente.nombre;
+            select.appendChild(opt);
+        });
+    }
+}
+
+// Limpiar campos de pago al actualizar carrito
+    if(document.getElementById('pagaCon')) document.getElementById('pagaCon').value = ''; 
+    if(document.getElementById('vuelto')) document.getElementById('vuelto').textContent = '$0.00';
 
 inicializar();

@@ -114,6 +114,20 @@
                     </div>
                 </div>
 
+                <div class="bg-indigo-50 p-4 rounded-2xl mb-4 border border-indigo-100">
+                    <div class="flex items-center gap-3 mb-3">
+                        <input type="checkbox" id="esFiado" onchange="toggleSelectorCliente()" class="w-5 h-5 accent-indigo-600 cursor-pointer">
+                        <label for="esFiado" class="font-bold text-indigo-800 text-sm cursor-pointer">¿Es una venta fiada (crédito)?</label>
+                    </div>
+
+                    <div id="contenedorCliente" class="hidden animate-pulse">
+                        <select id="selectCliente" class="w-full p-3 rounded-xl border-2 border-indigo-200 outline-none focus:border-indigo-500 text-sm font-bold text-indigo-900 bg-white">
+                            <option value="">Cargando clientes...</option>
+                        </select>
+                        <p class="text-[10px] text-indigo-400 mt-2 uppercase font-black tracking-widest">⚠️ El total se sumará a la deuda del cliente</p>
+                    </div>
+                </div>
+
                 <button id="btnFinalizarVenta" disabled 
                     class="w-full mt-8 bg-green-500 text-white font-black py-5 rounded-2xl shadow-lg shadow-green-100 hover:bg-green-600 disabled:bg-gray-200 disabled:shadow-none transition-all flex justify-center items-center gap-2 uppercase tracking-widest text-sm">
                     Finalizar Venta (F2)
