@@ -105,7 +105,7 @@ window.agregarAlCarrito = (id) => {
 };
 
 // ==========================================
-// RENDERIZAR TICKET (RESUMEN DE VENTA)
+// RENDERIZAR TICKET (AHORA CON BOTONES +/-)
 // ==========================================
 function renderizarCarrito() {
     const contenedor = document.getElementById('carritoItems');
@@ -125,22 +125,29 @@ function renderizarCarrito() {
         return;
     }
 
-    // Crea visualmente cada item en el ticket
     carrito.forEach((item, index) => {
         const subtotal = item.precio * item.cantidadSeleccionada;
         total += subtotal;
         totalItems += item.cantidadSeleccionada;
         
         const div = document.createElement('div');
-        div.className = "flex justify-between items-center bg-gray-50 p-4 rounded-2xl border border-gray-100 shadow-sm";
+        div.className = "flex flex-col bg-gray-50 p-4 rounded-2xl border border-gray-100 shadow-sm gap-2";
         div.innerHTML = `
-            <div class="flex-1">
-                <p class="font-black text-gray-800 text-sm leading-tight">${item.nombre}</p>
-                <p class="text-xs text-gray-400 font-bold">$${item.precio.toFixed(2)} x ${item.cantidadSeleccionada}</p>
+            <div class="flex justify-between items-start">
+                <div class="flex-1">
+                    <p class="font-black text-gray-800 text-sm leading-tight">${item.nombre}</p>
+                    <p class="text-xs text-gray-400 font-bold">$${item.precio.toFixed(2)} c/u</p>
+                </div>
+                <button onclick="quitarDelCarrito(${index})" class="text-red-300 hover:text-red-500 transition-all font-bold text-lg">✕</button>
             </div>
-            <div class="flex items-center gap-4">
-                <span class="font-black text-green-600">$${subtotal.toFixed(2)}</span>
-                <button onclick="quitarDelCarrito(${index})" class="bg-white text-red-400 w-8 h-8 rounded-full shadow-sm hover:text-red-600 transition-all flex items-center justify-center font-bold">✕</button>
+            
+            <div class="flex justify-between items-center mt-2">
+                <div class="flex items-center gap-2 bg-white rounded-xl border p-1">
+                    <button onclick="ajustarCantidad(${index}, -1)" class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-lg hover:bg-red-100 hover:text-red-600 transition-all font-bold">-</button>
+                    <span class="w-8 text-center font-black text-sm">${item.cantidadSeleccionada}</span>
+                    <button onclick="ajustarCantidad(${index}, 1)" class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-lg hover:bg-green-100 hover:text-green-600 transition-all font-bold">+</button>
+                </div>
+                <span class="font-black text-green-600 text-lg">$${subtotal.toFixed(2)}</span>
             </div>
         `;
         contenedor.appendChild(div);
@@ -151,9 +158,28 @@ function renderizarCarrito() {
     btnVenta.disabled = false;
 }
 
-// Quita un producto del ticket
-window.quitarDelCarrito = (index) => {
-    carrito.splice(index, 1);
+// ==========================================
+// FUNCIÓN PARA SUMAR O RESTAR DESDE EL TICKET
+// ==========================================
+window.ajustarCantidad = (index, cambio) => {
+    const item = carrito[index];
+    const productoOriginal = productosBaseDeDatos.find(p => p.id === item.id);
+
+    const nuevaCantidad = item.cantidadSeleccionada + cambio;
+
+    // Validar que no baje de 1
+    if (nuevaCantidad < 1) {
+        if(confirm("¿Quitar producto del carrito?")) quitarDelCarrito(index);
+        return;
+    }
+
+    // Validar que no supere el stock disponible
+    if (nuevaCantidad > productoOriginal.cantidad) {
+        alert("⚠️ No hay más stock disponible (" + productoOriginal.cantidad + " máx)");
+        return;
+    }
+
+    item.cantidadSeleccionada = nuevaCantidad;
     renderizarCarrito();
 };
 
