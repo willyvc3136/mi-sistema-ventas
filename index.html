@@ -14,17 +14,37 @@
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-6 font-sans">
 
     <div id="authSection" class="max-w-md w-full bg-white p-8 rounded-2xl shadow-xl border-t-8 border-blue-600 hidden fade-in">
-        <h2 class="text-2xl font-black mb-6 text-center text-gray-800 tracking-tighter">INICIAR SISTEMA</h2>
+        <h2 class="text-2xl font-black mb-6 text-center text-gray-800 tracking-tighter uppercase">Iniciar Sistema</h2>
+        
         <div class="space-y-4">
             <input type="email" id="authEmail" placeholder="Correo electrónico" 
                 class="w-full border p-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 border-gray-200 font-medium">
+            
             <input type="password" id="authPassword" placeholder="Contraseña" 
                 class="w-full border p-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 border-gray-200 font-medium">
-            <button id="btnLogin" class="bg-blue-600 text-white px-4 py-3 rounded-xl w-full font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-200 active:scale-95">
+            
+            <button id="btnLogin" class="bg-blue-600 text-white px-4 py-3 rounded-xl w-full font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-200 active:scale-95 uppercase text-xs tracking-widest">
                 Entrar al Panel
             </button>
         </div>
-        <p class="text-center text-gray-400 text-[10px] mt-6 uppercase tracking-[0.2em] font-bold">Personal Autorizado Only</p>
+
+        <div class="mt-6 border-t pt-4">
+            <div id="boxGoRegister" class="text-center">
+                <p class="text-gray-400 text-[10px] mb-2 uppercase font-bold">¿Eres nuevo?</p>
+                <button id="btnSwitchToRegister" class="text-blue-600 text-xs font-black hover:underline uppercase">
+                    Crear una cuenta propia
+                </button>
+            </div>
+
+            <div id="boxGoLogin" class="text-center hidden">
+                <p class="text-gray-400 text-[10px] mb-2 uppercase font-bold">¿Ya tienes cuenta?</p>
+                <button id="btnSwitchToLogin" class="text-gray-600 text-xs font-black hover:underline uppercase">
+                    Volver al ingreso
+                </button>
+            </div>
+        </div>
+
+        <p class="text-center text-gray-400 text-[9px] mt-6 uppercase tracking-[0.2em] font-bold">Acceso Seguro Multi-Cliente</p>
     </div>
 
     <div id="mainApp" class="hidden w-full max-w-5xl fade-in">
@@ -69,52 +89,92 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        const supabaseUrl = 'https://ijyhkbiukiqiqjabpubm.supabase.co';
-        const supabaseKey = 'sb_publishable_EpJx4G5egW9GZdj8P7oudw_kDWWsj6p';
-        const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+<script>
+    const supabaseUrl = 'https://ijyhkbiukiqiqjabpubm.supabase.co';
+    const supabaseKey = 'sb_publishable_EpJx4G5egW9GZdj8P7oudw_kDWWsj6p';
+    const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-        // Función que revisa si hay alguien logueado para mostrar/ocultar secciones
-        async function checkUser() {
-            const { data: { user } } = await _supabase.auth.getUser();
-            
-            if (user) {
-                // Si hay usuario: Ocultamos login y mostramos panel
-                document.getElementById('authSection').classList.add('hidden');
-                document.getElementById('mainApp').classList.remove('hidden');
-            } else {
-                // Si no hay usuario: Mostramos login y ocultamos panel
-                document.getElementById('authSection').classList.remove('hidden');
-                document.getElementById('mainApp').classList.add('hidden');
-            }
+    // --- FUNCIONES DE INTERFAZ ---
+
+    async function checkUser() {
+        const { data: { user } } = await _supabase.auth.getUser();
+        
+        if (user) {
+            document.getElementById('authSection').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+        } else {
+            document.getElementById('authSection').classList.remove('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
         }
+    }
 
-        // Evento para el botón de Iniciar Sesión
-        document.getElementById('btnLogin').addEventListener('click', async () => {
-            const email = document.getElementById('authEmail').value;
-            const password = document.getElementById('authPassword').value;
-            
-            if(!email || !password) return alert("Por favor, ingresa tus credenciales completas");
-            
+    // Cambiar visualmente a modo REGISTRO
+    document.getElementById('btnSwitchToRegister').addEventListener('click', () => {
+        document.getElementById('authSection').querySelector('h2').textContent = "CREAR CUENTA";
+        document.getElementById('btnLogin').textContent = "Registrar Mi Tienda";
+        document.getElementById('boxGoRegister').classList.add('hidden');
+        document.getElementById('boxGoLogin').classList.remove('hidden');
+        document.getElementById('authSection').classList.replace('border-blue-600', 'border-purple-600');
+    });
+
+    // Cambiar visualmente a modo LOGIN
+    document.getElementById('btnSwitchToLogin').addEventListener('click', () => {
+        document.getElementById('authSection').querySelector('h2').textContent = "INICIAR SISTEMA";
+        document.getElementById('btnLogin').textContent = "Entrar al Panel";
+        document.getElementById('boxGoRegister').classList.remove('hidden');
+        document.getElementById('boxGoLogin').classList.add('hidden');
+        document.getElementById('authSection').classList.replace('border-purple-600', 'border-blue-600');
+    });
+
+    // --- LÓGICA DE BOTONES ---
+
+    document.getElementById('btnLogin').addEventListener('click', async () => {
+        const email = document.getElementById('authEmail').value;
+        const password = document.getElementById('authPassword').value;
+        
+        // Verificamos en qué modo está el botón según su texto
+        const esRegistro = document.getElementById('btnLogin').textContent.includes("Registrar");
+
+        if(!email || !password) return alert("Por favor, ingresa correo y contraseña");
+
+        if (esRegistro) {
+            // ACCIÓN: REGISTRAR NUEVO USUARIO
+            const { data, error } = await _supabase.auth.signUp({ 
+                email, 
+                password,
+                options: {
+                    // Esto ayuda a que el usuario se loguee automáticamente tras registrarse
+                    emailRedirectTo: window.location.origin 
+                }
+            });
+
+            if (error) {
+                alert("Error al registrar: " + error.message);
+            } else {
+                alert("¡Cuenta creada con éxito! Ahora puedes entrar.");
+                // Forzamos vuelta al login para que el usuario entre formalmente
+                location.reload(); 
+            }
+        } else {
+            // ACCIÓN: INICIAR SESIÓN (Ya existente)
             const { error } = await _supabase.auth.signInWithPassword({ email, password });
             if (error) {
                 alert("Acceso denegado: " + error.message);
             } else {
-                checkUser(); // Refrescar vista tras login exitoso
+                checkUser();
             }
-        });
+        }
+    });
 
-        // Evento para el botón de Cerrar Sesión
-        document.getElementById('btn-logout').addEventListener('click', async () => {
-            const confirmOut = confirm("¿Estás seguro de que quieres salir del sistema?");
-            if(confirmOut) {
-                await _supabase.auth.signOut();
-                window.location.reload(); // Recarga la página para limpiar todo
-            }
-        });
+    document.getElementById('btn-logout').addEventListener('click', async () => {
+        const confirmOut = confirm("¿Estás seguro de que quieres salir del sistema?");
+        if(confirmOut) {
+            await _supabase.auth.signOut();
+            window.location.reload();
+        }
+    });
 
-        // Ejecutar al cargar la página para ver el estado inicial
-        checkUser();
-    </script>
+    checkUser();
+</script>
 </body>
 </html>
