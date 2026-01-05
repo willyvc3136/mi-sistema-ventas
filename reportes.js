@@ -27,27 +27,54 @@ async function inicializarReportes() {
 // ==========================================
 // CARGA DE DATOS
 // ==========================================
-async function cargarReporte(userId) {
-    try {
-        // Consultamos ventas y traemos el nombre del cliente (relación Foreign Key)
-        const { data: ventas, error: errorVentas } = await _supabase
-            .from('ventas')
-            .select(`
-                *,
-                clientes ( nombre )
-            `)
-            .eq('vendedor_id', userId)
-            .order('created_at', { ascending: false });
+// En tu archivo reportes.js
 
-        if (errorVentas) throw errorVentas;
+async function cargarDatosReporte() {
+    // 1. Obtener las ventas del día (como ya lo haces)
+    const { data: ventas, error: errorVentas } = await _supabase
+        .from('ventas')
+        .select('*')
+        // ... aquí va tu filtro de fecha actual ...
 
-        procesarEstadisticas(ventas);
-        renderizarTabla(ventas);
+    // 2. NUEVO: Obtener la deuda total real de la tabla clientes
+    const { data: clientes, error: errorClientes } = await _supabase
+        .from('clientes')
+        .select('deuda');
 
-    } catch (error) {
-        console.error("Error en cargarReporte:", error.message);
-        // Si sale error aquí, verifica si en Supabase la columna es 'vendedor_id' o 'user_id'
+    if (errorVentas || errorClientes) {
+        console.error("Error cargando datos");
+        return;
     }
+
+    // 3. Procesar las estadísticas
+    procesarEstadisticas(ventas, clientes);
+}
+
+function procesarEstadisticas(ventas, clientes) {
+    let efectivo = 0, yape = 0, plin = 0;
+
+    // Calculamos el dinero real que entró hoy
+    ventas.forEach(v => {
+        const monto = Number(v.total || 0);
+        if (v.metodo_pago === 'Efectivo') efectivo += monto;
+        else if (v.metodo_pago === 'Yape') yape += monto;
+        else if (v.metodo_pago === 'Plin') plin += monto;
+    });
+
+    // CALCULAMOS LA DEUDA REAL (Sumando la columna deuda de cada cliente)
+    const totalDeudaReal = clientes.reduce((acc, c) => acc + (Number(c.deuda) || 0), 0);
+
+    // Actualizamos los elementos del HTML
+    document.getElementById('totalEfectivo').textContent = `$${efectivo.toFixed(2)}`;
+    document.getElementById('totalYape').textContent = `$${yape.toFixed(2)}`;
+    document.getElementById('totalPlin').textContent = `$${plin.toFixed(2)}`;
+    document.getElementById('granTotal').textContent = `$${(efectivo + yape + plin).toFixed(2)}`;
+    
+    // Aquí actualizamos la tarjeta azul con el dato de la tabla CLIENTES
+    document.getElementById('totalPorCobrar').textContent = `$${totalDeudaReal.toFixed(2)}`;
+
+    // Actualizamos la gráfica con los nuevos datos
+    actualizarGrafica(efectivo + yape + plin, totalDeudaReal);
 }
 
 // ==========================================
