@@ -292,5 +292,31 @@ window.quitarDelCarrito = (index) => {
     renderizarCarrito();
 };
 
+// ==========================================
+// LÓGICA PARA CALCULAR EL VUELTO
+// ==========================================
+document.getElementById('pagaCon').addEventListener('input', (e) => {
+    const totalTexto = document.getElementById('totalVenta').textContent;
+    // Quitamos el símbolo '$' y convertimos a número
+    const total = parseFloat(totalTexto.replace('$', '')) || 0;
+    const pagaCon = parseFloat(e.target.value) || 0;
+    const vueltoElem = document.getElementById('vuelto');
+
+    if (pagaCon > total) {
+        const cambio = pagaCon - total;
+        vueltoElem.textContent = `$${cambio.toFixed(2)}`;
+        vueltoElem.classList.replace('text-blue-600', 'text-green-600');
+    } else {
+        vueltoElem.textContent = "$0.00";
+        vueltoElem.classList.replace('text-green-600', 'text-blue-600');
+    }
+});
+
+// Limpiar el campo de vuelto cuando se renderiza el carrito
+// (Añade esta línea dentro de tu función renderizarCarrito actual)
+// document.getElementById('pagaCon').value = ''; 
+// document.getElementById('vuelto').textContent = '$0.00';
+
+
 // Inicia el proceso de autenticación al cargar el archivo
 inicializar();

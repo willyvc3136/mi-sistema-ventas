@@ -81,6 +81,21 @@
                     </div>
                 </div>
 
+                <div class="mt-6 p-4 bg-blue-50 rounded-2xl border border-blue-100 space-y-3">
+                    <div class="flex justify-between items-center">
+                        <label class="text-[10px] font-black text-blue-400 uppercase">Paga con:</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-2 text-gray-400 font-bold">$</span>
+                            <input type="number" id="pagaCon" placeholder="0.00" 
+                                class="w-24 p-2 pl-6 border-2 border-white rounded-lg focus:border-blue-500 outline-none font-bold text-right text-sm">
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center border-t border-blue-100 pt-2">
+                        <span class="text-[10px] font-black text-blue-400 uppercase">Vuelto:</span>
+                        <span id="vuelto" class="text-xl font-black text-blue-600">$0.00</span>
+                    </div>
+                </div>
+
                 <button id="btnFinalizarVenta" disabled 
                     class="w-full mt-8 bg-green-500 text-white font-black py-5 rounded-2xl shadow-lg shadow-green-100 hover:bg-green-600 disabled:bg-gray-200 disabled:shadow-none transition-all flex justify-center items-center gap-2 uppercase tracking-widest text-sm">
                     Finalizar Venta (F2)
