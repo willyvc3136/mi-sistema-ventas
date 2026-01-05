@@ -189,26 +189,41 @@ window.ajustarCantidad = (index, cambio) => {
 document.getElementById('btnFinalizarVenta').addEventListener('click', finalizarVenta);
 
 async function finalizarVenta() {
-    if (!confirm("¿Confirmar cobro y actualizar inventario?")) return;
-
+    if (carrito.length === 0) return alert("El carrito está vacío");
+    
     try {
-        // Descuenta el stock de cada producto vendido en Supabase
+        const { data: { user } } = await _supabase.auth.getUser();
+        const totalVenta = parseFloat(document.getElementById('totalVenta').textContent.replace('$', ''));
+
+        // === PASO A: REGISTRAR LA VENTA (Haz esto primero) ===
+        const { data, error: errorVenta } = await _supabase
+            .from('ventas')
+            .insert([{
+                total: totalVenta,
+                metodo_pago: metodoSeleccionado, // Asegúrate que esta variable tenga 'Yape', 'Plin' o 'Efectivo'
+                vendedor_id: user.id,
+                productos_vendidos: carrito 
+            }]);
+
+        if (errorVenta) {
+            console.error("Error al insertar venta:", errorVenta);
+            throw errorVenta;
+        }
+
+        // === PASO B: ACTUALIZAR EL STOCK ===
         for (const item of carrito) {
             const nuevoStock = item.cantidad - item.cantidadSeleccionada;
-            
-            const { error } = await _supabase
+            await _supabase
                 .from('productos')
                 .update({ cantidad: nuevoStock })
                 .eq('id', item.id);
-            
-            if (error) throw error;
         }
 
-        alert("🎯 Venta realizada con éxito");
-        carrito = []; // Limpia el carrito
-        location.reload(); // Recarga para actualizar el stock local
+        alert("🎯 ¡Venta Registrada!");
+        location.reload(); 
+
     } catch (error) {
-        alert("Error al descontar stock: " + error.message);
+        alert("Hubo un error: " + error.message);
     }
 }
 
