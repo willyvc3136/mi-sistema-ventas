@@ -51,28 +51,44 @@ async function cargarReporte(userId) {
 }
 
 // ==========================================
-// CÁLCULOS (IDs sincronizados con tu HTML)
+// CÁLCULOS CORREGIDOS (DINERO REAL)
 // ==========================================
 function procesarEstadisticas(ventas) {
     let efectivo = 0;
     let yape = 0;
     let plin = 0;
-    let granTotal = 0;
+    let porCobrar = 0; // Para rastrear cuánto dinero hay en "Fiados"
 
     ventas.forEach(v => {
-        granTotal += v.total || 0;
-        
-        // Clasificamos según el método de pago guardado
-        if (v.metodo_pago === 'Efectivo') efectivo += v.total;
-        else if (v.metodo_pago === 'Yape') yape += v.total;
-        else if (v.metodo_pago === 'Plin') plin += v.total;
+        const monto = Number(v.total || 0);
+
+        // Clasificamos según el método de pago
+        if (v.metodo_pago === 'Efectivo') {
+            efectivo += monto;
+        } else if (v.metodo_pago === 'Yape') {
+            yape += monto;
+        } else if (v.metodo_pago === 'Plin') {
+            plin += monto;
+        } else if (v.metodo_pago === 'Fiado') {
+            porCobrar += monto; // Esto NO suma al dinero real del día
+        }
     });
 
-    // Actualizamos los IDs de las tarjetas de tu HTML
+    // CÁLCULO DEL DINERO REAL (Solo lo que ya pagaron)
+    // Esto evitará que tus reportes marquen $190 cuando solo tienes $133.50 reales
+    const granTotalReal = efectivo + yape + plin;
+
+    // Actualizamos los IDs en tu HTML
     document.getElementById('totalEfectivo').textContent = `$${efectivo.toFixed(2)}`;
     document.getElementById('totalYape').textContent = `$${yape.toFixed(2)}`;
     document.getElementById('totalPlin').textContent = `$${plin.toFixed(2)}`;
-    document.getElementById('granTotal').textContent = `$${granTotal.toFixed(2)}`;
+    document.getElementById('granTotal').textContent = `$${granTotalReal.toFixed(2)}`;
+
+    // OPCIONAL: Si creas un ID llamado 'totalPorCobrar', puedes ver tus fiados ahí
+    const elemPorCobrar = document.getElementById('totalPorCobrar');
+    if (elemPorCobrar) {
+        elemPorCobrar.textContent = `$${porCobrar.toFixed(2)}`;
+    }
 }
 
 // ==========================================
