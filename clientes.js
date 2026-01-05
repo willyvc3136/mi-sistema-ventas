@@ -1,5 +1,5 @@
 const supabaseUrl = 'https://ijyhkbiukiqiqjabpubm.supabase.co';
-const supabaseKey = 'TU_LLAVE_PUBLICA_AQUI'; // USA TU LLAVE REAL
+const supabaseKey = 'sb_publishable_EpJx4G5egW9GZdj8P7oudw_kDWWsj6p'; // USA TU LLAVE REAL
 const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 async function registrarCliente() {
