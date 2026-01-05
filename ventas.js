@@ -200,6 +200,8 @@ async function finalizarVenta() {
 
     try {
         const { data: { user } } = await _supabase.auth.getUser();
+        if (!user) throw new Error("No hay una sesión de usuario activa.");
+
         const totalVenta = parseFloat(document.getElementById('totalVenta').textContent.replace('$', ''));
 
         // 1. REGISTRAR LA VENTA
@@ -216,36 +218,51 @@ async function finalizarVenta() {
 
         if (errorVenta) throw errorVenta;
 
-        // 2. SI ES FIADO: ACTUALIZAR LA DEUDA DEL CLIENTE
+        // 2. SI ES FIADO: ACTUALIZAR LA DEUDA DEL CLIENTE (CORREGIDO)
         if (esFiado) {
-            const { data: cliente } = await _supabase
+            // Obtenemos la deuda actual de forma segura
+            const { data: cliente, error: errorCliente } = await _supabase
                 .from('clientes')
                 .select('deuda')
                 .eq('id', clienteId)
                 .single();
 
-            const nuevaDeuda = (cliente.deuda || 0) + totalVenta;
+            if (errorCliente) {
+                console.error("Error al obtener deuda previa:", errorCliente.message);
+            } else {
+                // Forzamos que ambos sean números antes de sumar
+                const deudaPrevia = Number(cliente.deuda || 0);
+                const nuevaDeuda = deudaPrevia + totalVenta;
 
-            await _supabase
-                .from('clientes')
-                .update({ deuda: nuevaDeuda })
-                .eq('id', clienteId);
+                // Guardamos la nueva deuda
+                const { error: errorUpdate } = await _supabase
+                    .from('clientes')
+                    .update({ deuda: nuevaDeuda })
+                    .eq('id', clienteId);
+
+                if (errorUpdate) {
+                    console.error("Error al actualizar saldo del cliente:", errorUpdate.message);
+                } else {
+                    console.log("✅ Saldo de cliente actualizado: " + nuevaDeuda);
+                }
+            }
         }
 
         // 3. ACTUALIZAR EL STOCK
         for (const item of carrito) {
-            const nuevoStock = item.cantidad - item.cantidadSeleccionada;
+            const nuevoStock = Number(item.cantidad) - Number(item.cantidadSeleccionada);
             await _supabase
                 .from('productos')
                 .update({ cantidad: nuevoStock })
                 .eq('id', item.id);
         }
 
-        alert(esFiado ? "📝 Venta registrada como FIADO" : "🎯 ¡Venta Exitosa!");
+        alert(esFiado ? `📝 Fiado anotado: $${totalVenta.toFixed(2)}` : "🎯 ¡Venta Exitosa!");
         location.reload(); 
 
     } catch (error) {
-        alert("Hubo un error: " + error.message);
+        console.error("Fallo total en la operación:", error);
+        alert("Hubo un error crítico: " + error.message);
     }
 }
 
