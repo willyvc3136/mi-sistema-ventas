@@ -96,6 +96,24 @@
                     </div>
                 </div>
 
+                <div class="mt-4">
+                    <label class="text-[10px] font-black text-gray-400 uppercase block mb-2">Método de Pago:</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="seleccionarMetodo('Efectivo')" id="btnEfectivo" 
+                            class="metodo-pago p-2 rounded-xl border-2 border-green-500 bg-green-50 text-[10px] font-bold text-green-700 transition-all">
+                            💵 EFECTIVO
+                        </button>
+                        <button onclick="seleccionarMetodo('Yape')" id="btnYape" 
+                            class="metodo-pago p-2 rounded-xl border-2 border-gray-100 bg-gray-50 text-[10px] font-bold text-gray-500 transition-all">
+                            🟣 YAPE
+                        </button>
+                        <button onclick="seleccionarMetodo('Plin')" id="btnPlin" 
+                            class="metodo-pago p-2 rounded-xl border-2 border-gray-100 bg-gray-50 text-[10px] font-bold text-gray-500 transition-all">
+                            🔵 PLIN
+                        </button>
+                    </div>
+                </div>
+
                 <button id="btnFinalizarVenta" disabled 
                     class="w-full mt-8 bg-green-500 text-white font-black py-5 rounded-2xl shadow-lg shadow-green-100 hover:bg-green-600 disabled:bg-gray-200 disabled:shadow-none transition-all flex justify-center items-center gap-2 uppercase tracking-widest text-sm">
                     Finalizar Venta (F2)

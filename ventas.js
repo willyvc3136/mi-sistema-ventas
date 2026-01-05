@@ -319,4 +319,29 @@ document.getElementById('pagaCon').addEventListener('input', (e) => {
 
 
 // Inicia el proceso de autenticación al cargar el archivo
+
+// Variable para saber el método actual (Efectivo por defecto)
+let metodoSeleccionado = 'Efectivo';
+
+window.seleccionarMetodo = (metodo) => {
+    metodoSeleccionado = metodo;
+    
+    // Resetear estilos de todos los botones
+    document.querySelectorAll('.metodo-pago').forEach(btn => {
+        btn.classList.remove('border-green-500', 'bg-green-50', 'text-green-700');
+        btn.classList.add('border-gray-100', 'bg-gray-50', 'text-gray-500');
+    });
+
+    // Pintar el botón seleccionado
+    const btnId = `btn${metodo}`;
+    const btn = document.getElementById(btnId);
+    btn.classList.replace('border-gray-100', 'border-green-500');
+    btn.classList.replace('bg-gray-50', 'bg-green-50');
+    btn.classList.replace('text-gray-500', 'text-green-700');
+
+    // Mostrar/Ocultar calculadora de vuelto solo si es Efectivo
+    const panelVuelto = document.getElementById('pagaCon').closest('.bg-blue-50');
+    panelVuelto.style.display = (metodo === 'Efectivo') ? 'block' : 'none';
+};
+
 inicializar();
