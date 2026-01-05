@@ -22,33 +22,33 @@
         <p class="text-center text-gray-400 text-xs mt-6 uppercase tracking-widest">Personal Autorizado Only</p>
     </div>
 
-    <div id="mainApp" class="hidden max-w-4xl w-full text-center">
-        <div class="flex justify-between items-center mb-10 bg-white p-4 rounded-2xl shadow-sm">
-            <h1 class="text-2xl font-extrabold text-gray-800">🏪 Minimarket <span class="text-blue-600">Pro</span></h1>
-            <button id="btn-logout" class="bg-red-50 text-red-600 px-4 py-2 rounded-lg font-bold hover:bg-red-600 hover:text-white transition-all border border-red-100">
-                Cerrar Sesión
-            </button>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <a href="ventas.html" class="group bg-white p-10 rounded-3xl shadow-xl border-b-8 border-green-500 hover:scale-105 transition-all">
-                <div class="text-6xl mb-4 group-hover:bounce">🛒</div>
-                <h2 class="text-2xl font-bold text-gray-700">Punto de Venta</h2>
-                <p class="text-gray-400 text-sm mt-2">Realizar cobros y bajar stock</p>
-                <div class="mt-6 inline-block bg-green-500 text-white px-8 py-3 rounded-xl font-bold group-hover:bg-green-600 shadow-lg shadow-green-100">
-                    Vender Ahora
-                </div>
-            </a>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <a href="ventas.html" class="group bg-white p-10 rounded-3xl shadow-xl border-b-8 border-green-500 hover:scale-105 transition-all">
+            <div class="text-6xl mb-4 group-hover:bounce">🛒</div>
+            <h2 class="text-xl font-bold text-gray-700">Punto de Venta</h2>
+            <p class="text-gray-400 text-sm mt-2">Realizar cobros y bajar stock</p>
+            <div class="mt-6 inline-block bg-green-500 text-white px-6 py-3 rounded-xl font-bold group-hover:bg-green-600 shadow-lg shadow-green-100 uppercase text-xs">
+                Vender Ahora
+            </div>
+        </a>
 
-            <a href="inventario.html" class="group bg-white p-10 rounded-3xl shadow-xl border-b-8 border-blue-500 hover:scale-105 transition-all">
-                <div class="text-6xl mb-4">📦</div>
-                <h2 class="text-2xl font-bold text-gray-700">Inventario</h2>
-                <p class="text-gray-400 text-sm mt-2">Gestionar productos y costos</p>
-                <div class="mt-6 inline-block bg-blue-500 text-white px-8 py-3 rounded-xl font-bold group-hover:bg-blue-600 shadow-lg shadow-blue-100">
-                    Ver Almacén
-                </div>
-            </a>
-        </div>
+        <a href="inventario.html" class="group bg-white p-10 rounded-3xl shadow-xl border-b-8 border-blue-500 hover:scale-105 transition-all">
+            <div class="text-6xl mb-4">📦</div>
+            <h2 class="text-xl font-bold text-gray-700">Inventario</h2>
+            <p class="text-gray-400 text-sm mt-2">Gestionar productos y costos</p>
+            <div class="mt-6 inline-block bg-blue-500 text-white px-6 py-3 rounded-xl font-bold group-hover:bg-blue-600 shadow-lg shadow-blue-100 uppercase text-xs">
+                Ver Almacén
+            </div>
+        </a>
+
+        <a href="reportes.html" class="group bg-white p-10 rounded-3xl shadow-xl border-b-8 border-purple-500 hover:scale-105 transition-all">
+            <div class="text-6xl mb-4">📊</div>
+            <h2 class="text-xl font-bold text-gray-700">Reportes</h2>
+            <p class="text-gray-400 text-sm mt-2">Ventas diarias y ganancias</p>
+            <div class="mt-6 inline-block bg-purple-500 text-white px-6 py-3 rounded-xl font-bold group-hover:bg-purple-600 shadow-lg shadow-purple-100 uppercase text-xs">
+                Ver Balances
+            </div>
+        </a>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
