@@ -5,50 +5,67 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Minimarket Pro - Inicio</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Animación suave para la entrada de los paneles */
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center p-6">
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-6 font-sans">
 
-    <div id="authSection" class="max-w-md w-full bg-white p-8 rounded-2xl shadow-xl border-t-8 border-blue-600">
-        <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Iniciar Sistema</h2>
+    <div id="authSection" class="max-w-md w-full bg-white p-8 rounded-2xl shadow-xl border-t-8 border-blue-600 hidden fade-in">
+        <h2 class="text-2xl font-black mb-6 text-center text-gray-800 tracking-tighter">INICIAR SISTEMA</h2>
         <div class="space-y-4">
             <input type="email" id="authEmail" placeholder="Correo electrónico" 
-                class="w-full border p-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 border-gray-200">
+                class="w-full border p-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 border-gray-200 font-medium">
             <input type="password" id="authPassword" placeholder="Contraseña" 
-                class="w-full border p-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 border-gray-200">
-            <button id="btnLogin" class="bg-blue-600 text-white px-4 py-3 rounded-xl w-full font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-200">
+                class="w-full border p-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 border-gray-200 font-medium">
+            <button id="btnLogin" class="bg-blue-600 text-white px-4 py-3 rounded-xl w-full font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-200 active:scale-95">
                 Entrar al Panel
             </button>
         </div>
-        <p class="text-center text-gray-400 text-xs mt-6 uppercase tracking-widest">Personal Autorizado Only</p>
+        <p class="text-center text-gray-400 text-[10px] mt-6 uppercase tracking-[0.2em] font-bold">Personal Autorizado Only</p>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <a href="ventas.html" class="group bg-white p-10 rounded-3xl shadow-xl border-b-8 border-green-500 hover:scale-105 transition-all">
-            <div class="text-6xl mb-4 group-hover:bounce">🛒</div>
-            <h2 class="text-xl font-bold text-gray-700">Punto de Venta</h2>
-            <p class="text-gray-400 text-sm mt-2">Realizar cobros y bajar stock</p>
-            <div class="mt-6 inline-block bg-green-500 text-white px-6 py-3 rounded-xl font-bold group-hover:bg-green-600 shadow-lg shadow-green-100 uppercase text-xs">
-                Vender Ahora
-            </div>
-        </a>
+    <div id="mainApp" class="hidden w-full max-w-5xl fade-in">
+        
+        <div class="flex justify-between items-center mb-10 bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
+            <h1 class="text-xl font-black text-gray-800 tracking-tighter uppercase">🏪 Minimarket <span class="text-blue-600">Pro</span></h1>
+            <button id="btn-logout" class="bg-red-50 text-red-600 px-4 py-2 rounded-lg text-xs font-black hover:bg-red-600 hover:text-white transition-all border border-red-100 uppercase">
+                Cerrar Sesión
+            </button>
+        </div>
 
-        <a href="inventario.html" class="group bg-white p-10 rounded-3xl shadow-xl border-b-8 border-blue-500 hover:scale-105 transition-all">
-            <div class="text-6xl mb-4">📦</div>
-            <h2 class="text-xl font-bold text-gray-700">Inventario</h2>
-            <p class="text-gray-400 text-sm mt-2">Gestionar productos y costos</p>
-            <div class="mt-6 inline-block bg-blue-500 text-white px-6 py-3 rounded-xl font-bold group-hover:bg-blue-600 shadow-lg shadow-blue-100 uppercase text-xs">
-                Ver Almacén
-            </div>
-        </a>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            
+            <a href="ventas.html" class="group bg-white p-10 rounded-3xl shadow-xl border-b-8 border-green-500 hover:scale-105 transition-all text-center">
+                <div class="text-6xl mb-4 group-hover:animate-bounce">🛒</div>
+                <h2 class="text-xl font-black text-gray-700 uppercase tracking-tight">Punto de Venta</h2>
+                <p class="text-gray-400 text-xs mt-2 font-medium">Realizar cobros y bajar stock</p>
+                <div class="mt-6 inline-block bg-green-500 text-white px-6 py-3 rounded-xl font-black group-hover:bg-green-600 shadow-lg shadow-green-100 uppercase text-[10px] tracking-widest">
+                    Vender Ahora
+                </div>
+            </a>
 
-        <a href="reportes.html" class="group bg-white p-10 rounded-3xl shadow-xl border-b-8 border-purple-500 hover:scale-105 transition-all">
-            <div class="text-6xl mb-4">📊</div>
-            <h2 class="text-xl font-bold text-gray-700">Reportes</h2>
-            <p class="text-gray-400 text-sm mt-2">Ventas diarias y ganancias</p>
-            <div class="mt-6 inline-block bg-purple-500 text-white px-6 py-3 rounded-xl font-bold group-hover:bg-purple-600 shadow-lg shadow-purple-100 uppercase text-xs">
-                Ver Balances
-            </div>
-        </a>
+            <a href="inventario.html" class="group bg-white p-10 rounded-3xl shadow-xl border-b-8 border-blue-500 hover:scale-105 transition-all text-center">
+                <div class="text-6xl mb-4 group-hover:animate-pulse">📦</div>
+                <h2 class="text-xl font-black text-gray-700 uppercase tracking-tight">Inventario</h2>
+                <p class="text-gray-400 text-xs mt-2 font-medium">Gestionar productos y costos</p>
+                <div class="mt-6 inline-block bg-blue-500 text-white px-6 py-3 rounded-xl font-black group-hover:bg-blue-600 shadow-lg shadow-blue-100 uppercase text-[10px] tracking-widest">
+                    Ver Almacén
+                </div>
+            </a>
+
+            <a href="reportes.html" class="group bg-white p-10 rounded-3xl shadow-xl border-b-8 border-purple-500 hover:scale-105 transition-all text-center">
+                <div class="text-6xl mb-4 group-hover:rotate-12 transition-transform">📊</div>
+                <h2 class="text-xl font-black text-gray-700 uppercase tracking-tight">Reportes</h2>
+                <p class="text-gray-400 text-xs mt-2 font-medium">Ventas diarias y ganancias</p>
+                <div class="mt-6 inline-block bg-purple-500 text-white px-6 py-3 rounded-xl font-black group-hover:bg-purple-600 shadow-lg shadow-purple-100 uppercase text-[10px] tracking-widest">
+                    Ver Balances
+                </div>
+            </a>
+            
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -57,31 +74,46 @@
         const supabaseKey = 'sb_publishable_EpJx4G5egW9GZdj8P7oudw_kDWWsj6p';
         const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
+        // Función que revisa si hay alguien logueado para mostrar/ocultar secciones
         async function checkUser() {
             const { data: { user } } = await _supabase.auth.getUser();
+            
             if (user) {
+                // Si hay usuario: Ocultamos login y mostramos panel
                 document.getElementById('authSection').classList.add('hidden');
                 document.getElementById('mainApp').classList.remove('hidden');
             } else {
+                // Si no hay usuario: Mostramos login y ocultamos panel
                 document.getElementById('authSection').classList.remove('hidden');
                 document.getElementById('mainApp').classList.add('hidden');
             }
         }
 
+        // Evento para el botón de Iniciar Sesión
         document.getElementById('btnLogin').addEventListener('click', async () => {
             const email = document.getElementById('authEmail').value;
             const password = document.getElementById('authPassword').value;
-            if(!email || !password) return alert("Ingresa tus credenciales");
+            
+            if(!email || !password) return alert("Por favor, ingresa tus credenciales completas");
             
             const { error } = await _supabase.auth.signInWithPassword({ email, password });
-            if (error) alert("Error: " + error.message); else checkUser();
+            if (error) {
+                alert("Acceso denegado: " + error.message);
+            } else {
+                checkUser(); // Refrescar vista tras login exitoso
+            }
         });
 
+        // Evento para el botón de Cerrar Sesión
         document.getElementById('btn-logout').addEventListener('click', async () => {
-            await _supabase.auth.signOut();
-            window.location.reload();
+            const confirmOut = confirm("¿Estás seguro de que quieres salir del sistema?");
+            if(confirmOut) {
+                await _supabase.auth.signOut();
+                window.location.reload(); // Recarga la página para limpiar todo
+            }
         });
 
+        // Ejecutar al cargar la página para ver el estado inicial
         checkUser();
     </script>
 </body>
