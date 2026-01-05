@@ -62,57 +62,61 @@ async function cargarDatosReporte(userId) {
 // LÓGICA DE CÁLCULOS (ESTADÍSTICAS)
 // ==========================================
 function procesarEstadisticas(ventas, abonos) {
-    let totalVendido = 0;
-    let totalCobradoEfectivo = 0;
-    let totalFiadoPendiente = 0;
-    let totalAbonosRecibidos = 0;
+    let efectivo = 0;
+    let yape = 0;
+    let plin = 0;
+    let granTotal = 0;
 
     ventas.forEach(v => {
-        totalVendido += v.total;
+        granTotal += v.total;
         
-        // Separamos ventas según su estado de pago
-        if (v.estado_pago === 'pagado') {
-            totalCobradoEfectivo += v.total;
-        } else if (v.estado_pago === 'pendiente') {
-            totalFiadoPendiente += v.total;
-        }
+        // Clasificamos por el método de pago que guardamos en ventas.js
+        if (v.metodo_pago === 'Efectivo') efectivo += v.total;
+        if (v.metodo_pago === 'Yape') yape += v.total;
+        if (v.metodo_pago === 'Plin') plin += v.total;
+        // Si es Fiado, podrías sumarlo a una categoría aparte o dejarlo en el gran total
     });
 
-    // Sumamos los abonos que se hicieron hoy a deudas antiguas
+    // Sumamos los abonos recibidos al efectivo (porque suelen ser cash)
     abonos.forEach(a => {
-        totalAbonosRecibidos += a.monto;
+        efectivo += a.monto;
+        granTotal += a.monto;
     });
 
-    // Actualizamos los elementos visuales en el HTML (asegúrate de tener estos IDs)
-    document.getElementById('txtTotalVendido').textContent = `$${totalVendido.toFixed(2)}`;
-    document.getElementById('txtTotalEfectivo').textContent = `$${(totalCobradoEfectivo + totalAbonosRecibidos).toFixed(2)}`;
-    document.getElementById('txtTotalPendiente').textContent = `$${totalFiadoPendiente.toFixed(2)}`;
+    // ACTUALIZACIÓN DE LOS IDS REALES DE TU HTML
+    document.getElementById('totalEfectivo').textContent = `$${efectivo.toFixed(2)}`;
+    document.getElementById('totalYape').textContent = `$${yape.toFixed(2)}`;
+    document.getElementById('totalPlin').textContent = `$${plin.toFixed(2)}`;
+    document.getElementById('granTotal').textContent = `$${granTotal.toFixed(2)}`;
 }
 
 // ==========================================
 // RENDERIZADO DE TABLA DE VENTAS RECIENTES
 // ==========================================
 function renderizarTablaVentas(ventas) {
-    const cuerpoTabla = document.getElementById('tablaVentasCuerpo');
+    const cuerpoTabla = document.getElementById('listaVentas'); // Usamos 'listaVentas' que es tu ID real
     if (!cuerpoTabla) return;
 
     cuerpoTabla.innerHTML = '';
 
     ventas.forEach(v => {
-        const nombreCliente = v.clientes ? v.clientes.nombre : 'Público General';
-        const colorEstado = v.estado_pago === 'pendiente' ? 'text-red-600' : 'text-green-600';
+        const metodo = v.metodo_pago || (v.estado_pago === 'pendiente' ? 'Fiado' : 'Otro');
         
         const fila = document.createElement('tr');
         fila.className = "border-b hover:bg-gray-50 transition-all text-sm";
         fila.innerHTML = `
-            <td class="p-4">${new Date(v.created_at).toLocaleDateString()}</td>
-            <td class="p-4 font-bold text-gray-800">${nombreCliente}</td>
-            <td class="p-4">
-                <span class="px-2 py-1 rounded-full text-[10px] font-black uppercase ${v.estado_pago === 'pendiente' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}">
-                    ${v.estado_pago}
+            <td class="p-5">
+                <p class="font-bold text-gray-800">${new Date(v.created_at).toLocaleDateString()}</p>
+                <p class="text-[10px] text-gray-400">${new Date(v.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+            </td>
+            <td class="p-5 text-center">
+                <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase bg-gray-100 text-gray-600">
+                    ${metodo}
                 </span>
             </td>
-            <td class="p-4 font-black text-right ${colorEstado}">$${v.total.toFixed(2)}</td>
+            <td class="p-5 font-black text-right text-gray-800">
+                $${v.total.toFixed(2)}
+            </td>
         `;
         cuerpoTabla.appendChild(fila);
     });
