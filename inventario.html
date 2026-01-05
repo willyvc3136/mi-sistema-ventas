@@ -164,55 +164,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="inventario.js"></script>
 
-    <script>
-        let html5QrCode;
-
-        /**
-         * Enciende la cámara y envía el texto escaneado al input solicitado.
-         * @param {string} targetInputId - ID del campo (buscador o código registro).
-         */
-        async function encenderCamara(targetInputId) {
-            const container = document.getElementById('lectorContainer');
-            container.classList.remove('hidden');
-
-            html5QrCode = new Html5Qrcode("reader");
-            const config = { fps: 10, qrbox: { width: 250, height: 150 } };
-
-            try {
-                await html5QrCode.start(
-                    { facingMode: "environment" }, 
-                    config, 
-                    (decodedText) => {
-                        const input = document.getElementById(targetInputId);
-                        input.value = decodedText;
-                        
-                        // Si escanea en buscador, activa la búsqueda en la tabla automáticamente
-                        if(targetInputId === 'buscador') {
-                            input.dispatchEvent(new Event('input')); 
-                        }
-
-                        cerrarCamara();
-                        
-                        // Parpadeo verde para confirmar escaneo exitoso
-                        input.classList.add('bg-green-100');
-                        setTimeout(() => input.classList.remove('bg-green-100'), 1000);
-                    }
-                );
-            } catch (err) {
-                alert("Error: Asegúrate de dar permisos de cámara.");
-                container.classList.add('hidden');
-            }
-        }
-
-        function cerrarCamara() {
-            if (html5QrCode) {
-                html5QrCode.stop().then(() => {
-                    document.getElementById('lectorContainer').classList.add('hidden');
-                }).catch(() => {
-                    document.getElementById('lectorContainer').classList.add('hidden');
-                });
-            }
-        }
-    </script>
+    
 </body>
 </html>

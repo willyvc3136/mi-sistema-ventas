@@ -244,8 +244,34 @@ function cerrarCamara() {
     }
 }
 
-// Variable para saber si el filtro de alertas está activo o no
+// ==========================================
+// LÓGICA DE FILTRO DE ALERTAS (PARA EL BOTÓN)
+// ==========================================
 let filtrandoAlertas = false;
+
+window.toggleAlertas = function() {
+    const btn = document.getElementById('btnFiltroAlertas');
+    const filas = document.querySelectorAll('#listaProductos tr');
+    filtrandoAlertas = !filtrandoAlertas;
+
+    if (filtrandoAlertas) {
+        // ACTIVAR FILTRO
+        filas.forEach(fila => {
+            // Buscamos si la fila tiene la clase de color rojo (stock bajo)
+            const tieneAlerta = fila.querySelector('.text-red-600');
+            fila.style.display = tieneAlerta ? "" : "none";
+        });
+        btn.textContent = "Ver Todo";
+        btn.classList.replace('bg-red-50', 'bg-red-600');
+        btn.classList.replace('text-red-600', 'text-white');
+    } else {
+        // DESACTIVAR FILTRO
+        filas.forEach(fila => fila.style.display = "");
+        btn.textContent = "Ver Faltantes";
+        btn.classList.replace('bg-red-600', 'bg-red-50');
+        btn.classList.replace('text-white', 'text-red-600');
+    }
+};
 
 // Función principal que activa/desactiva el filtro
 function toggleAlertas() {
