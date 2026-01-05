@@ -174,14 +174,22 @@ window.eliminarProducto = async (id) => {
 };
 
 // ==========================================
-// BUSCADOR EN TIEMPO REAL
+// BUSCADOR EN TIEMPO REAL (MEJORADO)
 // ==========================================
 document.getElementById('buscador').addEventListener('input', (e) => {
+    // Si estamos en modo "Ver Faltantes", primero limpiamos ese filtro para buscar bien
+    if (filtrandoAlertas) {
+        filtrandoAlertas = false;
+        const btn = document.getElementById('btnFiltroAlertas');
+        btn.textContent = "Ver Faltantes";
+        btn.classList.replace('bg-red-600', 'bg-red-50');
+        btn.classList.replace('text-white', 'text-red-600');
+    }
+
     const filtro = e.target.value.toLowerCase();
     const filas = listaProductos.getElementsByTagName('tr');
     
     Array.from(filas).forEach(fila => {
-        // Mejoramos el filtro para buscar en nombre, categoría y código de barras
         fila.style.display = fila.innerText.toLowerCase().includes(filtro) ? "" : "none";
     });
 });
@@ -234,6 +242,43 @@ function cerrarCamara() {
     } else {
         document.getElementById('lectorContainer').classList.add('hidden');
     }
+}
+
+// Variable para saber si el filtro de alertas está activo o no
+let filtrandoAlertas = false;
+
+// Función principal que activa/desactiva el filtro
+function toggleAlertas() {
+    const btn = document.getElementById('btnFiltroAlertas');
+    filtrandoAlertas = !filtrandoAlertas; // Cambia el estado (de sí a no, o de no a sí)
+
+    if (filtrandoAlertas) {
+        // MODO ALERTA ACTIVO
+        mostrarSoloAlertas();
+        btn.textContent = "Ver Todo"; // El botón cambia su texto
+        btn.classList.replace('bg-red-50', 'bg-red-600');
+        btn.classList.replace('text-red-600', 'text-white');
+    } else {
+        // MODO ALERTA INACTIVO
+        const filas = listaProductos.getElementsByTagName('tr');
+        Array.from(filas).forEach(fila => fila.style.display = ""); // Muestra todas las filas
+        btn.textContent = "Ver Faltantes";
+        btn.classList.replace('bg-red-600', 'bg-red-50');
+        btn.classList.replace('text-white', 'text-red-600');
+        
+        // Si había algo escrito en el buscador, volvemos a aplicar ese filtro
+        document.getElementById('buscador').dispatchEvent(new Event('input'));
+    }
+}
+
+// La lógica interna que oculta lo que tiene stock suficiente
+function mostrarSoloAlertas() {
+    const filas = listaProductos.getElementsByTagName('tr');
+    Array.from(filas).forEach(fila => {
+        // Buscamos si la fila tiene el color rojo de stock bajo
+        const tieneAlerta = fila.innerHTML.includes('text-red-600');
+        fila.style.display = tieneAlerta ? "" : "none";
+    });
 }
 
 // ==========================================
