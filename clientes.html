@@ -47,17 +47,26 @@
         </div>
     </div>
 
-    <div id="modalAbono" class="hidden fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex justify-center items-center p-4 z-50">
-        <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm">
-            <h2 class="text-xl font-bold mb-4 text-gray-800">💰 Registrar Pago</h2>
-            <p id="nombreClienteAbono" class="text-sm text-gray-500 mb-4 font-bold"></p>
-            <input type="hidden" id="idClienteAbono">
-            <label class="text-[10px] font-black text-gray-400 uppercase">Monto que entrega el cliente ($)</label>
-            <input type="number" id="montoAbono" step="0.01" class="w-full border-2 border-indigo-100 p-4 rounded-2xl text-2xl font-bold text-indigo-600 outline-none focus:border-indigo-500 mb-6">
+    <div id="modalAbono" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+            <h3 class="text-xl font-black text-gray-800 mb-2">Registrar Pago</h3>
+            <p id="nombreClienteAbono" class="text-blue-600 font-bold mb-4 italic"></p>
             
-            <div class="flex flex-col gap-2">
-                <button onclick="guardarAbono()" class="w-full py-4 bg-green-600 text-white rounded-2xl font-bold hover:bg-green-700 shadow-lg">Confirmar Pago</button>
-                <button onclick="cerrarModalAbono()" class="w-full py-2 text-gray-400 font-bold uppercase text-xs">Cancelar</button>
+            <input type="hidden" id="idClienteAbono">
+            
+            <label class="block text-xs font-black uppercase text-gray-400 mb-1">Monto del Abono ($)</label>
+            <input type="number" id="montoAbono" step="0.01" placeholder="0.00" 
+                class="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-xl focus:border-blue-500 outline-none text-2xl font-bold mb-4">
+            
+            <div class="flex gap-2">
+                <button onclick="cerrarModalAbono()" 
+                        class="flex-1 py-3 text-gray-400 font-bold hover:bg-gray-100 rounded-xl transition-all">
+                    Cancelar
+                </button>
+                <button onclick="guardarAbono()" 
+                        class="flex-1 py-3 bg-green-500 text-white font-black rounded-xl hover:bg-green-600 shadow-lg shadow-green-200 transition-all">
+                    CONFIRMAR
+                </button>
             </div>
         </div>
     </div>

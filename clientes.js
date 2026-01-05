@@ -82,4 +82,63 @@ async function guardarAbono() {
     location.reload();
 }
 
+// ... (Todo tu código anterior de registrarCliente, obtenerClientes y abrirModal se mantiene igual)
+
+async function guardarAbono() {
+    const idCliente = document.getElementById('idClienteAbono').value;
+    const monto = parseFloat(document.getElementById('montoAbono').value);
+    const { data: { user } } = await _supabase.auth.getUser();
+
+    if(!monto || monto <= 0) return alert("Ingresa un monto válido");
+
+    try {
+        // 1. Registrar el abono en la tabla 'abonos' (Historial de pagos)
+        const { error: errorAbono } = await _supabase.from('abonos').insert([
+            { cliente_id: idCliente, monto: monto, user_id: user.id }
+        ]);
+        if (errorAbono) throw errorAbono;
+
+        // 2. Actualizar la deuda en la tabla 'clientes' (Restar el pago)
+        const { data: cliente, error: errorCliente } = await _supabase
+            .from('clientes')
+            .select('deuda')
+            .eq('id', idCliente)
+            .single();
+        
+        if (errorCliente) throw errorCliente;
+
+        // Usamos Number() para asegurar que la resta sea matemática
+        const nuevaDeuda = Number(cliente.deuda || 0) - monto;
+
+        const { error: errorUpdate } = await _supabase
+            .from('clientes')
+            .update({ deuda: nuevaDeuda })
+            .eq('id', idCliente);
+        
+        if (errorUpdate) throw errorUpdate;
+
+        // ==========================================
+        // 3. NUEVO: REGISTRAR EN VENTAS PARA REPORTES
+        // ==========================================
+        // Esto hace que el dinero sume a tu "Total Efectivo" de hoy
+        await _supabase.from('ventas').insert([{
+            total: monto,
+            metodo_pago: 'Efectivo', // Puedes cambiarlo si el modal tiene opción de Yape/Plin
+            estado_pago: 'pagado',
+            cliente_id: idCliente,
+            vendedor_id: user.id,
+            productos_vendidos: [{ nombre: "PAGO/ABONO DE DEUDA", cantidad: 1 }]
+        }]);
+        // ==========================================
+
+        alert("¡Pago registrado con éxito y sumado a reportes!");
+        location.reload();
+
+    } catch (error) {
+        console.error("Error procesando abono:", error);
+        alert("Hubo un error: " + error.message);
+    }
+}
+
+obtenerClientes();
 obtenerClientes();
