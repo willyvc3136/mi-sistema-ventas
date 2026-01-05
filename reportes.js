@@ -53,42 +53,51 @@ async function cargarReporte(userId) {
 // ==========================================
 // CÁLCULOS CORREGIDOS (DINERO REAL)
 // ==========================================
+let miGrafica; // Variable global para la gráfica
+
 function procesarEstadisticas(ventas) {
-    let efectivo = 0;
-    let yape = 0;
-    let plin = 0;
-    let porCobrar = 0; // Para rastrear cuánto dinero hay en "Fiados"
+    let efectivo = 0, yape = 0, plin = 0, porCobrar = 0;
 
     ventas.forEach(v => {
         const monto = Number(v.total || 0);
-
-        // Clasificamos según el método de pago
-        if (v.metodo_pago === 'Efectivo') {
-            efectivo += monto;
-        } else if (v.metodo_pago === 'Yape') {
-            yape += monto;
-        } else if (v.metodo_pago === 'Plin') {
-            plin += monto;
-        } else if (v.metodo_pago === 'Fiado') {
-            porCobrar += monto; // Esto NO suma al dinero real del día
-        }
+        if (v.metodo_pago === 'Efectivo') efectivo += monto;
+        else if (v.metodo_pago === 'Yape') yape += monto;
+        else if (v.metodo_pago === 'Plin') plin += monto;
+        else if (v.metodo_pago === 'Fiado') porCobrar += monto;
     });
 
-    // CÁLCULO DEL DINERO REAL (Solo lo que ya pagaron)
-    // Esto evitará que tus reportes marquen $190 cuando solo tienes $133.50 reales
     const granTotalReal = efectivo + yape + plin;
 
-    // Actualizamos los IDs en tu HTML
+    // Actualizar textos
     document.getElementById('totalEfectivo').textContent = `$${efectivo.toFixed(2)}`;
     document.getElementById('totalYape').textContent = `$${yape.toFixed(2)}`;
     document.getElementById('totalPlin').textContent = `$${plin.toFixed(2)}`;
     document.getElementById('granTotal').textContent = `$${granTotalReal.toFixed(2)}`;
+    document.getElementById('totalPorCobrar').textContent = `$${porCobrar.toFixed(2)}`;
 
-    // OPCIONAL: Si creas un ID llamado 'totalPorCobrar', puedes ver tus fiados ahí
-    const elemPorCobrar = document.getElementById('totalPorCobrar');
-    if (elemPorCobrar) {
-        elemPorCobrar.textContent = `$${porCobrar.toFixed(2)}`;
-    }
+    // DIBUJAR LA GRÁFICA
+    const ctx = document.getElementById('graficaBalance').getContext('2d');
+    
+    // Si la gráfica ya existe, la destruimos para crearla de nuevo con datos frescos
+    if (miGrafica) miGrafica.destroy();
+
+    miGrafica = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Dinero Real (Caja)', 'Dinero Fiado (Calle)'],
+            datasets: [{
+                label: 'Monto Total $',
+                data: [granTotalReal, porCobrar],
+                backgroundColor: ['#22c55e', '#3b82f6'], // Verde y Azul
+                borderRadius: 10
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
 }
 
 // ==========================================
