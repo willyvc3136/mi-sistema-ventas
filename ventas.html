@@ -5,130 +5,76 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ventas - Minimarket Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
 </head>
-<body class="bg-gray-100 p-4 md:p-8">
-
-    <div class="max-w-6xl mx-auto">
+<body class="bg-white p-4"> <div class="max-w-7xl mx-auto">
         
-        <div class="flex justify-between items-center mb-8 bg-white p-4 rounded-2xl shadow-sm border-l-8 border-green-500">
-            <div>
-                <a href="index.html" class="text-green-600 font-bold flex items-center gap-2 hover:underline mb-1">
-                    ← Regresar al Menú
-                </a>
-                <p class="text-xs text-gray-400 font-bold uppercase" id="user-display">Verificando sesión...</p>
-            </div>
-            <h1 class="text-xl font-black text-gray-800 tracking-tighter">CAJA RÁPIDA</h1>
+        <div class="flex justify-between items-center mb-6 bg-emerald-50 p-4 rounded-2xl border border-emerald-100">
+            <h1 class="text-xl font-black text-emerald-800 tracking-tighter uppercase">🛒 Caja Registradora</h1>
+            <p class="text-[10px] text-emerald-600 font-bold uppercase bg-white px-3 py-1 rounded-full shadow-sm" id="user-display">Verificando sesión...</p>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
             <div class="lg:col-span-2 space-y-6">
-                
                 <script src="https://unpkg.com/html5-qrcode"></script>
 
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                    <div class="flex justify-between items-center mb-2">
-                        <label class="block text-xs font-black text-gray-400 uppercase">Buscador o Escáner</label>
-                        <button onclick="toggleCamara()" class="text-xs bg-blue-500 text-white px-3 py-1 rounded-lg font-bold hover:bg-blue-600 transition">
-                            📷 Usar Cámara
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <div class="flex justify-between items-center mb-4">
+                        <label class="block text-xs font-black text-slate-400 uppercase">Buscador o Escáner</label>
+                        <button onclick="toggleCamara()" class="text-xs bg-slate-900 text-white px-4 py-2 rounded-xl font-bold hover:bg-emerald-600 transition shadow-sm">
+                            📷 Activar Cámara
                         </button>
                     </div>
                     
-                    <div id="reader" class="hidden w-full mb-4 overflow-hidden rounded-xl border-2 border-blue-500"></div>
+                    <div id="reader" class="hidden w-full mb-4 overflow-hidden rounded-xl border-2 border-emerald-500"></div>
 
                     <input type="text" id="inputBusqueda" placeholder="Escanea el código o escribe nombre..." 
-                        class="w-full p-4 border-2 border-blue-100 rounded-xl focus:border-green-500 outline-none text-lg font-medium">
-                    
-                    <p class="text-[10px] text-gray-400 mt-2 italic">Tip: Si usas pistola, solo escanea el producto y se agregará solo.</p>
+                        class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-emerald-500 focus:bg-white outline-none text-lg font-semibold transition-all">
                 </div>
 
-                <div class="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-200">
+                <div class="bg-white rounded-2xl shadow-sm overflow-hidden border border-slate-200">
                     <table class="w-full text-left">
-                        <thead class="bg-gray-50 border-b">
-                            <tr class="text-[10px] font-black text-gray-400 uppercase">
+                        <thead class="bg-slate-50 border-b">
+                            <tr class="text-[10px] font-black text-slate-400 uppercase">
                                 <th class="p-4">Descripción</th>
                                 <th class="p-4">Precio</th>
                                 <th class="p-4">Stock</th>
                                 <th class="p-4 text-center">Acción</th>
                             </tr>
                         </thead>
-                        <tbody id="tablaResultados" class="divide-y divide-gray-50 text-gray-700">
+                        <tbody id="tablaResultados" class="divide-y divide-slate-50 text-slate-700">
                             </tbody>
                     </table>
                 </div>
             </div>
 
-            <div class="bg-white p-6 rounded-3xl shadow-xl border border-gray-100 flex flex-col h-fit sticky top-8">
-                <div class="flex items-center gap-2 mb-6">
-                    <span class="text-2xl">📝</span>
-                    <h2 class="text-xl font-black text-gray-800">Resumen de Venta</h2>
+            <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100 flex flex-col h-fit sticky top-4">
+                <div class="flex items-center gap-2 mb-6 text-slate-800">
+                    <span class="text-xl">📄</span>
+                    <h2 class="text-lg font-black uppercase tracking-tight">Resumen</h2>
                 </div>
                 
-                <div id="carritoItems" class="space-y-4 mb-6 max-h-[400px] overflow-y-auto scrollbar-hide">
-                    <div class="text-center py-10">
-                        <p class="text-gray-300 text-sm italic">El carrito está vacío</p>
+                <div id="carritoItems" class="space-y-3 mb-6 max-h-[350px] overflow-y-auto pr-2">
                     </div>
-                </div>
 
-                <div class="border-t-2 border-dashed pt-6 space-y-3">
-                    <div class="flex justify-between text-gray-500 font-bold">
-                        <span>Items:</span>
-                        <span id="contadorItems">0</span>
-                    </div>
+                <div class="border-t-2 border-slate-200 border-dashed pt-6 space-y-4">
                     <div class="flex justify-between items-end">
-                        <span class="text-gray-800 font-black uppercase text-sm">Total a pagar:</span>
-                        <span id="totalVenta" class="text-4xl font-black text-green-600">$0.00</span>
+                        <span class="text-slate-500 font-bold uppercase text-[10px]">Total Neto:</span>
+                        <span id="totalVenta" class="text-4xl font-black text-emerald-600 tracking-tighter">$0.00</span>
                     </div>
                 </div>
 
-                <div id="seccionVuelto" class="mt-6 p-4 bg-blue-50 rounded-2xl border border-blue-100 space-y-3">
+                <div id="seccionVuelto" class="mt-6 p-4 bg-white rounded-2xl border border-slate-100 space-y-3 shadow-sm">
                     <div class="flex justify-between items-center">
-                        <label class="text-[10px] font-black text-blue-400 uppercase">Paga con:</label>
-                        <div class="relative">
-                            <span class="absolute left-3 top-2 text-gray-400 font-bold">$</span>
-                            <input type="number" id="pagaCon" placeholder="0.00" 
-                                class="w-24 p-2 pl-6 border-2 border-white rounded-lg focus:border-blue-500 outline-none font-bold text-right text-sm">
-                        </div>
-                    </div>
-                    <div class="flex justify-between items-center border-t border-blue-100 pt-2">
-                        <span class="text-[10px] font-black text-blue-400 uppercase">Vuelto:</span>
-                        <span id="vuelto" class="text-xl font-black text-blue-600">$0.00</span>
-                    </div>
-                </div>
-
-                <div class="mt-4">
-                    <label class="text-[10px] font-black text-gray-400 uppercase block mb-2">Método de Pago:</label>
-                    <div class="grid grid-cols-3 gap-2">
-                        <button onclick="seleccionarMetodo('Efectivo')" id="btnEfectivo" 
-                            class="metodo-pago p-2 rounded-xl border-2 border-green-500 bg-green-50 text-[10px] font-bold text-green-700 transition-all">
-                            💵 EFECTIVO
-                        </button>
-                        <button onclick="seleccionarMetodo('Yape')" id="btnYape" 
-                            class="metodo-pago p-2 rounded-xl border-2 border-gray-100 bg-gray-50 text-[10px] font-bold text-gray-500 transition-all">
-                            🟣 YAPE
-                        </button>
-                        <button onclick="seleccionarMetodo('Plin')" id="btnPlin" 
-                            class="metodo-pago p-2 rounded-xl border-2 border-gray-100 bg-gray-50 text-[10px] font-bold text-gray-500 transition-all">
-                            🔵 PLIN
-                        </button>
-                    </div>
-                </div>
-
-                <div class="mt-4 bg-indigo-50 p-4 rounded-2xl mb-4 border border-indigo-100">
-                    <div class="flex items-center gap-3 mb-3">
-                        <input type="checkbox" id="esFiado" onchange="toggleSelectorCliente()" class="w-5 h-5 accent-indigo-600 cursor-pointer">
-                        <label for="esFiado" class="font-bold text-indigo-800 text-sm cursor-pointer">¿Es una venta fiada?</label>
-                    </div>
-
-                    <div id="contenedorCliente" class="hidden">
-                        <select id="selectCliente" class="w-full p-3 rounded-xl border-2 border-indigo-200 outline-none focus:border-indigo-500 text-sm font-bold text-indigo-900 bg-white">
-                            <option value="">Cargando clientes...</option>
-                        </select>
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Paga con:</label>
+                        <input type="number" id="pagaCon" placeholder="0.00" class="w-24 p-2 border-b-2 border-slate-200 outline-none font-bold text-right text-emerald-600 focus:border-emerald-500">
                     </div>
                 </div>
 
                 <button id="btnFinalizarVenta" disabled 
-                    class="w-full mt-8 bg-green-500 text-white font-black py-5 rounded-2xl shadow-lg hover:bg-green-600 disabled:bg-gray-200 transition-all flex justify-center items-center gap-2 uppercase tracking-widest text-sm">
+                    class="w-full mt-6 bg-emerald-600 text-white font-black py-5 rounded-2xl shadow-xl shadow-emerald-100 hover:bg-emerald-700 disabled:bg-slate-200 transition-all uppercase tracking-widest text-xs">
                     Finalizar Venta (F2)
                 </button>
             </div>
