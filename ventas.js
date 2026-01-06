@@ -100,6 +100,56 @@ function procesarEscaneo(codigo) {
     }
 }
 
+async function encenderCamara(targetInputId) {
+    const container = document.getElementById('lectorContainer');
+    if(!container) return; // Evita errores si el div no existe
+    
+    container.classList.remove('hidden');
+    
+    // Si ya hay una instancia corriendo, la detenemos
+    if (html5QrCode) {
+        await html5QrCode.stop().catch(() => {});
+    }
+
+    html5QrCode = new Html5Qrcode("reader");
+
+    const config = { 
+        fps: 15, // Un poco más rápido para móviles
+        qrbox: { width: 250, height: 200 }, // Área de escaneo más grande
+        aspectRatio: 1.0 
+    };
+
+    try {
+        await html5QrCode.start(
+            { facingMode: "environment" }, // Forzar cámara trasera
+            config, 
+            (decodedText) => {
+                const input = document.getElementById(targetInputId);
+                if(input) {
+                    input.value = decodedText;
+                    // IMPORTANTE: Disparar evento para que el buscador reaccione
+                    input.dispatchEvent(new Event('input'));
+                    input.dispatchEvent(new Event('change'));
+                }
+                
+                // Si es la pantalla de ventas, procesar el escaneo automáticamente
+                if(typeof procesarEscaneo === 'function') {
+                    procesarEscaneo(decodedText);
+                }
+
+                cerrarCamara();
+                
+                // Vibración pequeña para confirmar (solo en móvil)
+                if (navigator.vibrate) navigator.vibrate(100);
+            }
+        );
+    } catch (err) {
+        console.error("Error de cámara:", err);
+        alert("No se pudo acceder a la cámara. Verifica los permisos de tu navegador.");
+        container.classList.add('hidden');
+    }
+}
+
 // ==========================================
 // LÓGICA DEL CARRITO
 // ==========================================

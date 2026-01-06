@@ -104,22 +104,38 @@ async function encenderCamara(targetInputId) {
     if(!container) return;
     
     container.classList.remove('hidden');
+    
+    // Detener cualquier instancia previa para evitar conflictos
+    if (html5QrCode) {
+        await html5QrCode.stop().catch(() => {});
+    }
+
     html5QrCode = new Html5Qrcode("reader");
+
+    const config = { 
+        fps: 10, 
+        qrbox: { width: 250, height: 150 },
+        aspectRatio: 1.0 
+    };
 
     try {
         await html5QrCode.start(
             { facingMode: "environment" }, 
-            { fps: 10, qrbox: { width: 250, height: 150 } }, 
+            config, 
             (decodedText) => {
-                document.getElementById(targetInputId).value = decodedText;
-                if(targetInputId === 'buscador') {
-                    document.getElementById('buscador').dispatchEvent(new Event('input'));
+                const input = document.getElementById(targetInputId);
+                if(input) {
+                    input.value = decodedText;
+                    input.dispatchEvent(new Event('input')); // Dispara la búsqueda
                 }
                 cerrarCamara();
+                // Feedback táctil/visual
+                alert("Código detectado: " + decodedText);
             }
         );
     } catch (err) {
-        alert("Error de cámara");
+        console.error("Error de cámara:", err);
+        alert("Error: Asegúrate de usar HTTPS y dar permisos de cámara.");
         container.classList.add('hidden');
     }
 }
