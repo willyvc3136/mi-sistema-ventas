@@ -3,6 +3,7 @@ const supabaseKey = 'sb_publishable_EpJx4G5egW9GZdj8P7oudw_kDWWsj6p';
 const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 let miGrafica; 
+let ventasActualesParaExportar = []; 
 
 async function inicializarReportes() {
     const { data: { session } } = await _supabase.auth.getSession();
@@ -23,7 +24,12 @@ async function inicializarReportes() {
     }
 }
 
+// 2. FUNCIÓN CARGAR REPORTE ACTUALIZADA
 async function cargarReporte() {
+    // Referencia a la tabla para mostrar un estado de "Cargando"
+    const tabla = document.getElementById('listaVentas');
+    if(tabla) tabla.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-slate-400 italic">Buscando datos...</td></tr>';
+
     const filtro = document.getElementById('filtroTiempo').value;
     const fInicio = document.getElementById('fechaInicio').value;
     const fFin = document.getElementById('fechaFin').value;
@@ -33,6 +39,7 @@ async function cargarReporte() {
     let hasta = new Date();
     hasta.setHours(23, 59, 59, 999);
 
+    // Lógica de fechas
     if (fInicio !== "" && fFin !== "") {
         desde = new Date(fInicio + "T00:00:00");
         hasta = new Date(fFin + "T23:59:59");
@@ -41,23 +48,32 @@ async function cargarReporte() {
         hasta = new Date(fInicio + "T23:59:59");
     } else {
         if (filtro === 'semanal') desde.setDate(desde.getDate() - 7);
-        else if (filtro === 'mensual') desde.setDate(1);
+        else if (filtro === 'mensual') desde.setMonth(desde.getMonth(), 1); // Optimizado: Primer día del mes actual
         else if (filtro === 'anual') desde.setMonth(0, 1);
     }
 
-    // Consulta de ventas
-    const { data: ventas, error: errorVentas } = await _supabase
-        .from('ventas')
-        .select('*, clientes(nombre)')
-        .gte('created_at', desde.toISOString())
-        .lte('created_at', hasta.toISOString())
-        .order('created_at', { ascending: false });
+    // Consulta de ventas y deuda de forma paralela (más rápido)
+    const [resVentas, resClientes] = await Promise.all([
+        _supabase
+            .from('ventas')
+            .select('*, clientes(nombre)')
+            .gte('created_at', desde.toISOString())
+            .lte('created_at', hasta.toISOString())
+            .order('created_at', { ascending: false }),
+        _supabase.from('clientes').select('deuda')
+    ]);
 
-    // Consulta de deuda de clientes
-    const { data: clientes } = await _supabase.from('clientes').select('deuda');
+    if (resVentas.error) {
+        console.error("Error cargando ventas:", resVentas.error);
+        tabla.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-red-500 font-bold">Error al conectar con la base de datos</td></tr>';
+        return;
+    }
 
-    if (errorVentas) return console.error("Error:", errorVentas);
-    procesarYMostrarDatos(ventas, clientes || []); 
+    // ACTUALIZACIÓN CLAVE: Guardamos los datos para que Excel y PDF puedan verlos
+    ventasActualesParaExportar = resVentas.data;
+
+    // Procesar y mostrar
+    procesarYMostrarDatos(resVentas.data, resClientes.data || []); 
 }
 
 function procesarYMostrarDatos(ventas, clientes) {

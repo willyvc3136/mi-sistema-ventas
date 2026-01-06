@@ -25,17 +25,27 @@
                 <p class="text-slate-500 font-medium">Monitorea el rendimiento de tu negocio en tiempo real.</p>
             </div>
             
-            <div class="flex flex-wrap gap-3 bg-white p-2 rounded-2xl shadow-sm border border-slate-200">
+            <div class="flex flex-wrap gap-3 bg-white p-2 rounded-2xl shadow-sm border border-slate-200 items-center">
                 <select id="filtroTiempo" class="bg-slate-50 p-2.5 rounded-xl font-bold text-slate-700 outline-none border-none">
                     <option value="hoy">Hoy</option>
                     <option value="semanal">Últimos 7 días</option>
                     <option value="mensual">Este mes</option>
                     <option value="anual">Este año</option>
                 </select>
+                
                 <div class="flex items-center gap-2 px-2 border-l border-slate-200">
                     <input type="date" id="fechaInicio" class="bg-transparent outline-none text-sm font-bold text-slate-600">
                     <span class="text-slate-300 text-xs font-black">❯</span>
                     <input type="date" id="fechaFin" class="bg-transparent outline-none text-sm font-bold text-slate-600">
+                </div>
+
+                <div class="flex gap-2 border-l border-slate-200 pl-3">
+                    <button onclick="exportarExcel()" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-4 py-2 rounded-xl transition-all shadow-sm flex items-center gap-2 font-bold text-xs border border-emerald-100">
+                        <span>📊</span> Excel
+                    </button>
+                    <button onclick="exportarPDF()" class="bg-red-50 hover:bg-red-100 text-red-700 px-4 py-2 rounded-xl transition-all shadow-sm flex items-center gap-2 font-bold text-xs border border-red-100">
+                        <span>📄</span> PDF
+                    </button>
                 </div>
             </div>
         </div>
@@ -106,5 +116,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="reportes.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 </body>
 </html>
