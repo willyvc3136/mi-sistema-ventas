@@ -5,64 +5,52 @@ const supabaseUrl = 'https://ijyhkbiukiqiqjabpubm.supabase.co';
 const supabaseKey = 'sb_publishable_EpJx4G5egW9GZdj8P7oudw_kDWWsj6p'; 
 const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-let miGrafica; // Variable global para la gráfica
+let miGrafica; 
 
-// ==========================================
-// INICIALIZACIÓN Y SEGURIDAD
-// ==========================================
 async function inicializarReportes() {
     const { data: { session } } = await _supabase.auth.getSession();
-    
     if (session && session.user) {
-        cargarReporte(); // Quitamos el ID de aquí para que la función sea más flexible
+        // Escuchar cambios en el filtro de tiempo y en el nuevo calendario
+        document.getElementById('filtroTiempo').addEventListener('change', cargarReporte);
+        document.getElementById('fechaManual').addEventListener('change', cargarReporte);
+        cargarReporte(); 
     } else {
-        alert("Tu sesión ha expirado.");
         window.location.href = 'index.html';
     }
 }
 
-// ==========================================
-// CARGA Y PROCESAMIENTO DE DATOS (UNIFICADO)
-// ==========================================
 async function cargarReporte() {
-    console.log("Cargando reporte con filtro inteligente...");
-
-    // 1. Obtener el valor del selector del HTML
     const filtro = document.getElementById('filtroTiempo').value;
+    const fechaManual = document.getElementById('fechaManual').value;
     
-    // 2. Calcular la fecha de inicio según la opción elegida
     let fechaInicio = new Date();
-    fechaInicio.setHours(0, 0, 0, 0); // Por defecto es "Hoy" a las 00:00
+    fechaInicio.setHours(0, 0, 0, 0);
 
-    if (filtro === 'semanal') {
-        // Restar 7 días a la fecha actual
-        fechaInicio.setDate(fechaInicio.getDate() - 7);
-    } else if (filtro === 'anual') {
-        // Ir al 1 de enero del año actual
-        fechaInicio.setMonth(0, 1);
+    // LÓGICA DE FILTRO MEJORADA
+    if (fechaManual) {
+        // Si el usuario eligió una fecha en el calendario, manda esa
+        fechaInicio = new Date(fechaManual + "T00:00:00");
+    } else {
+        if (filtro === 'semanal') fechaInicio.setDate(fechaInicio.getDate() - 7);
+        else if (filtro === 'anual') fechaInicio.setMonth(0, 1);
     }
-    // Si el filtro es 'hoy', no entra en los if y usa la medianoche de hoy
 
     const fechaISO = fechaInicio.toISOString();
+    // Definimos el fin del día para el filtro manual
+    let fechaFin = new Date(fechaInicio);
+    fechaFin.setHours(23, 59, 59, 999);
 
-    // 3. Obtener VENTAS filtradas por la fecha calculada
     const { data: ventas, error: errorVentas } = await _supabase
         .from('ventas')
         .select('*, clientes(nombre)')
-        .gte('created_at', fechaISO) 
+        .gte('created_at', fechaISO)
+        .lte('created_at', fechaFin.toISOString()) // Solo ventas de ese día/periodo
         .order('created_at', { ascending: false });
 
-    // 4. Obtener DEUDA TOTAL (Esto siempre es la suma de todos los clientes)
-    const { data: clientes, error: errorClientes } = await _supabase
-        .from('clientes')
-        .select('deuda');
+    const { data: clientes } = await _supabase.from('clientes').select('deuda');
 
-    if (errorVentas || errorClientes) {
-        console.error("Error cargando datos:", errorVentas || errorClientes);
-        return;
-    }
+    if (errorVentas) return console.error("Error:", errorVentas);
 
-    // 5. Procesar totales (Dinero Real)
     let efectivo = 0, yape = 0, plin = 0;
     ventas.forEach(v => {
         const monto = Number(v.total || 0);
@@ -74,81 +62,90 @@ async function cargarReporte() {
     const granTotalReal = efectivo + yape + plin;
     const totalDeudaReal = clientes.reduce((acc, c) => acc + (Number(c.deuda) || 0), 0);
 
-    // 6. Actualizar la interfaz (Números en las tarjetas)
     document.getElementById('totalEfectivo').textContent = `$${efectivo.toFixed(2)}`;
     document.getElementById('totalYape').textContent = `$${yape.toFixed(2)}`;
     document.getElementById('totalPlin').textContent = `$${plin.toFixed(2)}`;
     document.getElementById('granTotal').textContent = `$${granTotalReal.toFixed(2)}`;
     document.getElementById('totalPorCobrar').textContent = `$${totalDeudaReal.toFixed(2)}`;
 
-    // 7. Renderizar tabla y gráfica
     renderizarTabla(ventas);
     actualizarGrafica(granTotalReal, totalDeudaReal);
 }
 
-// ==========================================
-// COMPONENTES VISUALES (TABLA Y GRÁFICA)
-// ==========================================
 function renderizarTabla(ventas) {
     const tabla = document.getElementById('listaVentas');
-    if (!tabla) return;
     tabla.innerHTML = '';
-
-    if (ventas.length === 0) {
-        tabla.innerHTML = '<tr><td colspan="3" class="p-10 text-center text-gray-400 italic">No hay ventas en este periodo</td></tr>';
-        return;
-    }
 
     ventas.forEach(v => {
         const fechaObj = new Date(v.created_at);
-        const fecha = fechaObj.toLocaleDateString();
         const hora = fechaObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const clienteNombre = v.clientes ? v.clientes.nombre : 'Público General';
         
         const fila = document.createElement('tr');
-        fila.className = "border-b hover:bg-gray-50 transition-all";
+        fila.className = "border-b hover:bg-gray-50 transition-all text-sm";
         fila.innerHTML = `
-            <td class="p-5">
-                <p class="font-bold text-gray-800">${clienteNombre}</p>
-                <p class="text-[10px] text-gray-400 uppercase">${fecha} - ${hora}</p>
+            <td class="p-4">
+                <p class="font-bold">${clienteNombre}</p>
+                <p class="text-[10px] text-gray-400">${hora}</p>
             </td>
-            <td class="p-5 text-center">
-                <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase ${v.metodo_pago === 'Fiado' ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600'}">
-                    ${v.metodo_pago || 'Efectivo'}
-                </span>
+            <td class="p-4 text-center">
+                <span class="px-2 py-1 rounded-lg text-[9px] font-black uppercase bg-gray-100">${v.metodo_pago}</span>
             </td>
-            <td class="p-5 text-right font-black text-gray-800">
-                $${Number(v.total).toFixed(2)}
+            <td class="p-4 text-right font-black">$${Number(v.total).toFixed(2)}</td>
+            <td class="p-4 text-right">
+                <button onclick='imprimirTicket(${JSON.stringify(v)})' class="text-blue-500 hover:text-blue-700 text-lg">📄</button>
             </td>
         `;
         tabla.appendChild(fila);
     });
 }
 
+// ==========================================
+// FUNCIÓN DE TICKET (VIRTUAL / PDF)
+// ==========================================
+window.imprimirTicket = (venta) => {
+    const fecha = new Date(venta.created_at).toLocaleString();
+    const productosHtml = venta.productos_vendidos.map(p => `
+        <div style="display: flex; justify-content: space-between; font-size: 12px;">
+            <span>${p.cantidadSeleccionada}x ${p.nombre.substring(0,15)}</span>
+            <span>$${(p.precio * p.cantidadSeleccionada).toFixed(2)}</span>
+        </div>
+    `).join('');
+
+    const ventanaTicket = window.open('', '', 'width=300,height=600');
+    ventanaTicket.document.write(`
+        <html>
+        <body style="font-family: monospace; padding: 20px; width: 260px;">
+            <div style="text-align: center; border-bottom: 1px dashed #000; padding-bottom: 10px;">
+                <h2 style="margin:0">MINIMARKET PRO</h2>
+                <p style="font-size: 10px;">Fecha: ${fecha}</p>
+            </div>
+            <div style="padding: 10px 0; border-bottom: 1px dashed #000;">
+                ${productosHtml}
+            </div>
+            <div style="text-align: right; font-weight: bold; padding-top: 10px;">
+                TOTAL: $${Number(venta.total).toFixed(2)}
+            </div>
+            <p style="text-align: center; font-size: 10px; margin-top: 20px;">¡Gracias por su compra!</p>
+            <script>window.print(); setTimeout(() => window.close(), 500);</script>
+        </body>
+        </html>
+    `);
+    ventanaTicket.document.close();
+};
+
 function actualizarGrafica(real, fiado) {
     const canvas = document.getElementById('graficaBalance');
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    
     if (miGrafica) miGrafica.destroy();
-
-    miGrafica = new Chart(ctx, {
+    miGrafica = new Chart(canvas.getContext('2d'), {
         type: 'bar',
         data: {
-            labels: ['Dinero en Caja', 'Por Cobrar'],
-            datasets: [{
-                data: [real, fiado],
-                backgroundColor: ['#22c55e', '#2563eb'],
-                borderRadius: 10
-            }]
+            labels: ['En Caja', 'Por Cobrar'],
+            datasets: [{ data: [real, fiado], backgroundColor: ['#22c55e', '#2563eb'], borderRadius: 10 }]
         },
-        options: {
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: true } }
-        }
+        options: { responsive: true, plugins: { legend: { display: false } } }
     });
 }
 
-// Iniciar proceso
 inicializarReportes();
