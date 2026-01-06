@@ -9,7 +9,7 @@ const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 let carrito = []; 
 let productosBaseDeDatos = []; 
 let html5QrCode; 
-let metodoSeleccionado = 'Efectivo'; // Método por defecto
+let metodoSeleccionado = 'Efectivo'; 
 
 // ==========================================
 // SEGURIDAD E INICIALIZACIÓN
@@ -20,15 +20,22 @@ async function inicializar() {
         document.getElementById('user-display').textContent = `Vendedor: ${user.email}`;
         await cargarProductos(user.id); 
         
-        // FOCO AUTOMÁTICO AL INICIAR: Prepara la pistola apenas abre la página
-        document.getElementById('inputBusqueda').focus();
+        // FOCO AUTOMÁTICO
+        const inputBusqueda = document.getElementById('inputBusqueda');
+        if(inputBusqueda) inputBusqueda.focus();
+
+        // ASIGNAR EVENTO AL BOTÓN FINALIZAR (Corrección crítica)
+        const btnFinalizar = document.getElementById('btnFinalizarVenta');
+        if(btnFinalizar) {
+            btnFinalizar.onclick = finalizarVenta;
+        }
     } else {
         window.location.href = 'index.html';
     }
 }
 
 // ==========================================
-// DESCARGAR PRODUCTOS (INVENTARIO LOCAL)
+// DESCARGAR PRODUCTOS
 // ==========================================
 async function cargarProductos(userId) {
     const { data, error } = await _supabase
@@ -41,12 +48,10 @@ async function cargarProductos(userId) {
 }
 
 // ==========================================
-// BUSCADOR MANUAL Y PISTOLA (LÓGICA HÍBRIDA)
+// BUSCADOR Y PISTOLA (LÓGICA CORREGIDA)
 // ==========================================
-const inputBusqueda = document.getElementById('inputBusqueda');
-
-// 1. Detección de escritura manual (Búsqueda por nombre)
-inputBusqueda.addEventListener('input', (e) => {
+// Usamos window para evitar el SyntaxError de doble declaración
+window.manejarBusqueda = (e) => {
     const busqueda = e.target.value.toLowerCase();
     const tabla = document.getElementById('tablaResultados');
     tabla.innerHTML = '';
@@ -56,73 +61,44 @@ inputBusqueda.addEventListener('input', (e) => {
     const filtrados = productosBaseDeDatos.filter(p => 
         p.nombre.toLowerCase().includes(busqueda) || 
         (p.categoria && p.categoria.toLowerCase().includes(busqueda)) ||
-        (p.codigo_barras && p.codigo_barras === busqueda) // También busca por código exacto mientras escribes
+        (p.codigo_barras && p.codigo_barras === busqueda)
     );
 
     filtrados.forEach(prod => {
         const fila = document.createElement('tr');
         fila.className = "hover:bg-gray-50 transition-all cursor-pointer";
         fila.innerHTML = `
-            <td class="p-4">
-                <p class="font-bold text-gray-800">${prod.nombre}</p>
-                <p class="text-[10px] text-blue-500 uppercase font-black">${prod.categoria || 'General'}</p>
-            </td>
+            <td class="p-4"><p class="font-bold text-gray-800">${prod.nombre}</p></td>
             <td class="p-4 font-black text-gray-700">$${prod.precio.toFixed(2)}</td>
-            <td class="p-4">
-                <span class="text-xs font-bold ${prod.cantidad < 5 ? 'text-red-500' : 'text-gray-400'}">
-                    ${prod.cantidad} disp.
-                </span>
-            </td>
-            <td class="p-4 text-center">
-                <button onclick="agregarAlCarrito(${prod.id})" 
-                    class="bg-green-100 text-green-700 px-4 py-2 rounded-xl hover:bg-green-500 hover:text-white transition-all font-bold text-xs uppercase">
-                    + Añadir
-                </button>
-            </td>
+            <td class="p-4 text-xs">${prod.cantidad} disp.</td>
+            <td class="p-4"><button onclick="agregarAlCarrito(${prod.id})" class="bg-green-100 text-green-700 px-3 py-1 rounded-lg font-bold">+ Añadir</button></td>
         `;
         tabla.appendChild(fila);
     });
-});
+};
 
-// 2. Detección de la PISTOLA (Señal de Enter)
-inputBusqueda.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-        const valor = e.target.value.trim();
-        if (valor.length > 2) {
-            procesarEscaneo(valor);
-            e.target.value = ''; // Limpia el buscador para el siguiente "disparo"
+// Listeners corregidos para evitar duplicidad
+const inputBusq = document.getElementById('inputBusqueda');
+if(inputBusq) {
+    inputBusq.addEventListener('input', manejarBusqueda);
+    inputBusq.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            procesarEscaneo(e.target.value.trim());
+            e.target.value = '';
         }
-    }
-});
-
-// 3. FOCO INFINITO: Mantiene el cursor en el buscador para que la pistola nunca falle
-document.addEventListener('click', (e) => {
-    // Si el usuario no está haciendo clic en los campos de pago o cliente, regresa el foco al buscador
-    const camposIgnorar = ['pagaCon', 'selectCliente', 'esFiado'];
-    if (!camposIgnorar.includes(e.target.id) && e.target.tagName !== 'BUTTON') {
-        inputBusqueda.focus();
-    }
-});
+    });
+}
 
 // ==========================================
-// FUNCIÓN MAESTRA DE ESCANEO (CÁMARA Y PISTOLA)
+// FUNCIÓN MAESTRA DE ESCANEO
 // ==========================================
 function procesarEscaneo(codigo) {
     const producto = productosBaseDeDatos.find(p => p.codigo_barras === codigo);
-    
     if (producto) {
         agregarAlCarrito(producto.id);
-        
-        // Feedback visual: El total parpadea en verde cuando la pistola agrega algo
         const totalElem = document.getElementById('totalVenta');
         totalElem.classList.add('scale-110', 'text-blue-500');
         setTimeout(() => totalElem.classList.remove('scale-110', 'text-blue-500'), 200);
-        
-        // Limpiar tabla de resultados manuales si hubiera algo
-        document.getElementById('tablaResultados').innerHTML = '';
-    } else {
-        console.warn("Producto no registrado: " + codigo);
-        // Podrías agregar un sonido de error aquí
     }
 }
 
@@ -152,61 +128,42 @@ window.agregarAlCarrito = (id) => {
 function renderizarCarrito() {
     const contenedor = document.getElementById('carritoItems');
     const totalElem = document.getElementById('totalVenta');
-    const contadorElem = document.getElementById('contadorItems');
     const btnVenta = document.getElementById('btnFinalizarVenta');
-    const pagaConInput = document.getElementById('pagaCon');
-    const vueltoElem = document.getElementById('vuelto');
     
     contenedor.innerHTML = '';
     let total = 0;
-    let totalItems = 0;
 
     if (carrito.length === 0) {
         contenedor.innerHTML = '<p class="text-center text-gray-300 py-10 italic">Carrito vacío</p>';
         totalElem.textContent = "$0.00";
-        contadorElem.textContent = "0";
         btnVenta.disabled = true;
         return;
     }
 
     carrito.forEach((item, index) => {
-        const subtotal = item.precio * item.cantidadSeleccionada;
-        total += subtotal;
-        totalItems += item.cantidadSeleccionada;
-        
+        total += item.precio * item.cantidadSeleccionada;
         const div = document.createElement('div');
-        div.className = "flex flex-col bg-gray-50 p-4 rounded-2xl border border-gray-100 shadow-sm gap-2";
+        div.className = "flex justify-between items-center bg-gray-50 p-3 rounded-xl mb-2 border";
         div.innerHTML = `
-            <div class="flex justify-between items-start">
-                <div class="flex-1">
-                    <p class="font-black text-gray-800 text-sm leading-tight">${item.nombre}</p>
-                    <p class="text-xs text-gray-400 font-bold">$${item.precio.toFixed(2)} c/u</p>
-                </div>
-                <button onclick="quitarDelCarrito(${index})" class="text-red-300 hover:text-red-500 transition-all font-bold text-lg">✕</button>
+            <div>
+                <p class="font-bold text-sm">${item.nombre}</p>
+                <p class="text-xs text-gray-500">$${item.precio.toFixed(2)} x ${item.cantidadSeleccionada}</p>
             </div>
-            <div class="flex justify-between items-center mt-2">
-                <div class="flex items-center gap-2 bg-white rounded-xl border p-1">
-                    <button onclick="ajustarCantidad(${index}, -1)" class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-lg hover:bg-red-100 hover:text-red-600 transition-all font-bold">-</button>
-                    <span class="w-8 text-center font-black text-sm">${item.cantidadSeleccionada}</span>
-                    <button onclick="ajustarCantidad(${index}, 1)" class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-lg hover:bg-green-100 hover:text-green-600 transition-all font-bold">+</button>
-                </div>
-                <span class="font-black text-green-600 text-lg">$${subtotal.toFixed(2)}</span>
+            <div class="flex items-center gap-2">
+                <button onclick="ajustarCantidad(${index}, -1)" class="px-2 bg-white border rounded">-</button>
+                <button onclick="ajustarCantidad(${index}, 1)" class="px-2 bg-white border rounded">+</button>
+                <button onclick="quitarDelCarrito(${index})" class="text-red-500 ml-2">✕</button>
             </div>
         `;
         contenedor.appendChild(div);
     });
 
     totalElem.textContent = `$${total.toFixed(2)}`;
-    contadorElem.textContent = totalItems;
     btnVenta.disabled = false;
-
-    // Reset de calculadora de vuelto al cambiar el carrito
-    if(pagaConInput) pagaConInput.value = '';
-    if(vueltoElem) vueltoElem.textContent = '$0.00';
 }
 
 // ==========================================
-// PROCESAR VENTA FINAL
+// PROCESAR VENTA (MODIFICADO)
 // ==========================================
 async function finalizarVenta() {
     if (carrito.length === 0) return;
@@ -236,7 +193,7 @@ async function finalizarVenta() {
 
         if (errorVenta) throw errorVenta;
 
-        // 2. Actualizar Deuda si es fiado
+        // 2. Actualizar Deuda
         if (esFiado) {
             const { data: cliente } = await _supabase.from('clientes').select('deuda').eq('id', clienteId).single();
             const nuevaDeuda = Number(cliente.deuda || 0) + totalVenta;
@@ -253,58 +210,42 @@ async function finalizarVenta() {
         location.reload(); 
 
     } catch (error) {
-        alert("Error: " + error.message);
+        console.error(error);
+        alert("Error al finalizar venta.");
     }
 }
 
 // ==========================================
-// FUNCIONES DE SOPORTE (CÁMARA, VUELTO, ETC)
+// MÉTODOS DE PAGO Y VUELTO (LÓGICA NUEVA)
 // ==========================================
-async function toggleCamara() {
-    const readerDiv = document.getElementById('reader');
-    if (readerDiv.classList.contains('hidden')) {
-        readerDiv.classList.remove('hidden');
-        html5QrCode = new Html5Qrcode("reader");
-        html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (text) => {
-            procesarEscaneo(text);
-            detenerCamara();
-        });
-    } else {
-        detenerCamara();
-    }
-}
-
-function detenerCamara() {
-    if (html5QrCode) {
-        html5QrCode.stop().then(() => document.getElementById('reader').classList.add('hidden'));
-    }
-}
-
 window.seleccionarMetodo = (metodo) => {
     metodoSeleccionado = metodo;
+    
+    // UI: Resaltar botón seleccionado
     document.querySelectorAll('.metodo-pago').forEach(btn => {
         btn.classList.remove('border-green-500', 'bg-green-50', 'text-green-700');
         btn.classList.add('border-gray-100', 'bg-gray-50', 'text-gray-500');
     });
     const btn = document.getElementById(`btn${metodo}`);
-    btn.classList.replace('border-gray-100', 'border-green-500');
-    btn.classList.replace('bg-gray-50', 'bg-green-50');
-    btn.classList.replace('text-gray-500', 'text-green-700');
+    if(btn) btn.classList.add('border-green-500', 'bg-green-50', 'text-green-700');
+
+    // LÓGICA DE VUELTO: Ocultar si no es Efectivo
+    const panelVuelto = document.getElementById('pagaCon').closest('.bg-blue-50');
+    if(metodo === 'Efectivo') {
+        panelVuelto.style.display = 'block';
+    } else {
+        panelVuelto.style.display = 'none';
+        document.getElementById('pagaCon').value = '';
+        document.getElementById('vuelto').textContent = '$0.00';
+    }
 };
 
-// Cálculo de vuelto en tiempo real
-document.getElementById('pagaCon').addEventListener('input', (e) => {
-    const total = parseFloat(document.getElementById('totalVenta').textContent.replace('$', '')) || 0;
-    const pagaCon = parseFloat(e.target.value) || 0;
-    const vueltoElem = document.getElementById('vuelto');
-    if (pagaCon >= total) {
-        vueltoElem.textContent = `$${(pagaCon - total).toFixed(2)}`;
-    } else {
-        vueltoElem.textContent = "$0.00";
-    }
+// Atajo de teclado F2
+document.addEventListener('keydown', (e) => {
+    if (e.key === "F2") finalizarVenta();
 });
 
-// Atajos globales
+// Otras funciones de soporte
 window.ajustarCantidad = (index, cambio) => {
     const item = carrito[index];
     const original = productosBaseDeDatos.find(p => p.id === item.id);
@@ -322,11 +263,16 @@ window.quitarDelCarrito = (index) => {
 
 window.toggleSelectorCliente = function() {
     const con = document.getElementById('contenedorCliente');
-    if (document.getElementById('esFiado').checked) {
+    const esFiado = document.getElementById('esFiado').checked;
+    const panelVuelto = document.getElementById('pagaCon').closest('.bg-blue-50');
+
+    if (esFiado) {
         con.classList.remove('hidden');
+        panelVuelto.style.display = 'none'; // No hay vuelto en fiados
         cargarClientesVentas(); 
     } else {
         con.classList.add('hidden');
+        if(metodoSeleccionado === 'Efectivo') panelVuelto.style.display = 'block';
     }
 };
 
@@ -342,5 +288,16 @@ async function cargarClientesVentas() {
     });
 }
 
-// Ejecutar inicio
+// Cálculo de vuelto
+document.getElementById('pagaCon').addEventListener('input', (e) => {
+    const total = parseFloat(document.getElementById('totalVenta').textContent.replace('$', '')) || 0;
+    const pagaCon = parseFloat(e.target.value) || 0;
+    const vueltoElem = document.getElementById('vuelto');
+    if (pagaCon >= total) {
+        vueltoElem.textContent = `$${(pagaCon - total).toFixed(2)}`;
+    } else {
+        vueltoElem.textContent = "$0.00";
+    }
+});
+
 inicializar();

@@ -37,7 +37,7 @@
                     <div id="reader" class="hidden w-full mb-4 overflow-hidden rounded-xl border-2 border-blue-500"></div>
 
                     <input type="text" id="inputBusqueda" placeholder="Escanea el código o escribe nombre..." 
-                        class="w-full p-4 border-2 border-blue-100 rounded-xl focus:border-green-500 outline-none text-lg font-medium" autofocus>
+                        class="w-full p-4 border-2 border-blue-100 rounded-xl focus:border-green-500 outline-none text-lg font-medium">
                     
                     <p class="text-[10px] text-gray-400 mt-2 italic">Tip: Si usas pistola, solo escanea el producto y se agregará solo.</p>
                 </div>
@@ -81,7 +81,7 @@
                     </div>
                 </div>
 
-                <div class="mt-6 p-4 bg-blue-50 rounded-2xl border border-blue-100 space-y-3">
+                <div id="seccionVuelto" class="mt-6 p-4 bg-blue-50 rounded-2xl border border-blue-100 space-y-3">
                     <div class="flex justify-between items-center">
                         <label class="text-[10px] font-black text-blue-400 uppercase">Paga con:</label>
                         <div class="relative">
@@ -137,43 +137,5 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="ventas.js"></script>
-
-    <script>
-        const inputBusqueda = document.getElementById('inputBusqueda');
-
-        // 1. Detectar disparo de la PISTOLA (Enter)
-        inputBusqueda.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                const valor = this.value.trim();
-                if (valor !== "") {
-                    // Llamamos a la función que ya tienes en ventas.js
-                    if (typeof procesarEscaneo === "function") {
-                        procesarEscaneo(valor);
-                    } else {
-                        // Si tu función de búsqueda se llama diferente, cámbiala aquí:
-                        realizarBusqueda(valor); 
-                    }
-                    this.value = ""; // Limpiamos para el siguiente producto
-                }
-            }
-        });
-
-        // 2. ATAJO F2: Finalizar venta sin usar el mouse
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'F2') {
-                e.preventDefault();
-                document.getElementById('btnFinalizarVenta').click();
-            }
-        });
-
-        // 3. FOCO AUTOMÁTICO: Evita que el cursor se pierda
-        // Si haces clic en cualquier parte vacía, el cursor vuelve al buscador
-        document.addEventListener('click', function(e) {
-            if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'SELECT') {
-                inputBusqueda.focus();
-            }
-        });
-    </script>
 </body>
 </html>
