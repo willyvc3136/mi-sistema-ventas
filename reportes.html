@@ -3,80 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reportes - Minimarket Pro</title>
+    <title>Reportes Pro - Gestión de Ventas</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        .tabla-container::-webkit-scrollbar { width: 6px; }
-        .tabla-container::-webkit-scrollbar-track { background: #f1f1f1; }
-        .tabla-container::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); }
+        .tabla-container::-webkit-scrollbar { width: 5px; }
+        .tabla-container::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
     </style>
 </head>
-<body class="bg-gray-50 p-4 md:p-8">
+<body class="bg-[#f8fafc] text-slate-900 p-4 md:p-8">
 
     <div class="max-w-6xl mx-auto">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
             <div>
-                <a href="index.html" class="text-green-600 font-bold hover:underline">← Menú Principal</a>
-                <h1 class="text-3xl font-black text-gray-800 tracking-tighter mt-2">REPORTES DE VENTA</h1>
+                <a href="index.html" class="inline-flex items-center text-emerald-600 font-bold hover:gap-2 transition-all">
+                    <span class="mr-2">←</span> Volver al menú
+                </a>
+                <h1 class="text-4xl font-extrabold tracking-tight text-slate-900 mt-2">Analítica de Ventas</h1>
+                <p class="text-slate-500 font-medium">Monitorea el rendimiento de tu negocio en tiempo real.</p>
             </div>
             
-            <div class="flex flex-wrap gap-2 w-full md:w-auto items-center">
-                <select id="filtroTiempo" class="p-3 border-2 border-green-500 rounded-xl font-bold text-gray-700 outline-none">
-                    <option value="hoy">Ventas de Hoy</option>
-                    <option value="semanal">Últimos 7 Días</option>
-                    <option value="anual">Ventas del Año</option>
+            <div class="flex flex-wrap gap-3 bg-white p-2 rounded-2xl shadow-sm border border-slate-200">
+                <select id="filtroTiempo" class="bg-slate-50 p-2.5 rounded-xl font-bold text-slate-700 outline-none border-none">
+                    <option value="hoy">Hoy</option>
+                    <option value="semanal">Últimos 7 días</option>
+                    <option value="mensual">Este mes</option>
+                    <option value="anual">Este año</option>
                 </select>
-                
-                <div class="flex items-center gap-2 bg-white p-2 border-2 border-blue-400 rounded-xl">
-                    <input type="date" id="fechaInicio" class="outline-none text-sm font-bold text-gray-600">
-                    <span class="text-gray-400 font-black text-xs">AL</span>
-                    <input type="date" id="fechaFin" class="outline-none text-sm font-bold text-gray-600">
+                <div class="flex items-center gap-2 px-2 border-l border-slate-200">
+                    <input type="date" id="fechaInicio" class="bg-transparent outline-none text-sm font-bold text-slate-600">
+                    <span class="text-slate-300 text-xs font-black">❯</span>
+                    <input type="date" id="fechaFin" class="bg-transparent outline-none text-sm font-bold text-slate-600">
                 </div>
             </div>
         </div>
 
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-10">
-            <div class="bg-white p-4 rounded-3xl shadow-sm border-l-4 border-green-500">
-                <p class="text-[10px] font-black text-gray-400 uppercase">Efectivo</p>
-                <h2 id="totalEfectivo" class="text-xl font-black text-gray-800">$0.00</h2>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
+                <div class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mb-4">💰</div>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Venta Total (Real)</p>
+                <h2 id="granTotal" class="text-3xl font-black text-slate-800">$0.00</h2>
             </div>
-            <div class="bg-white p-4 rounded-3xl shadow-sm border-l-4 border-purple-500">
-                <p class="text-[10px] font-black text-gray-400 uppercase">Yape</p>
-                <h2 id="totalYape" class="text-xl font-black text-gray-800">$0.00</h2>
+
+            <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
+                <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-4">⏳</div>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Por Cobrar (Fiados)</p>
+                <h2 id="totalPorCobrar" class="text-3xl font-black text-slate-800">$0.00</h2>
             </div>
-            <div class="bg-white p-4 rounded-3xl shadow-sm border-l-4 border-blue-500">
-                <p class="text-[10px] font-black text-gray-400 uppercase">Plin</p>
-                <h2 id="totalPlin" class="text-xl font-black text-gray-800">$0.00</h2>
-            </div>
-            <div class="bg-green-600 p-4 rounded-3xl shadow-lg text-white col-span-2 md:col-span-1">
-                <p class="text-[10px] font-black text-green-200 uppercase">Gran Total Real</p>
-                <h2 id="granTotal" class="text-2xl font-black">$0.00</h2>
-            </div>
-            <div class="bg-blue-600 p-4 rounded-3xl shadow-lg text-white col-span-2 md:col-span-1">
-                <p class="text-[10px] font-black text-blue-200 uppercase">Por Cobrar</p>
-                <h2 id="totalPorCobrar" class="text-2xl font-black">$0.00</h2>
+
+            <div class="md:col-span-2 bg-slate-900 p-6 rounded-[2rem] shadow-xl text-white flex justify-between items-center">
+                <div>
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Desglose de Caja</p>
+                    <div class="flex gap-6 mt-3">
+                        <div>
+                            <span class="block text-[10px] text-emerald-400 font-bold uppercase">Efectivo</span>
+                            <span id="totalEfectivo" class="text-xl font-black">$0.00</span>
+                        </div>
+                        <div>
+                            <span class="block text-[10px] text-purple-400 font-bold uppercase">Digital (Y/P)</span>
+                            <span id="totalDigital" class="text-xl font-black">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="hidden md:block text-4xl">📈</div>
             </div>
         </div>
 
-        <div class="bg-white rounded-3xl shadow-sm overflow-hidden border border-gray-100">
-            <div class="tabla-container overflow-y-auto" style="max-height: 450px;">
-                <table class="w-full text-left">
-                    <thead class="bg-gray-50 border-b sticky top-0 z-10">
-                        <tr class="text-[10px] font-black text-gray-400 uppercase">
-                            <th class="p-5">Fecha / Hora</th>
-                            <th class="p-5 text-center">Método</th>
-                            <th class="p-5 text-right">Monto Total</th>
-                            <th class="p-5 text-center">Ticket</th> 
-                        </tr>
-                    </thead>
-                    <tbody id="listaVentas" class="divide-y divide-gray-50"></tbody>
-                </table>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden">
+                <div class="p-6 border-b border-slate-50 flex justify-between items-center">
+                    <h3 class="font-extrabold text-slate-800 uppercase text-sm tracking-widest">Historial de Operaciones</h3>
+                </div>
+                <div class="tabla-container overflow-y-auto" style="max-height: 500px;">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50/50 sticky top-0 z-10 backdrop-blur-md">
+                            <tr class="text-[10px] font-black text-slate-400 uppercase">
+                                <th class="p-5">Cliente / Fecha</th>
+                                <th class="p-5 text-center">Método</th>
+                                <th class="p-5 text-right">Total</th>
+                                <th class="p-5 text-center">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listaVentas" class="divide-y divide-slate-50">
+                            </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
 
-        <div class="bg-white p-6 rounded-3xl shadow-lg border border-gray-100 mt-8">
-            <h3 class="font-black text-gray-800 mb-4 uppercase text-sm">Balance: Dinero Real vs Fiados</h3>
-            <canvas id="graficaBalance" height="100"></canvas>
+            <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col justify-center">
+                <h3 class="font-extrabold text-slate-800 uppercase text-sm tracking-widest mb-8 text-center">Estructura de Ingresos</h3>
+                <div class="relative h-64">
+                    <canvas id="graficaBalance"></canvas>
+                </div>
+                <div id="leyendaGrafica" class="mt-8 space-y-3">
+                    </div>
+            </div>
         </div>
     </div>
 
