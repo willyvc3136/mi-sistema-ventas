@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Control - Minimarket Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; overflow: hidden; }
+        .sidebar-item.active { background: #ecfdf5; color: #059669; border-right: 4px solid #059669; }
+        iframe { width: 100%; height: calc(100vh - 64px); border: none; }
+    </style>
+</head>
+<body class="bg-slate-50 flex h-screen">
+
+    <aside class="hidden md:flex flex-col w-64 bg-white border-r border-slate-200 h-full">
+        <div class="p-6 flex items-center gap-3">
+            <div class="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center shadow-lg">
+                <span class="text-white font-black text-sm">M</span>
+            </div>
+            <span class="text-lg font-black text-slate-800 tracking-tighter">Minimarket<span class="text-emerald-600">Pro</span></span>
+        </div>
+
+        <nav class="flex-1 mt-4">
+            <button onclick="navegar('ventas.html', this)" class="sidebar-item active w-full flex items-center gap-4 px-6 py-4 font-bold text-slate-500 hover:bg-slate-50 transition-all">
+                <span>🛒</span> Caja Rápida
+            </button>
+            <button onclick="navegar('inventario.html', this)" class="sidebar-item w-full flex items-center gap-4 px-6 py-4 font-bold text-slate-500 hover:bg-slate-50 transition-all">
+                <span>📦</span> Inventario
+            </button>
+            <button onclick="navegar('clientes.html', this)" class="sidebar-item w-full flex items-center gap-4 px-6 py-4 font-bold text-slate-500 hover:bg-slate-50 transition-all">
+                <span>👥</span> Clientes / Fiados
+            </button>
+            <button onclick="navegar('reportes.html', this)" class="sidebar-item w-full flex items-center gap-4 px-6 py-4 font-bold text-slate-500 hover:bg-slate-50 transition-all">
+                <span>📊</span> Reportes
+            </button>
+        </nav>
+
+        <div class="p-6 border-t border-slate-100">
+            <button onclick="cerrarSesion()" class="flex items-center gap-4 text-red-500 font-bold hover:translate-x-2 transition-transform">
+                <span>🚪</span> Cerrar Sesión
+            </button>
+        </div>
+    </aside>
+
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6">
+            <button class="md:hidden text-2xl">☰</button>
+            <div class="flex items-center gap-4">
+                <span id="user-email" class="text-xs font-bold text-slate-400 uppercase hidden sm:block">Cargando...</span>
+                <div class="w-8 h-8 bg-slate-100 rounded-full border border-slate-200"></div>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-hidden">
+            <iframe src="ventas.html" id="visor"></iframe>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Configuración mínima de Supabase para el Header
+        const supabaseUrl = 'https://ijyhkbiukiqiqjabpubm.supabase.co';
+        const supabaseKey = 'sb_publishable_EpJx4G5egW9GZdj8P7oudw_kDWWsj6p';
+        const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+        async function verificarSesion() {
+            const { data: { user } } = await _supabase.auth.getUser();
+            if (!user) {
+                window.location.href = 'index.html';
+            } else {
+                document.getElementById('user-email').textContent = user.email;
+            }
+        }
+
+        function navegar(url, btn) {
+            document.getElementById('visor').src = url;
+            
+            // Estilo visual de botones
+            document.querySelectorAll('.sidebar-item').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        async function cerrarSesion() {
+            await _supabase.auth.signOut();
+            window.location.href = 'index.html';
+        }
+
+        verificarSesion();
+    </script>
+</body>
+</html>
