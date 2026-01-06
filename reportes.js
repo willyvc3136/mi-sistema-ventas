@@ -25,27 +25,30 @@ async function inicializarReportes() {
 // CARGA Y PROCESAMIENTO DE DATOS (UNIFICADO)
 // ==========================================
 async function cargarReporte() {
-    console.log("Cargando datos del reporte...");
-    
-    // 1. Obtener las ventas (con datos del cliente para la tabla)
+    console.log("Cargando datos de hoy (Hora Local)...");
+
+    // 1. Crear el inicio del día en tu hora local (00:00:00)
+    const mañana = new Date();
+    mañana.setDate(mañana.getDate() + 1); // Sumamos 1 día
+    mañana.setHours(0, 0, 0, 0); 
+    const hoyISO = mañana.toISOString(); // Ahora "hoyISO" es en realidad mañana
+
+    // 2. Obtener ventas filtradas
     const { data: ventas, error: errorVentas } = await _supabase
         .from('ventas')
         .select('*, clientes(nombre)')
+        .gte('created_at', hoyISO) // Solo lo que pasó después de las 00:00 de hoy
         .order('created_at', { ascending: false });
 
-    // 2. Obtener deudas reales de la tabla clientes
+    // 3. Obtener deudas totales
     const { data: clientes, error: errorClientes } = await _supabase
         .from('clientes')
         .select('deuda');
 
-    if (errorVentas || errorClientes) {
-        console.error("Error:", errorVentas || errorClientes);
-        return;
-    }
+    if (errorVentas || errorClientes) return;
 
-    // 3. Procesar montos
+    // --- El resto del procesamiento se mantiene igual ---
     let efectivo = 0, yape = 0, plin = 0;
-
     ventas.forEach(v => {
         const monto = Number(v.total || 0);
         if (v.metodo_pago === 'Efectivo') efectivo += monto;
@@ -56,14 +59,13 @@ async function cargarReporte() {
     const granTotalReal = efectivo + yape + plin;
     const totalDeudaReal = clientes.reduce((acc, c) => acc + (Number(c.deuda) || 0), 0);
 
-    // 4. Actualizar Interfaz (IDs del HTML)
+    // Actualizar Interfaz
     document.getElementById('totalEfectivo').textContent = `$${efectivo.toFixed(2)}`;
     document.getElementById('totalYape').textContent = `$${yape.toFixed(2)}`;
     document.getElementById('totalPlin').textContent = `$${plin.toFixed(2)}`;
     document.getElementById('granTotal').textContent = `$${granTotalReal.toFixed(2)}`;
     document.getElementById('totalPorCobrar').textContent = `$${totalDeudaReal.toFixed(2)}`;
 
-    // 5. Renderizar tabla y gráfica
     renderizarTabla(ventas);
     actualizarGrafica(granTotalReal, totalDeudaReal);
 }
