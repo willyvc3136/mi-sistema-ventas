@@ -11,6 +11,33 @@ let productosBaseDeDatos = [];
 let html5QrCode; 
 let metodoSeleccionado = 'Efectivo'; 
 
+// VARIABLES PARA EL CONTROL DEL ESCÁNER
+let ultimoCodigoLeido = null;
+let tiempoUltimaLectura = 0;
+
+// ==========================================
+// UTILIDADES: SONIDO Y VIBRACIÓN
+// ==========================================
+function emitirBeep() {
+    try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); 
+        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.1);
+    } catch (e) {
+        console.log("Audio no permitido aún por el navegador");
+    }
+}
+
 // ==========================================
 // SEGURIDAD E INICIALIZACIÓN
 // ==========================================
@@ -31,9 +58,6 @@ async function inicializar() {
     }
 }
 
-// ==========================================
-// DESCARGAR PRODUCTOS
-// ==========================================
 async function cargarProductos(userId) {
     const { data, error } = await _supabase
         .from('productos')
@@ -45,7 +69,7 @@ async function cargarProductos(userId) {
 }
 
 // ==========================================
-// LÓGICA DE LA CÁMARA (CORREGIDA Y SINCRONIZADA)
+// LÓGICA DE LA CÁMARA (ANTI-REPETICIÓN)
 // ==========================================
 window.toggleLector = async function() {
     const container = document.getElementById('lectorContainer');
@@ -67,29 +91,27 @@ async function encenderCamara(targetInputId) {
     }
 
     html5QrCode = new Html5Qrcode("reader");
-
-    const config = { 
-        fps: 20, 
-        qrbox: { width: 250, height: 180 },
-        aspectRatio: 1.0 
-    };
+    const config = { fps: 20, qrbox: { width: 250, height: 180 }, aspectRatio: 1.0 };
 
     try {
         await html5QrCode.start(
             { facingMode: "environment" }, 
             config, 
             (decodedText) => {
-                const input = document.getElementById(targetInputId);
-                if(input) {
-                    input.value = decodedText;
-                    procesarEscaneo(decodedText);
-                    if (navigator.vibrate) navigator.vibrate(100);
+                const ahora = Date.now();
+                // Si es el mismo código y han pasado menos de 2.5 segundos, ignorar
+                if (decodedText === ultimoCodigoLeido && (ahora - tiempoUltimaLectura) < 2500) {
+                    return; 
                 }
+                
+                ultimoCodigoLeido = decodedText;
+                tiempoUltimaLectura = ahora;
+                
+                procesarEscaneo(decodedText);
             }
         );
     } catch (err) {
         console.error("Error de cámara:", err);
-        alert("Asegúrate de usar HTTPS y dar permisos de cámara");
         cerrarCamara();
     }
 }
@@ -97,25 +119,38 @@ async function encenderCamara(targetInputId) {
 async function cerrarCamara() {
     const container = document.getElementById('lectorContainer');
     const btn = document.getElementById('btnCamara');
-    
     if (html5QrCode) {
         await html5QrCode.stop().catch(() => {});
         html5QrCode = null;
     }
-    
     container.classList.add('hidden');
     btn.textContent = "📷 Activar Cámara";
     btn.classList.replace('bg-red-600', 'bg-slate-900');
 }
 
 // ==========================================
-// BUSCADOR Y PISTOLA
+// PROCESAMIENTO DE ESCANEO
 // ==========================================
+function procesarEscaneo(codigo) {
+    const producto = productosBaseDeDatos.find(p => p.codigo_barras === codigo);
+    if (producto) {
+        emitirBeep();
+        if (navigator.vibrate) navigator.vibrate(100);
+        
+        agregarAlCarrito(producto.id);
+        
+        document.getElementById('inputBusqueda').value = '';
+        const totalElem = document.getElementById('totalVenta');
+        totalElem.classList.add('scale-110', 'text-blue-500');
+        setTimeout(() => totalElem.classList.remove('scale-110', 'text-blue-500'), 200);
+    }
+}
+
+// Buscador manual
 window.manejarBusqueda = (e) => {
     const busqueda = e.target.value.toLowerCase();
     const tabla = document.getElementById('tablaResultados');
     tabla.innerHTML = '';
-
     if (busqueda.length < 1) return;
 
     const filtrados = productosBaseDeDatos.filter(p => 
@@ -125,33 +160,19 @@ window.manejarBusqueda = (e) => {
 
     filtrados.forEach(prod => {
         const fila = document.createElement('tr');
-        fila.className = "hover:bg-gray-50 transition-all cursor-pointer";
+        fila.className = "hover:bg-gray-50 cursor-pointer border-b";
         fila.innerHTML = `
             <td class="p-4"><p class="font-bold text-gray-800">${prod.nombre}</p></td>
-            <td class="p-4 font-black text-gray-700">$${prod.precio.toFixed(2)}</td>
+            <td class="p-4 font-black text-emerald-600">$${prod.precio.toFixed(2)}</td>
             <td class="p-4 text-xs">${prod.cantidad} disp.</td>
             <td class="p-4 text-center">
-                <button onclick="agregarAlCarrito(${prod.id})" class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-lg font-bold hover:bg-emerald-600 hover:text-white transition">
-                    + Añadir
-                </button>
+                <button onclick="agregarAlCarrito(${prod.id})" class="bg-emerald-600 text-white px-3 py-1 rounded-lg font-bold">+ Añadir</button>
             </td>
         `;
         tabla.appendChild(fila);
     });
 };
 
-function procesarEscaneo(codigo) {
-    const producto = productosBaseDeDatos.find(p => p.codigo_barras === codigo);
-    if (producto) {
-        agregarAlCarrito(producto.id);
-        document.getElementById('inputBusqueda').value = '';
-        const totalElem = document.getElementById('totalVenta');
-        totalElem.classList.add('scale-110', 'text-blue-500');
-        setTimeout(() => totalElem.classList.remove('scale-110', 'text-blue-500'), 200);
-    }
-}
-
-// Listeners
 const inputBusq = document.getElementById('inputBusqueda');
 if(inputBusq) {
     inputBusq.addEventListener('input', manejarBusqueda);
@@ -164,7 +185,7 @@ if(inputBusq) {
 }
 
 // ==========================================
-// LÓGICA DEL CARRITO
+// GESTIÓN DEL CARRITO
 // ==========================================
 window.agregarAlCarrito = (id) => {
     const producto = productosBaseDeDatos.find(p => p.id === id);
@@ -195,7 +216,7 @@ function renderizarCarrito() {
     let total = 0;
 
     if (carrito.length === 0) {
-        contenedor.innerHTML = '<p class="text-center text-gray-300 py-10 italic">Carrito vacío</p>';
+        contenedor.innerHTML = '<p class="text-center text-gray-300 py-10 italic">Caja Vacía</p>';
         totalElem.textContent = "$0.00";
         btnVenta.disabled = true;
         return;
@@ -207,14 +228,14 @@ function renderizarCarrito() {
         div.className = "flex justify-between items-center bg-white p-3 rounded-xl mb-2 border shadow-sm";
         div.innerHTML = `
             <div>
-                <p class="font-bold text-sm">${item.nombre}</p>
-                <p class="text-xs text-gray-500">$${item.precio.toFixed(2)} x ${item.cantidadSeleccionada}</p>
+                <p class="font-bold text-sm text-slate-800">${item.nombre}</p>
+                <p class="text-xs text-slate-500">$${item.precio.toFixed(2)} unit.</p>
             </div>
             <div class="flex items-center gap-2">
-                <button onclick="ajustarCantidad(${index}, -1)" class="px-2 bg-slate-100 rounded">-</button>
-                <span class="text-xs font-bold">${item.cantidadSeleccionada}</span>
-                <button onclick="ajustarCantidad(${index}, 1)" class="px-2 bg-slate-100 rounded">+</button>
-                <button onclick="quitarDelCarrito(${index})" class="text-red-500 ml-2">✕</button>
+                <button onclick="ajustarCantidad(${index}, -1)" class="w-8 h-8 bg-slate-100 rounded-lg font-bold">-</button>
+                <span class="text-sm font-black w-6 text-center">${item.cantidadSeleccionada}</span>
+                <button onclick="ajustarCantidad(${index}, 1)" class="w-8 h-8 bg-slate-100 rounded-lg font-bold">+</button>
+                <button onclick="quitarDelCarrito(${index})" class="text-red-400 ml-2">✕</button>
             </div>
         `;
         contenedor.appendChild(div);
@@ -241,7 +262,7 @@ window.quitarDelCarrito = (index) => {
 };
 
 // ==========================================
-// PAGOS Y FINALIZACIÓN
+// FINALIZACIÓN Y PAGO
 // ==========================================
 window.seleccionarMetodo = (metodo) => {
     metodoSeleccionado = metodo;
@@ -249,28 +270,18 @@ window.seleccionarMetodo = (metodo) => {
         btn.classList.remove('border-emerald-500', 'bg-emerald-50', 'text-emerald-700');
         btn.classList.add('border-slate-100', 'bg-white', 'text-slate-500');
     });
-    
-    const btnId = `btn${metodo}`;
-    const btnActivo = document.getElementById(btnId);
+    const btnActivo = document.getElementById(`btn${metodo}`);
     if(btnActivo) btnActivo.classList.add('border-emerald-500', 'bg-emerald-50', 'text-emerald-700');
-
+    
     const panelVuelto = document.getElementById('panelVuelto');
-    if(metodo === 'Efectivo') {
-        panelVuelto.classList.remove('hidden');
-    } else {
-        panelVuelto.classList.add('hidden');
-    }
+    metodo === 'Efectivo' ? panelVuelto.classList.remove('hidden') : panelVuelto.classList.add('hidden');
 };
 
 function actualizarVuelto() {
     const total = parseFloat(document.getElementById('totalVenta').textContent.replace('$', '')) || 0;
     const pagaCon = parseFloat(document.getElementById('pagaCon').value) || 0;
     const vueltoElem = document.getElementById('vuelto');
-    if (pagaCon >= total && total > 0) {
-        vueltoElem.textContent = `$${(pagaCon - total).toFixed(2)}`;
-    } else {
-        vueltoElem.textContent = "$0.00";
-    }
+    vueltoElem.textContent = pagaCon >= total ? `$${(pagaCon - total).toFixed(2)}` : "$0.00";
 }
 
 document.getElementById('pagaCon').addEventListener('input', actualizarVuelto);
@@ -278,12 +289,7 @@ document.getElementById('pagaCon').addEventListener('input', actualizarVuelto);
 window.toggleSelectorCliente = function() {
     const con = document.getElementById('contenedorCliente');
     const esFiado = document.getElementById('esFiado').checked;
-    if (esFiado) {
-        con.classList.remove('hidden');
-        cargarClientesVentas(); 
-    } else {
-        con.classList.add('hidden');
-    }
+    esFiado ? (con.classList.remove('hidden'), cargarClientesVentas()) : con.classList.add('hidden');
 };
 
 async function cargarClientesVentas() {
@@ -291,29 +297,23 @@ async function cargarClientesVentas() {
     const { data } = await _supabase.from('clientes').select('id, nombre').eq('user_id', user.id);
     const select = document.getElementById('selectCliente');
     select.innerHTML = '<option value="">-- Seleccionar cliente --</option>';
-    if(data) {
-        data.forEach(c => {
-            const o = document.createElement('option');
-            o.value = c.id; o.textContent = c.nombre;
-            select.appendChild(o);
-        });
-    }
+    if(data) data.forEach(c => {
+        const o = document.createElement('option');
+        o.value = c.id; o.textContent = c.nombre;
+        select.appendChild(o);
+    });
 }
 
 async function finalizarVenta() {
     if (carrito.length === 0) return;
     const btn = document.getElementById('btnFinalizarVenta');
-    btn.disabled = true;
-    btn.textContent = "PROCESANDO...";
-
     const esFiado = document.getElementById('esFiado').checked;
     const clienteId = document.getElementById('selectCliente').value;
 
-    if (esFiado && !clienteId) {
-        btn.disabled = false;
-        btn.textContent = "Finalizar Venta (F2)";
-        return alert("⚠️ Selecciona un cliente para el fiado.");
-    }
+    if (esFiado && !clienteId) return alert("⚠️ Selecciona un cliente para el fiado.");
+
+    btn.disabled = true;
+    btn.textContent = "PROCESANDO...";
 
     try {
         const { data: { user } } = await _supabase.auth.getUser();
@@ -345,10 +345,10 @@ async function finalizarVenta() {
         console.error(e);
         alert("Error al guardar venta");
         btn.disabled = false;
+        btn.textContent = "Finalizar Venta (F2)";
     }
 }
 
-// Atajo F2
 document.addEventListener('keydown', (e) => { if (e.key === "F2") finalizarVenta(); });
 
 inicializar();
