@@ -16,26 +16,33 @@ let ultimoCodigoLeido = null;
 let tiempoUltimaLectura = 0;
 
 // ==========================================
-// UTILIDADES: SONIDO Y VIBRACIÓN
+// UTILIDADES: SONIDO Y NOTIFICACIONES
 // ==========================================
 function emitirBeep() {
     try {
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         const oscillator = audioCtx.createOscillator();
         const gainNode = audioCtx.createGain();
-
         oscillator.connect(gainNode);
         gainNode.connect(audioCtx.destination);
-
         oscillator.type = 'sine';
         oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); 
         gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-
         oscillator.start();
         oscillator.stop(audioCtx.currentTime + 0.1);
-    } catch (e) {
-        console.log("Audio no permitido aún por el navegador");
-    }
+    } catch (e) { console.log("Audio bloqueado"); }
+}
+
+// Toast Notification (Mejora #4)
+function mostrarNotificacion(mensaje, tipo = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `fixed bottom-5 right-5 px-6 py-3 rounded-lg text-white font-bold z-50 shadow-2xl transition-all transform translate-y-0 ${tipo === 'success' ? 'bg-emerald-500' : 'bg-red-500'}`;
+    toast.textContent = mensaje;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-10');
+        setTimeout(() => toast.remove(), 500);
+    }, 2000);
 }
 
 // ==========================================
@@ -48,14 +55,22 @@ async function inicializar() {
         if(display) display.textContent = `Vendedor: ${user.email}`;
         await cargarProductos(user.id); 
         
-        const inputBusqueda = document.getElementById('inputBusqueda');
-        if(inputBusqueda) inputBusqueda.focus();
+        // Mejorar el foco inicial (Mejora #3)
+        enfocarBuscador();
 
         const btnFinalizar = document.getElementById('btnFinalizarVenta');
         if(btnFinalizar) btnFinalizar.onclick = finalizarVenta;
+
+        // Inyectar botones de pago rápido si no existen (Mejora #1)
+        crearBotonesPagoRapido();
     } else {
         window.location.href = 'index.html';
     }
+}
+
+function enfocarBuscador() {
+    const inputBusqueda = document.getElementById('inputBusqueda');
+    if(inputBusqueda) inputBusqueda.focus();
 }
 
 async function cargarProductos(userId) {
@@ -86,10 +101,7 @@ window.toggleLector = async function() {
 };
 
 async function encenderCamara(targetInputId) {
-    if (html5QrCode) {
-        await html5QrCode.stop().catch(() => {});
-    }
-
+    if (html5QrCode) await html5QrCode.stop().catch(() => {});
     html5QrCode = new Html5Qrcode("reader");
     const config = { fps: 20, qrbox: { width: 250, height: 180 }, aspectRatio: 1.0 };
 
@@ -99,21 +111,13 @@ async function encenderCamara(targetInputId) {
             config, 
             (decodedText) => {
                 const ahora = Date.now();
-                // Si es el mismo código y han pasado menos de 2.5 segundos, ignorar
-                if (decodedText === ultimoCodigoLeido && (ahora - tiempoUltimaLectura) < 2500) {
-                    return; 
-                }
-                
+                if (decodedText === ultimoCodigoLeido && (ahora - tiempoUltimaLectura) < 2500) return; 
                 ultimoCodigoLeido = decodedText;
                 tiempoUltimaLectura = ahora;
-                
                 procesarEscaneo(decodedText);
             }
         );
-    } catch (err) {
-        console.error("Error de cámara:", err);
-        cerrarCamara();
-    }
+    } catch (err) { cerrarCamara(); }
 }
 
 async function cerrarCamara() {
@@ -136,17 +140,18 @@ function procesarEscaneo(codigo) {
     if (producto) {
         emitirBeep();
         if (navigator.vibrate) navigator.vibrate(100);
-        
         agregarAlCarrito(producto.id);
         
         document.getElementById('inputBusqueda').value = '';
         const totalElem = document.getElementById('totalVenta');
         totalElem.classList.add('scale-110', 'text-blue-500');
-        setTimeout(() => totalElem.classList.remove('scale-110', 'text-blue-500'), 200);
+        setTimeout(() => {
+            totalElem.classList.remove('scale-110', 'text-blue-500');
+            enfocarBuscador(); // (Mejora #3)
+        }, 200);
     }
 }
 
-// Buscador manual
 window.manejarBusqueda = (e) => {
     const busqueda = e.target.value.toLowerCase();
     const tabla = document.getElementById('tablaResultados');
@@ -164,7 +169,7 @@ window.manejarBusqueda = (e) => {
         fila.innerHTML = `
             <td class="p-4"><p class="font-bold text-gray-800">${prod.nombre}</p></td>
             <td class="p-4 font-black text-emerald-600">$${prod.precio.toFixed(2)}</td>
-            <td class="p-4 text-xs">${prod.cantidad} disp.</td>
+            <td class="p-4 text-xs ${prod.cantidad < 5 ? 'text-red-500 font-bold animate-pulse' : ''}">${prod.cantidad} disp.</td>
             <td class="p-4 text-center">
                 <button onclick="agregarAlCarrito(${prod.id})" class="bg-emerald-600 text-white px-3 py-1 rounded-lg font-bold">+ Añadir</button>
             </td>
@@ -172,17 +177,6 @@ window.manejarBusqueda = (e) => {
         tabla.appendChild(fila);
     });
 };
-
-const inputBusq = document.getElementById('inputBusqueda');
-if(inputBusq) {
-    inputBusq.addEventListener('input', manejarBusqueda);
-    inputBusq.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            procesarEscaneo(e.target.value.trim());
-            e.target.value = '';
-        }
-    });
-}
 
 // ==========================================
 // GESTIÓN DEL CARRITO
@@ -195,16 +189,19 @@ window.agregarAlCarrito = (id) => {
         if (itemEnCarrito.cantidadSeleccionada < producto.cantidad) {
             itemEnCarrito.cantidadSeleccionada++;
         } else {
-            alert("⚠️ Stock insuficiente");
+            mostrarNotificacion("Stock insuficiente", "error");
+            return;
         }
     } else {
         if (producto.cantidad > 0) {
             carrito.push({ ...producto, cantidadSeleccionada: 1 });
         } else {
-            alert("⚠️ Producto sin stock");
+            mostrarNotificacion("Producto sin stock", "error");
+            return;
         }
     }
     renderizarCarrito();
+    enfocarBuscador(); // (Mejora #3)
 };
 
 function renderizarCarrito() {
@@ -224,12 +221,17 @@ function renderizarCarrito() {
 
     carrito.forEach((item, index) => {
         total += item.precio * item.cantidadSeleccionada;
+        // Alerta de stock crítico en el carrito (Mejora #2)
+        const stockCritico = item.cantidad - item.cantidadSeleccionada < 3;
+
         const div = document.createElement('div');
-        div.className = "flex justify-between items-center bg-white p-3 rounded-xl mb-2 border shadow-sm";
+        div.className = `flex justify-between items-center p-3 rounded-xl mb-2 border shadow-sm ${stockCritico ? 'bg-orange-50 border-orange-200' : 'bg-white'}`;
         div.innerHTML = `
             <div>
                 <p class="font-bold text-sm text-slate-800">${item.nombre}</p>
-                <p class="text-xs text-slate-500">$${item.precio.toFixed(2)} unit.</p>
+                <p class="text-xs ${stockCritico ? 'text-orange-600 font-bold' : 'text-slate-500'}">
+                    $${item.precio.toFixed(2)} unit. ${stockCritico ? '(¡Queda poco!)' : ''}
+                </p>
             </div>
             <div class="flex items-center gap-2">
                 <button onclick="ajustarCantidad(${index}, -1)" class="w-8 h-8 bg-slate-100 rounded-lg font-bold">-</button>
@@ -253,6 +255,8 @@ window.ajustarCantidad = (index, cambio) => {
     if (nueva >= 1 && nueva <= original.cantidad) {
         item.cantidadSeleccionada = nueva;
         renderizarCarrito();
+    } else if (nueva > original.cantidad) {
+        mostrarNotificacion("Límite de stock alcanzado", "error");
     }
 };
 
@@ -262,8 +266,43 @@ window.quitarDelCarrito = (index) => {
 };
 
 // ==========================================
-// FINALIZACIÓN Y PAGO
+// PAGO RÁPIDO Y VUELTO (Mejora #1)
 // ==========================================
+function crearBotonesPagoRapido() {
+    const contenedorVuelto = document.getElementById('panelVuelto');
+    if(!contenedorVuelto) return;
+
+    const divBotones = document.createElement('div');
+    divBotones.className = "flex flex-wrap gap-2 mt-2";
+    const montos = [10, 20, 50, 100];
+    
+    montos.forEach(monto => {
+        const btn = document.createElement('button');
+        btn.className = "bg-slate-100 hover:bg-emerald-100 text-slate-600 text-xs px-2 py-1 rounded border transition-colors";
+        btn.textContent = `+$${monto}`;
+        btn.onclick = () => {
+            const inputPaga = document.getElementById('pagaCon');
+            const actual = parseFloat(inputPaga.value) || 0;
+            inputPaga.value = (actual + monto).toFixed(2);
+            actualizarVuelto();
+        };
+        divBotones.appendChild(btn);
+    });
+    
+    // Boton de Pago Exacto
+    const btnExacto = document.createElement('button');
+    btnExacto.className = "bg-emerald-100 hover:bg-emerald-200 text-emerald-700 text-xs px-2 py-1 rounded border border-emerald-200 font-bold";
+    btnExacto.textContent = "Pago Exacto";
+    btnExacto.onclick = () => {
+        const total = document.getElementById('totalVenta').textContent.replace('$', '');
+        document.getElementById('pagaCon').value = total;
+        actualizarVuelto();
+    };
+    divBotones.appendChild(btnExacto);
+
+    contenedorVuelto.appendChild(divBotones);
+}
+
 window.seleccionarMetodo = (metodo) => {
     metodoSeleccionado = metodo;
     document.querySelectorAll('.metodo-pago').forEach(btn => {
@@ -286,31 +325,16 @@ function actualizarVuelto() {
 
 document.getElementById('pagaCon').addEventListener('input', actualizarVuelto);
 
-window.toggleSelectorCliente = function() {
-    const con = document.getElementById('contenedorCliente');
-    const esFiado = document.getElementById('esFiado').checked;
-    esFiado ? (con.classList.remove('hidden'), cargarClientesVentas()) : con.classList.add('hidden');
-};
-
-async function cargarClientesVentas() {
-    const { data: { user } } = await _supabase.auth.getUser();
-    const { data } = await _supabase.from('clientes').select('id, nombre').eq('user_id', user.id);
-    const select = document.getElementById('selectCliente');
-    select.innerHTML = '<option value="">-- Seleccionar cliente --</option>';
-    if(data) data.forEach(c => {
-        const o = document.createElement('option');
-        o.value = c.id; o.textContent = c.nombre;
-        select.appendChild(o);
-    });
-}
-
+// ==========================================
+// FINALIZACIÓN DE VENTA
+// ==========================================
 async function finalizarVenta() {
     if (carrito.length === 0) return;
     const btn = document.getElementById('btnFinalizarVenta');
     const esFiado = document.getElementById('esFiado').checked;
     const clienteId = document.getElementById('selectCliente').value;
 
-    if (esFiado && !clienteId) return alert("⚠️ Selecciona un cliente para el fiado.");
+    if (esFiado && !clienteId) return alert("⚠️ Selecciona un cliente.");
 
     btn.disabled = true;
     btn.textContent = "PROCESANDO...";
@@ -339,14 +363,25 @@ async function finalizarVenta() {
             await _supabase.from('productos').update({ cantidad: item.cantidad - item.cantidadSeleccionada }).eq('id', item.id);
         }
 
-        alert("🎯 Venta procesada!");
-        location.reload(); 
+        mostrarNotificacion("🎯 Venta registrada con éxito");
+        setTimeout(() => location.reload(), 1000); 
     } catch (e) {
         console.error(e);
-        alert("Error al guardar venta");
         btn.disabled = false;
         btn.textContent = "Finalizar Venta (F2)";
     }
+}
+
+// Listeners
+const inputBusq = document.getElementById('inputBusqueda');
+if(inputBusq) {
+    inputBusq.addEventListener('input', manejarBusqueda);
+    inputBusq.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            procesarEscaneo(e.target.value.trim());
+            e.target.value = '';
+        }
+    });
 }
 
 document.addEventListener('keydown', (e) => { if (e.key === "F2") finalizarVenta(); });
