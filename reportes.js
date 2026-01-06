@@ -25,29 +25,44 @@ async function inicializarReportes() {
 // CARGA Y PROCESAMIENTO DE DATOS (UNIFICADO)
 // ==========================================
 async function cargarReporte() {
-    console.log("Cargando datos de hoy (Hora Local)...");
+    console.log("Cargando reporte con filtro inteligente...");
 
-    // 1. Crear el inicio del día en tu hora local (00:00:00)
-    const mañana = new Date();
-    mañana.setDate(mañana.getDate() + 1); // Sumamos 1 día
-    mañana.setHours(0, 0, 0, 0); 
-    const hoyISO = mañana.toISOString(); // Ahora "hoyISO" es en realidad mañana
+    // 1. Obtener el valor del selector del HTML
+    const filtro = document.getElementById('filtroTiempo').value;
+    
+    // 2. Calcular la fecha de inicio según la opción elegida
+    let fechaInicio = new Date();
+    fechaInicio.setHours(0, 0, 0, 0); // Por defecto es "Hoy" a las 00:00
 
-    // 2. Obtener ventas filtradas
+    if (filtro === 'semanal') {
+        // Restar 7 días a la fecha actual
+        fechaInicio.setDate(fechaInicio.getDate() - 7);
+    } else if (filtro === 'anual') {
+        // Ir al 1 de enero del año actual
+        fechaInicio.setMonth(0, 1);
+    }
+    // Si el filtro es 'hoy', no entra en los if y usa la medianoche de hoy
+
+    const fechaISO = fechaInicio.toISOString();
+
+    // 3. Obtener VENTAS filtradas por la fecha calculada
     const { data: ventas, error: errorVentas } = await _supabase
         .from('ventas')
         .select('*, clientes(nombre)')
-        .gte('created_at', hoyISO) // Solo lo que pasó después de las 00:00 de hoy
+        .gte('created_at', fechaISO) 
         .order('created_at', { ascending: false });
 
-    // 3. Obtener deudas totales
+    // 4. Obtener DEUDA TOTAL (Esto siempre es la suma de todos los clientes)
     const { data: clientes, error: errorClientes } = await _supabase
         .from('clientes')
         .select('deuda');
 
-    if (errorVentas || errorClientes) return;
+    if (errorVentas || errorClientes) {
+        console.error("Error cargando datos:", errorVentas || errorClientes);
+        return;
+    }
 
-    // --- El resto del procesamiento se mantiene igual ---
+    // 5. Procesar totales (Dinero Real)
     let efectivo = 0, yape = 0, plin = 0;
     ventas.forEach(v => {
         const monto = Number(v.total || 0);
@@ -59,13 +74,14 @@ async function cargarReporte() {
     const granTotalReal = efectivo + yape + plin;
     const totalDeudaReal = clientes.reduce((acc, c) => acc + (Number(c.deuda) || 0), 0);
 
-    // Actualizar Interfaz
+    // 6. Actualizar la interfaz (Números en las tarjetas)
     document.getElementById('totalEfectivo').textContent = `$${efectivo.toFixed(2)}`;
     document.getElementById('totalYape').textContent = `$${yape.toFixed(2)}`;
     document.getElementById('totalPlin').textContent = `$${plin.toFixed(2)}`;
     document.getElementById('granTotal').textContent = `$${granTotalReal.toFixed(2)}`;
     document.getElementById('totalPorCobrar').textContent = `$${totalDeudaReal.toFixed(2)}`;
 
+    // 7. Renderizar tabla y gráfica
     renderizarTabla(ventas);
     actualizarGrafica(granTotalReal, totalDeudaReal);
 }
@@ -79,7 +95,7 @@ function renderizarTabla(ventas) {
     tabla.innerHTML = '';
 
     if (ventas.length === 0) {
-        tabla.innerHTML = '<tr><td colspan="3" class="p-10 text-center text-gray-400 italic">No hay ventas</td></tr>';
+        tabla.innerHTML = '<tr><td colspan="3" class="p-10 text-center text-gray-400 italic">No hay ventas en este periodo</td></tr>';
         return;
     }
 
