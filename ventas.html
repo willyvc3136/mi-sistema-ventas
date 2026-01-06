@@ -21,9 +21,14 @@
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                     <div class="flex justify-between items-center mb-4">
                         <label class="block text-xs font-black text-slate-400 uppercase">Buscador o Escáner</label>
-                        <button onclick="toggleCamara()" class="text-xs bg-slate-900 text-white px-4 py-2 rounded-xl font-bold hover:bg-emerald-600 transition shadow-sm">📷 Activar Cámara</button>
+                        <button onclick="toggleLector()" id="btnCamara" class="text-xs bg-slate-900 text-white px-4 py-2 rounded-xl font-bold hover:bg-emerald-600 transition shadow-sm">📷 Activar Cámara</button>
                     </div>
-                    <div id="reader" class="hidden w-full mb-4 overflow-hidden rounded-xl border-2 border-emerald-500"></div>
+                    
+                    <div id="lectorContainer" class="hidden mb-4 overflow-hidden rounded-xl border-2 border-emerald-500 bg-black relative">
+                        <div id="reader" class="w-full"></div>
+                        <button onclick="toggleLector()" class="absolute top-2 right-2 bg-red-600 text-white p-2 rounded-full text-xs font-bold">✕ Cerrar</button>
+                    </div>
+
                     <input type="text" id="inputBusqueda" placeholder="Escanea el código o escribe nombre..." 
                         class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-emerald-500 focus:bg-white outline-none text-lg font-semibold transition-all">
                 </div>
