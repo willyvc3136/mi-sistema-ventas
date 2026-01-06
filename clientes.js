@@ -141,4 +141,3 @@ async function guardarAbono() {
 }
 
 obtenerClientes();
-obtenerClientes();
