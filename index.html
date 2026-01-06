@@ -3,183 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minimarket Pro - Inicio</title>
+    <title>Minimarket Pro | Gestión Inteligente</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        /* Animación suave para la entrada de los paneles */
-        .fade-in { animation: fadeIn 0.5s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); }
+        .hero-gradient { background: radial-gradient(circle at 0% 0%, #ecfdf5 0%, #ffffff 50%); }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center p-6 font-sans">
+<body class="hero-gradient text-slate-900">
 
-    <div id="authSection" class="max-w-md w-full bg-white p-8 rounded-2xl shadow-xl border-t-8 border-blue-600 hidden fade-in">
-        <h2 class="text-2xl font-black mb-6 text-center text-gray-800 tracking-tighter uppercase">Iniciar Sistema</h2>
-        
-        <div class="space-y-4">
-            <input type="email" id="authEmail" placeholder="Correo electrónico" 
-                class="w-full border p-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 border-gray-200 font-medium">
-            
-            <input type="password" id="authPassword" placeholder="Contraseña" 
-                class="w-full border p-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 border-gray-200 font-medium">
-            
-            <button id="btnLogin" class="bg-blue-600 text-white px-4 py-3 rounded-xl w-full font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-200 active:scale-95 uppercase text-xs tracking-widest">
-                Entrar al Panel
+    <nav class="fixed w-full z-50 top-0 glass border-b border-slate-100">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-200">
+                    <span class="text-white font-black text-xl">M</span>
+                </div>
+                <span class="text-xl font-extrabold tracking-tight text-slate-800">Minimarket<span class="text-emerald-600">Pro</span></span>
+            </div>
+            <button onclick="abrirLogin()" class="bg-slate-900 text-white px-6 py-2.5 rounded-full font-bold hover:bg-emerald-600 transition-all shadow-md">
+                Iniciar Sesión
             </button>
         </div>
+    </nav>
 
-        <div class="mt-6 border-t pt-4">
-            <div id="boxGoRegister" class="text-center">
-                <p class="text-gray-400 text-[10px] mb-2 uppercase font-bold">¿Eres nuevo?</p>
-                <button id="btnSwitchToRegister" class="text-blue-600 text-xs font-black hover:underline uppercase">
-                    Crear una cuenta propia
-                </button>
+    <main class="pt-40 pb-20 px-6">
+        <div class="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
+            <div class="space-y-8 text-center lg:text-left">
+                <div class="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-2 rounded-full text-sm font-bold border border-emerald-100">
+                    ✨ Nueva Versión 2.0 disponible
+                </div>
+                <h1 class="text-5xl lg:text-7xl font-black text-slate-900 leading-[1.1] tracking-tighter">
+                    Toma el control de tu <span class="text-emerald-600">negocio</span> sin complicaciones.
+                </h1>
+                <p class="text-lg text-slate-500 font-medium max-w-lg mx-auto lg:mx-0">
+                    Ventas, inventarios y reportes en tiempo real. La plataforma más intuitiva para digitalizar tu minimarket hoy mismo.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                    <button onclick="abrirLogin()" class="bg-emerald-600 text-white px-8 py-4 rounded-2xl font-bold text-lg hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-200">
+                        Comenzar ahora gratis
+                    </button>
+                    <button class="bg-white text-slate-900 border-2 border-slate-100 px-8 py-4 rounded-2xl font-bold text-lg hover:border-emerald-200 transition-all">
+                        Ver demostración
+                    </button>
+                </div>
             </div>
-
-            <div id="boxGoLogin" class="text-center hidden">
-                <p class="text-gray-400 text-[10px] mb-2 uppercase font-bold">¿Ya tienes cuenta?</p>
-                <button id="btnSwitchToLogin" class="text-gray-600 text-xs font-black hover:underline uppercase">
-                    Volver al ingreso
-                </button>
+            
+            <div class="relative flex justify-center">
+                <div class="absolute inset-0 bg-emerald-400/20 blur-[120px] rounded-full"></div>
+                <div class="relative bg-white p-4 rounded-[2.5rem] shadow-2xl border border-slate-100 rotate-2 hover:rotate-0 transition-transform duration-700 w-full max-w-md">
+                    <div class="bg-slate-50 rounded-[2rem] p-6 space-y-6">
+                        <div class="flex justify-between items-center border-b pb-4">
+                            <span class="font-black text-slate-400">DASHBOARD</span>
+                            <span class="w-8 h-8 bg-emerald-100 rounded-full"></span>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="h-24 bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+                                <p class="text-xs font-bold text-slate-400 uppercase">Ventas de Hoy</p>
+                                <p class="text-2xl font-black text-emerald-600">$1,450.00</p>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="h-20 bg-emerald-600 rounded-2xl p-4 text-white">
+                                    <p class="text-[10px] font-bold opacity-80 uppercase">Stock Bajo</p>
+                                    <p class="text-xl font-black">12</p>
+                                </div>
+                                <div class="h-20 bg-slate-900 rounded-2xl p-4 text-white">
+                                    <p class="text-[10px] font-bold opacity-80 uppercase">Clientes</p>
+                                    <p class="text-xl font-black">48</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
+    </main>
 
-        <p class="text-center text-gray-400 text-[9px] mt-6 uppercase tracking-[0.2em] font-bold">Acceso Seguro Multi-Cliente</p>
-    </div>
-
-    <div id="mainApp" class="hidden w-full max-w-5xl fade-in">
-        
-        <div class="flex justify-between items-center mb-10 bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
-            <h1 class="text-xl font-black text-gray-800 tracking-tighter uppercase">🏪 Minimarket <span class="text-blue-600">Pro</span></h1>
-            <button id="btn-logout" class="bg-red-50 text-red-600 px-4 py-2 rounded-lg text-xs font-black hover:bg-red-600 hover:text-white transition-all border border-red-100 uppercase">
-                Cerrar Sesión
-            </button>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <div id="modalLogin" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-6">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="cerrarLogin()"></div>
+        <div class="relative bg-white w-full max-w-md rounded-[2.5rem] p-10 shadow-2xl animate-in fade-in zoom-in duration-300">
+            <h2 class="text-3xl font-black text-slate-900 mb-2">Bienvenido</h2>
+            <p class="text-slate-500 mb-8 font-medium">Ingresa tus credenciales para continuar.</p>
             
-            <a href="ventas.html" class="group bg-white p-10 rounded-3xl shadow-xl border-b-8 border-green-500 hover:scale-105 transition-all text-center">
-                <div class="text-6xl mb-4 group-hover:animate-bounce">🛒</div>
-                <h2 class="text-xl font-black text-gray-700 uppercase tracking-tight">Punto de Venta</h2>
-                <p class="text-gray-400 text-xs mt-2 font-medium">Realizar cobros y bajar stock</p>
-                <div class="mt-6 inline-block bg-green-500 text-white px-6 py-3 rounded-xl font-black group-hover:bg-green-600 shadow-lg shadow-green-100 uppercase text-[10px] tracking-widest">
-                    Vender Ahora
+            <form id="loginForm" class="space-y-4">
+                <div class="space-y-2">
+                    <label class="text-sm font-bold text-slate-700 ml-1 uppercase tracking-wider">Correo Electrónico</label>
+                    <input type="email" id="email" required class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-emerald-500 focus:bg-white outline-none transition-all font-semibold">
                 </div>
-            </a>
-
-            <a href="inventario.html" class="group bg-white p-10 rounded-3xl shadow-xl border-b-8 border-blue-500 hover:scale-105 transition-all text-center">
-                <div class="text-6xl mb-4 group-hover:animate-pulse">📦</div>
-                <h2 class="text-xl font-black text-gray-700 uppercase tracking-tight">Inventario</h2>
-                <p class="text-gray-400 text-xs mt-2 font-medium">Gestionar productos y costos</p>
-                <div class="mt-6 inline-block bg-blue-500 text-white px-6 py-3 rounded-xl font-black group-hover:bg-blue-600 shadow-lg shadow-blue-100 uppercase text-[10px] tracking-widest">
-                    Ver Almacén
+                <div class="space-y-2">
+                    <label class="text-sm font-bold text-slate-700 ml-1 uppercase tracking-wider">Contraseña</label>
+                    <input type="password" id="password" required class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-emerald-500 focus:bg-white outline-none transition-all font-semibold">
                 </div>
-            </a>
-
-            <a href="reportes.html" class="group bg-white p-10 rounded-3xl shadow-xl border-b-8 border-purple-500 hover:scale-105 transition-all text-center">
-                <div class="text-6xl mb-4 group-hover:rotate-12 transition-transform">📊</div>
-                <h2 class="text-xl font-black text-gray-700 uppercase tracking-tight">Reportes</h2>
-                <p class="text-gray-400 text-xs mt-2 font-medium">Ventas diarias y ganancias</p>
-                <div class="mt-6 inline-block bg-purple-500 text-white px-6 py-3 rounded-xl font-black group-hover:bg-purple-600 shadow-lg shadow-purple-100 uppercase text-[10px] tracking-widest">
-                    Ver Balances
-                </div>
-            </a>
-
-            <a href="clientes.html" class="bg-indigo-600 p-6 rounded-3xl text-white text-center shadow-xl hover:bg-indigo-700 transition-all border-b-4 border-indigo-900">
-                <span class="text-4xl block mb-2">👥</span>
-                <span class="font-black uppercase text-xs tracking-widest">Clientes / Fiados</span>
-            </a>
-            
+                <button type="submit" class="w-full bg-emerald-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg shadow-emerald-100 hover:bg-emerald-700 transition-all mt-4 uppercase tracking-widest">
+                    Entrar al Sistema
+                </button>
+            </form>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-    const supabaseUrl = 'https://ijyhkbiukiqiqjabpubm.supabase.co';
-    const supabaseKey = 'sb_publishable_EpJx4G5egW9GZdj8P7oudw_kDWWsj6p';
-    const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
-
-    // --- FUNCIONES DE INTERFAZ ---
-
-    async function checkUser() {
-        const { data: { user } } = await _supabase.auth.getUser();
-        
-        if (user) {
-            document.getElementById('authSection').classList.add('hidden');
-            document.getElementById('mainApp').classList.remove('hidden');
-        } else {
-            document.getElementById('authSection').classList.remove('hidden');
-            document.getElementById('mainApp').classList.add('hidden');
-        }
-    }
-
-    // Cambiar visualmente a modo REGISTRO
-    document.getElementById('btnSwitchToRegister').addEventListener('click', () => {
-        document.getElementById('authSection').querySelector('h2').textContent = "CREAR CUENTA";
-        document.getElementById('btnLogin').textContent = "Registrar Mi Tienda";
-        document.getElementById('boxGoRegister').classList.add('hidden');
-        document.getElementById('boxGoLogin').classList.remove('hidden');
-        document.getElementById('authSection').classList.replace('border-blue-600', 'border-purple-600');
-    });
-
-    // Cambiar visualmente a modo LOGIN
-    document.getElementById('btnSwitchToLogin').addEventListener('click', () => {
-        document.getElementById('authSection').querySelector('h2').textContent = "INICIAR SISTEMA";
-        document.getElementById('btnLogin').textContent = "Entrar al Panel";
-        document.getElementById('boxGoRegister').classList.remove('hidden');
-        document.getElementById('boxGoLogin').classList.add('hidden');
-        document.getElementById('authSection').classList.replace('border-purple-600', 'border-blue-600');
-    });
-
-    // --- LÓGICA DE BOTONES ---
-
-    document.getElementById('btnLogin').addEventListener('click', async () => {
-        const email = document.getElementById('authEmail').value;
-        const password = document.getElementById('authPassword').value;
-        
-        // Verificamos en qué modo está el botón según su texto
-        const esRegistro = document.getElementById('btnLogin').textContent.includes("Registrar");
-
-        if(!email || !password) return alert("Por favor, ingresa correo y contraseña");
-
-        if (esRegistro) {
-            // ACCIÓN: REGISTRAR NUEVO USUARIO
-            const { data, error } = await _supabase.auth.signUp({ 
-                email, 
-                password,
-                options: {
-                    // Esto ayuda a que el usuario se loguee automáticamente tras registrarse
-                    emailRedirectTo: window.location.origin 
-                }
-            });
-
-            if (error) {
-                alert("Error al registrar: " + error.message);
-            } else {
-                alert("¡Cuenta creada con éxito! Ahora puedes entrar.");
-                // Forzamos vuelta al login para que el usuario entre formalmente
-                location.reload(); 
-            }
-        } else {
-            // ACCIÓN: INICIAR SESIÓN (Ya existente)
-            const { error } = await _supabase.auth.signInWithPassword({ email, password });
-            if (error) {
-                alert("Acceso denegado: " + error.message);
-            } else {
-                checkUser();
-            }
-        }
-    });
-
-    document.getElementById('btn-logout').addEventListener('click', async () => {
-        const confirmOut = confirm("¿Estás seguro de que quieres salir del sistema?");
-        if(confirmOut) {
-            await _supabase.auth.signOut();
-            window.location.reload();
-        }
-    });
-
-    checkUser();
-</script>
+    <script src="auth.js"></script>
+    <script>
+        function abrirLogin() { document.getElementById('modalLogin').classList.remove('hidden'); }
+        function cerrarLogin() { document.getElementById('modalLogin').classList.add('hidden'); }
+    </script>
 </body>
 </html>
