@@ -53,7 +53,7 @@
                             </tr>
                         </thead>
                         <tbody id="tablaResultados" class="divide-y divide-gray-50 text-gray-700">
-                        </tbody>
+                            </tbody>
                     </table>
                 </div>
             </div>
@@ -66,7 +66,7 @@
                 
                 <div id="carritoItems" class="space-y-4 mb-6 max-h-[400px] overflow-y-auto scrollbar-hide">
                     <div class="text-center py-10">
-                        <p class="text-gray-300 text-sm italic italic">El carrito está vacío</p>
+                        <p class="text-gray-300 text-sm italic">El carrito está vacío</p>
                     </div>
                 </div>
 
@@ -114,22 +114,21 @@
                     </div>
                 </div>
 
-                <div class="bg-indigo-50 p-4 rounded-2xl mb-4 border border-indigo-100">
+                <div class="mt-4 bg-indigo-50 p-4 rounded-2xl mb-4 border border-indigo-100">
                     <div class="flex items-center gap-3 mb-3">
                         <input type="checkbox" id="esFiado" onchange="toggleSelectorCliente()" class="w-5 h-5 accent-indigo-600 cursor-pointer">
-                        <label for="esFiado" class="font-bold text-indigo-800 text-sm cursor-pointer">¿Es una venta fiada (crédito)?</label>
+                        <label for="esFiado" class="font-bold text-indigo-800 text-sm cursor-pointer">¿Es una venta fiada?</label>
                     </div>
 
-                    <div id="contenedorCliente" class="hidden animate-pulse">
+                    <div id="contenedorCliente" class="hidden">
                         <select id="selectCliente" class="w-full p-3 rounded-xl border-2 border-indigo-200 outline-none focus:border-indigo-500 text-sm font-bold text-indigo-900 bg-white">
                             <option value="">Cargando clientes...</option>
                         </select>
-                        <p class="text-[10px] text-indigo-400 mt-2 uppercase font-black tracking-widest">⚠️ El total se sumará a la deuda del cliente</p>
                     </div>
                 </div>
 
                 <button id="btnFinalizarVenta" disabled 
-                    class="w-full mt-8 bg-green-500 text-white font-black py-5 rounded-2xl shadow-lg shadow-green-100 hover:bg-green-600 disabled:bg-gray-200 disabled:shadow-none transition-all flex justify-center items-center gap-2 uppercase tracking-widest text-sm">
+                    class="w-full mt-8 bg-green-500 text-white font-black py-5 rounded-2xl shadow-lg hover:bg-green-600 disabled:bg-gray-200 transition-all flex justify-center items-center gap-2 uppercase tracking-widest text-sm">
                     Finalizar Venta (F2)
                 </button>
             </div>
@@ -138,5 +137,43 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="ventas.js"></script>
+
+    <script>
+        const inputBusqueda = document.getElementById('inputBusqueda');
+
+        // 1. Detectar disparo de la PISTOLA (Enter)
+        inputBusqueda.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const valor = this.value.trim();
+                if (valor !== "") {
+                    // Llamamos a la función que ya tienes en ventas.js
+                    if (typeof procesarEscaneo === "function") {
+                        procesarEscaneo(valor);
+                    } else {
+                        // Si tu función de búsqueda se llama diferente, cámbiala aquí:
+                        realizarBusqueda(valor); 
+                    }
+                    this.value = ""; // Limpiamos para el siguiente producto
+                }
+            }
+        });
+
+        // 2. ATAJO F2: Finalizar venta sin usar el mouse
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F2') {
+                e.preventDefault();
+                document.getElementById('btnFinalizarVenta').click();
+            }
+        });
+
+        // 3. FOCO AUTOMÁTICO: Evita que el cursor se pierda
+        // Si haces clic en cualquier parte vacía, el cursor vuelve al buscador
+        document.addEventListener('click', function(e) {
+            if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'SELECT') {
+                inputBusqueda.focus();
+            }
+        });
+    </script>
 </body>
 </html>
