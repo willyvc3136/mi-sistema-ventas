@@ -8,28 +8,22 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
 </head>
-<body class="bg-white p-4"> <div class="max-w-7xl mx-auto">
-        
+<body class="bg-white p-4"> 
+    <div class="max-w-7xl mx-auto">
         <div class="flex justify-between items-center mb-6 bg-emerald-50 p-4 rounded-2xl border border-emerald-100">
             <h1 class="text-xl font-black text-emerald-800 tracking-tighter uppercase">🛒 Caja Registradora</h1>
             <p class="text-[10px] text-emerald-600 font-bold uppercase bg-white px-3 py-1 rounded-full shadow-sm" id="user-display">Verificando sesión...</p>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
             <div class="lg:col-span-2 space-y-6">
                 <script src="https://unpkg.com/html5-qrcode"></script>
-
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                     <div class="flex justify-between items-center mb-4">
                         <label class="block text-xs font-black text-slate-400 uppercase">Buscador o Escáner</label>
-                        <button onclick="toggleCamara()" class="text-xs bg-slate-900 text-white px-4 py-2 rounded-xl font-bold hover:bg-emerald-600 transition shadow-sm">
-                            📷 Activar Cámara
-                        </button>
+                        <button onclick="toggleCamara()" class="text-xs bg-slate-900 text-white px-4 py-2 rounded-xl font-bold hover:bg-emerald-600 transition shadow-sm">📷 Activar Cámara</button>
                     </div>
-                    
                     <div id="reader" class="hidden w-full mb-4 overflow-hidden rounded-xl border-2 border-emerald-500"></div>
-
                     <input type="text" id="inputBusqueda" placeholder="Escanea el código o escribe nombre..." 
                         class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-emerald-500 focus:bg-white outline-none text-lg font-semibold transition-all">
                 </div>
@@ -44,37 +38,53 @@
                                 <th class="p-4 text-center">Acción</th>
                             </tr>
                         </thead>
-                        <tbody id="tablaResultados" class="divide-y divide-slate-50 text-slate-700">
-                            </tbody>
+                        <tbody id="tablaResultados" class="divide-y divide-slate-50 text-slate-700"></tbody>
                     </table>
                 </div>
             </div>
 
             <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100 flex flex-col h-fit sticky top-4">
-                <div class="flex items-center gap-2 mb-6 text-slate-800">
-                    <span class="text-xl">📄</span>
-                    <h2 class="text-lg font-black uppercase tracking-tight">Resumen</h2>
-                </div>
+                <h2 class="text-lg font-black uppercase tracking-tight mb-4">📄 Resumen</h2>
                 
-                <div id="carritoItems" class="space-y-3 mb-6 max-h-[350px] overflow-y-auto pr-2">
+                <div id="carritoItems" class="space-y-3 mb-6 max-h-[300px] overflow-y-auto pr-2"></div>
+
+                <div class="border-t-2 border-slate-200 border-dashed pt-4 space-y-4">
+                    <label class="text-[10px] font-black text-slate-400 uppercase">Método de Pago:</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button id="btnEfectivo" onclick="seleccionarMetodo('Efectivo')" class="metodo-pago p-2 border-2 rounded-xl text-[10px] font-bold border-emerald-500 bg-emerald-50 text-emerald-700">EFECTIVO</button>
+                        <button id="btnYape" onclick="seleccionarMetodo('Yape')" class="metodo-pago p-2 border-2 rounded-xl text-[10px] font-bold border-slate-100 bg-white text-slate-500">YAPE</button>
+                        <button id="btnPlin" onclick="seleccionarMetodo('Plin')" class="metodo-pago p-2 border-2 rounded-xl text-[10px] font-bold border-slate-100 bg-white text-slate-500">PLIN</button>
                     </div>
 
-                <div class="border-t-2 border-slate-200 border-dashed pt-6 space-y-4">
-                    <div class="flex justify-between items-end">
-                        <span class="text-slate-500 font-bold uppercase text-[10px]">Total Neto:</span>
-                        <span id="totalVenta" class="text-4xl font-black text-emerald-600 tracking-tighter">$0.00</span>
+                    <div class="flex items-center gap-2 p-3 bg-white rounded-xl border border-slate-200">
+                        <input type="checkbox" id="esFiado" onchange="toggleSelectorCliente()" class="w-4 h-4 accent-emerald-600">
+                        <label for="esFiado" class="text-xs font-bold text-slate-600 uppercase">Dar Fiado</label>
                     </div>
-                </div>
 
-                <div id="seccionVuelto" class="mt-6 p-4 bg-white rounded-2xl border border-slate-100 space-y-3 shadow-sm">
-                    <div class="flex justify-between items-center">
-                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Paga con:</label>
-                        <input type="number" id="pagaCon" placeholder="0.00" class="w-24 p-2 border-b-2 border-slate-200 outline-none font-bold text-right text-emerald-600 focus:border-emerald-500">
+                    <div id="contenedorCliente" class="hidden space-y-2">
+                        <select id="selectCliente" class="w-full p-3 rounded-xl border-2 border-emerald-100 text-xs font-bold outline-none focus:border-emerald-500"></select>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-2xl border border-slate-100">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-slate-400 font-bold text-[10px] uppercase">Total:</span>
+                            <span id="totalVenta" class="text-3xl font-black text-emerald-600 tracking-tighter">$0.00</span>
+                        </div>
+                        <div id="panelVuelto" class="space-y-3 pt-2 border-t border-slate-50">
+                            <div class="flex justify-between items-center">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase">Paga con:</span>
+                                <input type="number" id="pagaCon" placeholder="0.00" class="w-20 text-right font-bold text-emerald-600 outline-none border-b border-emerald-200">
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase">Vuelto:</span>
+                                <span id="vuelto" class="font-black text-emerald-600">$0.00</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <button id="btnFinalizarVenta" disabled 
-                    class="w-full mt-6 bg-emerald-600 text-white font-black py-5 rounded-2xl shadow-xl shadow-emerald-100 hover:bg-emerald-700 disabled:bg-slate-200 transition-all uppercase tracking-widest text-xs">
+                    class="w-full mt-6 bg-emerald-600 text-white font-black py-5 rounded-2xl shadow-xl hover:bg-emerald-700 disabled:bg-slate-200 transition-all uppercase tracking-widest text-xs">
                     Finalizar Venta (F2)
                 </button>
             </div>
