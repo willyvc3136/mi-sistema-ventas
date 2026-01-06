@@ -19,8 +19,8 @@ let html5QrCode; // Variable global para el control de la cámara
 async function checkAuth() {
     const { data: { user } } = await _supabase.auth.getUser();
     if (user) {
-        userEmailDisplay.textContent = user.email; 
-        obtenerProductos(user.id);                
+        if(userEmailDisplay) userEmailDisplay.textContent = user.email; 
+        obtenerProductos(user.id); // <--- Esta es la que trae los datos de la base
     } else {
         window.location.href = 'index.html';
     }
@@ -307,7 +307,13 @@ function mostrarSoloAlertas() {
     });
 }
 
+/// ==========================================
+// INICIALIZACIÓN SEGURA (CORREGIDO)
 // ==========================================
-// INICIALIZACIÓN
-// ==========================================
-checkAuth();
+// Esto asegura que la función corra tanto si la página carga sola 
+// como si carga dentro del Dashboard.
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', checkAuth);
+} else {
+    checkAuth();
+}

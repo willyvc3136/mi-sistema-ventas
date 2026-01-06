@@ -75,9 +75,14 @@
         }
 
         function navegar(url, btn) {
-            document.getElementById('visor').src = url;
+            const visor = document.getElementById('visor');
+            visor.src = url; // Esto recarga la página interna
             
-            // Estilo visual de botones
+            // Forzar recarga si ya estaba en esa página
+            visor.onload = function() {
+                console.log("Pestaña cargada: " + url);
+            };
+
             document.querySelectorAll('.sidebar-item').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
         }
