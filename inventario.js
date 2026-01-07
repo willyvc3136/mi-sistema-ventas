@@ -20,13 +20,13 @@ async function checkAuth() {
     }
 }
 
-// --- OBTENER Y RENDERIZAR (ORDEN ALFABÉTICO) ---
+// --- OBTENER Y RENDERIZAR ---
 async function obtenerProductos(userId) {
     const { data, error } = await _supabase
         .from('productos')
         .select('*')
         .eq('user_id', userId)
-        .order('nombre', { ascending: true }); // Orden alfabético aquí
+        .order('nombre', { ascending: true });
 
     if (!error) {
         renderizarTabla(data);      
@@ -79,37 +79,25 @@ function actualizarDashboard(productos) {
     document.getElementById('stat-alerta').textContent = stockBajo;
 }
 
-// --- MODALES REGISTRO ---
+// --- MODALES Y LIMPIEZA ---
 window.abrirModalRegistro = () => modalRegistro.classList.remove('hidden');
+
 window.cerrarModalRegistro = () => {
     modalRegistro.classList.add('hidden');
-    // LIMPIEZA PROFUNDA: Ponemos todos los IDs en blanco
     const campos = ['codigoProducto', 'nombreProducto', 'cantidadProducto', 'precioProducto', 'precioCosto'];
     campos.forEach(id => {
         const el = document.getElementById(id);
         if(el) el.value = '';
     });
-    // Regresamos la categoría a la primera opción por defecto
     document.getElementById('categoriaProducto').selectedIndex = 0;
 };
 
-window.abrirModalRegistroDesdeBusqueda = () => {
-    const query = document.getElementById('buscador').value;
-    abrirModalRegistro();
-    // Si la búsqueda era un código (números largos), ponerlo en el campo código
-    if(!isNaN(query) && query.length > 5) {
-        document.getElementById('codigoProducto').value = query;
-    } else {
-        document.getElementById('nombreProducto').value = query;
-    }
-};
-
-// --- CÁMARA (CORREGIDA PARA EVITAR BLOQUEOS) ---
+// --- LÓGICA DE CÁMARA MEJORADA ---
 async function encenderCamara(targetInputId) {
     const container = document.getElementById('lectorContainer');
     if(!container) return;
     
-    // Ocultamos modal de registro solo si venimos de ahí
+    // Si vamos a registrar, ocultamos el modal para ver la cámara
     if(targetInputId === 'codigoProducto') {
         modalRegistro.classList.add('hidden');
     }
@@ -118,7 +106,7 @@ async function encenderCamara(targetInputId) {
         try {
             await html5QrCode.stop();
             await html5QrCode.clear();
-        } catch (e) { console.log("Reinicio de cámara"); }
+        } catch (e) { console.log("Reinicio"); }
     }
 
     container.classList.remove('hidden');
@@ -133,42 +121,49 @@ async function encenderCamara(targetInputId) {
                 if(input) {
                     input.value = decodedText;
                     
-                    // IMPORTANTE: Cerramos cámara ANTES de cualquier lógica de modales
-                    await cerrarCamara();
+                    // Cerramos la cámara inmediatamente
+                    await cerrarCamaraPure(); 
 
                     if(targetInputId === 'buscador') {
-                        // Si es buscador, SOLO filtramos la tabla
+                        // SOLO filtramos, NO abrimos el modal de registro
                         input.dispatchEvent(new Event('input'));
                     } 
                     else if(targetInputId === 'codigoProducto') {
-                        // Si es registro, validamos duplicado
+                        // Aquí sí validamos si el producto existe
                         validarDuplicado(decodedText);
                     }
                 }
             }
         );
     } catch (err) {
-        console.error("Error de cámara", err);
+        console.error(err);
         container.classList.add('hidden');
         if(targetInputId === 'codigoProducto') modalRegistro.classList.remove('hidden');
     }
 }
 
-function cerrarCamara() {
+// Función auxiliar para cerrar la cámara sin efectos secundarios de modales
+async function cerrarCamaraPure() {
     if (html5QrCode) {
-        html5QrCode.stop().then(() => {
+        try {
+            await html5QrCode.stop();
             document.getElementById('lectorContainer').classList.add('hidden');
-            // Si el campo de código está vacío o activo, regresamos al modal
-            if(!modalEditar.classList.contains('hidden') === false) {
-                 modalRegistro.classList.remove('hidden');
-            }
-        }).catch(() => {
+        } catch (e) {
             document.getElementById('lectorContainer').classList.add('hidden');
-        });
+        }
     }
 }
 
-// --- VALIDACIÓN DE DUPLICADOS ---
+// Esta es la función que usa el botón "Cerrar" del lector
+window.cerrarCamara = async () => {
+    await cerrarCamaraPure();
+    // Solo si el input de código tiene algo y no estamos editando, re-abrimos registro
+    if (document.activeElement.id === 'codigoProducto' || !modalRegistro.classList.contains('hidden')) {
+        modalRegistro.classList.remove('hidden');
+    }
+};
+
+// --- VALIDACIÓN DE DUPLICADOS CON SALTO A EDICIÓN ---
 async function validarDuplicado(codigo) {
     const { data: { user } } = await _supabase.auth.getUser();
     const { data } = await _supabase
@@ -179,25 +174,22 @@ async function validarDuplicado(codigo) {
         .maybeSingle();
 
     if(data) {
-        // confirm() da opción de Aceptar o Cancelar
-        const respuesta = confirm(`El producto "${data.nombre}" ya existe.\n\n¿Deseas ir a la ventana de EDICIÓN?`);
+        const respuesta = confirm(`El producto "${data.nombre}" ya existe en tu inventario.\n\n¿Deseas abrirlo para EDITAR su stock o precio?`);
         
         if(respuesta) {
             cerrarModalRegistro();
-            // Pasamos todos los datos incluyendo el precio_costo
             prepararEdicion(data.id, data.nombre, data.cantidad, data.precio, data.categoria, data.precio_costo, data.codigo_barras);
         } else {
-            // Si dice que NO, regresamos al modal de registro pero limpiamos el código para que no guarde duplicado
             document.getElementById('codigoProducto').value = '';
             modalRegistro.classList.remove('hidden');
         }
     } else {
-        // Si el producto es realmente nuevo, simplemente mostramos el modal para seguir llenando
+        // Es un producto nuevo, volvemos al modal para terminar de llenar datos
         modalRegistro.classList.remove('hidden');
     }
 }
 
-// --- BUSCADOR CON MENSAJE "NO EXISTE" ---
+// --- BUSCADOR ---
 const inputBuscador = document.getElementById('buscador');
 if(inputBuscador) {
     inputBuscador.addEventListener('input', (e) => {
@@ -254,9 +246,11 @@ window.prepararEdicion = (id, nombre, cant, precio, cat, costo, cod) => {
     document.getElementById('editCategoria').value = cat || 'Otros';
     document.getElementById('editCodigo').value = cod || ''; 
     
-    // CORRECCIÓN: Asignar el costo al campo oculto o visible del modal
+    // CORREGIDO: Carga el precio costo en el campo correspondiente del modal editar
     const inputCosto = document.getElementById('editPrecioCosto');
-    if(inputCosto) inputCosto.value = costo || 0;
+    if(inputCosto) {
+        inputCosto.value = costo;
+    }
 
     modalEditar.classList.remove('hidden');
 };
@@ -270,7 +264,8 @@ document.getElementById('btnGuardarCambios').onclick = async () => {
         codigo_barras: document.getElementById('editCodigo').value,
         categoria: document.getElementById('editCategoria').value,
         cantidad: parseInt(document.getElementById('editCantidad').value),
-        precio: parseFloat(document.getElementById('editPrecio').value)
+        precio: parseFloat(document.getElementById('editPrecio').value),
+        precio_costo: parseFloat(document.getElementById('editPrecioCosto').value) || 0
     };
     const { error } = await _supabase.from('productos').update(updates).eq('id', id);
     if (!error) {
@@ -301,8 +296,6 @@ window.toggleAlertas = function() {
     });
 
     btn.textContent = filtrandoAlertas ? "Ver Todo" : "Ver Faltantes";
-    btn.className = filtrandoAlertas ? "bg-slate-800 text-white px-6 py-4 rounded-2xl font-black text-[10px] uppercase" : "bg-red-50 text-red-600 px-6 py-4 rounded-2xl border border-red-100 font-black text-[10px] uppercase";
 };
 
-// INICIO
 checkAuth();
