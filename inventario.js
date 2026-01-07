@@ -8,6 +8,7 @@ const modalEditar = document.getElementById('modalEditar');
 const modalRegistro = document.getElementById('modalRegistro');
 let html5QrCode;
 let filtrandoAlertas = false;
+let mostrandoFaltantes = false;
 
 // --- AUTENTICACIÓN ---
 async function checkAuth() {
@@ -354,4 +355,32 @@ window.nuevaCategoriaPrompt = async () => {
         }
     }
 };
+
+window.toggleFaltantes = async () => {
+    const btn = document.querySelector('.text-red-500.border-red-200'); // Seleccionamos tu botón de "Ver Faltantes"
+    const { data: { user } } = await _supabase.auth.getUser();
+
+    if (!mostrandoFaltantes) {
+        // FILTRAR: Traer solo productos con stock menor a 5
+        const { data: productos, error } = await _supabase
+            .from('productos')
+            .select('*')
+            .eq('usuario_id', user.id)
+            .lt('cantidad', 5); // "lt" significa "Less Than" (Menor que 5)
+
+        if (!error) {
+            renderizarTabla(productos); // Usamos tu función existente para redibujar la tabla
+            btn.textContent = "VER TODOS"; // Cambiamos el texto del botón
+            btn.classList.add('bg-red-500', 'text-white'); // Le damos un color activo
+            mostrandoFaltantes = true;
+        }
+    } else {
+        // QUITAR FILTRO: Traer todos los productos normalmente
+        obtenerProductos(user.id); 
+        btn.textContent = "VER FALTANTES";
+        btn.classList.remove('bg-red-500', 'text-white');
+        mostrandoFaltantes = false;
+    }
+};
+
 checkAuth();
