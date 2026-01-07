@@ -55,9 +55,11 @@ function renderizarTabla(productos) {
             <td class="py-4 px-4 text-center">
                 <div class="flex gap-2 justify-center">
                     <button onclick="prepararEdicion(${prod.id}, '${prod.nombre}', ${prod.cantidad}, ${prod.precio}, '${prod.categoria}', ${prod.precio_costo || 0}, '${prod.codigo_barras || ''}')" 
-                        class="bg-slate-100 text-slate-600 px-3 py-1 rounded-md font-bold text-[9px] uppercase hover:bg-slate-200">Editar</button>
+                        class="bg-slate-100 text-slate-600 px-3 py-1 rounded-md font-bold text-[9px] uppercase hover:bg-slate-200">Editar
+                    </button>
                     <button onclick="eliminarProducto(${prod.id})" 
-                        class="text-red-400 hover:text-red-600 font-bold text-[9px] uppercase">Borrar</button>
+                        class="text-red-400 hover:text-red-600 font-bold text-[9px] uppercase">Borrar
+                    </button>
                 </div>
             </td>
         `;
@@ -249,7 +251,7 @@ window.prepararEdicion = (id, nombre, cant, precio, cat, costo, cod) => {
     // CORREGIDO: Carga el precio costo en el campo correspondiente del modal editar
     const inputCosto = document.getElementById('editPrecioCosto');
     if(inputCosto) {
-        inputCosto.value = costo;
+        inputCosto.value = costo || 0;
     }
 
     modalEditar.classList.remove('hidden');
@@ -272,6 +274,8 @@ document.getElementById('btnGuardarCambios').onclick = async () => {
         cerrarModal();
         const { data: { user } } = await _supabase.auth.getUser();
         obtenerProductos(user.id);
+    } else {
+        alert("Error al actualizar: " + error.message);
     }
 };
 
