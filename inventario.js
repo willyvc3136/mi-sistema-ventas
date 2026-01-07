@@ -290,20 +290,6 @@ window.eliminarProducto = async (id) => {
     }
 };
 
-// --- FILTRO ALERTAS ---
-window.toggleAlertas = function() {
-    const btn = document.getElementById('btnFiltroAlertas');
-    const filas = document.querySelectorAll('#listaProductos tr');
-    filtrandoAlertas = !filtrandoAlertas;
-
-    filas.forEach(fila => {
-        const tieneAlerta = fila.innerHTML.includes('text-red-600');
-        fila.style.display = filtrandoAlertas ? (tieneAlerta ? "" : "none") : "";
-    });
-
-    btn.textContent = filtrandoAlertas ? "Ver Todo" : "Ver Faltantes";
-};
-
 // FUNCIÓN 1: Para leer las categorías de Supabase y ponerlas en los menús
 async function cargarCategorias() {
     try {
@@ -357,25 +343,26 @@ window.nuevaCategoriaPrompt = async () => {
 };
 
 window.toggleFaltantes = async () => {
-    const btn = document.querySelector('.text-red-500.border-red-200'); // Seleccionamos tu botón de "Ver Faltantes"
+    // Buscamos el botón por su clase original o por ID si prefieres agregárselo
+    const btn = document.querySelector('button[onclick="toggleFaltantes()"]'); 
     const { data: { user } } = await _supabase.auth.getUser();
 
     if (!mostrandoFaltantes) {
-        // FILTRAR: Traer solo productos con stock menor a 5
         const { data: productos, error } = await _supabase
             .from('productos')
             .select('*')
-            .eq('usuario_id', user.id)
-            .lt('cantidad', 5); // "lt" significa "Less Than" (Menor que 5)
+            .eq('user_id', user.id) // <--- ANTES DECÍA usuario_id, DEBE SER user_id
+            .lt('cantidad', 5);
 
         if (!error) {
-            renderizarTabla(productos); // Usamos tu función existente para redibujar la tabla
-            btn.textContent = "VER TODOS"; // Cambiamos el texto del botón
-            btn.classList.add('bg-red-500', 'text-white'); // Le damos un color activo
+            renderizarTabla(productos);
+            btn.textContent = "VER TODOS";
+            btn.classList.add('bg-red-500', 'text-white');
             mostrandoFaltantes = true;
+        } else {
+            console.error("Error filtrando:", error.message);
         }
     } else {
-        // QUITAR FILTRO: Traer todos los productos normalmente
         obtenerProductos(user.id); 
         btn.textContent = "VER FALTANTES";
         btn.classList.remove('bg-red-500', 'text-white');
