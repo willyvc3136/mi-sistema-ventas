@@ -191,4 +191,64 @@ window.imprimirTicket = (venta) => {
     win.document.close();
 };
 
+// ==========================================
+// FUNCIONES DE EXPORTACIÓN (CORREGIDAS)
+// ==========================================
+
+window.exportarExcel = () => {
+    // Verificamos si hay datos cargados
+    if (!ventasActualesParaExportar || ventasActualesParaExportar.length === 0) {
+        return alert("⚠️ No hay datos en la tabla para exportar. Intenta cambiar el filtro de fecha.");
+    }
+
+    const datosExcel = ventasActualesParaExportar.map(v => ({
+        Fecha: new Date(v.created_at).toLocaleString(),
+        Cliente: v.clientes ? v.clientes.nombre : 'Consumidor Final',
+        Metodo_Pago: v.metodo_pago,
+        Total: v.total
+    }));
+
+    const libro = XLSX.utils.book_new();
+    const hoja = XLSX.utils.json_to_sheet(datosExcel);
+    XLSX.utils.book_append_sheet(libro, hoja, "Ventas");
+    XLSX.writeFile(libro, `Reporte_Ventas_${new Date().toLocaleDateString()}.xlsx`);
+};
+
+window.exportarPDF = () => {
+    if (!ventasActualesParaExportar || ventasActualesParaExportar.length === 0) {
+        return alert("⚠️ No hay datos en la tabla para exportar.");
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    // Título del PDF
+    doc.setFontSize(18);
+    doc.text("REPORTE DE VENTAS - MINIMARKET PRO", 14, 20);
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Generado el: ${new Date().toLocaleString()}`, 14, 28);
+
+    // Mapear datos para la tabla del PDF
+    const columnas = ["Fecha", "Cliente", "Método", "Monto"];
+    const filas = ventasActualesParaExportar.map(v => [
+        new Date(v.created_at).toLocaleString(),
+        v.clientes ? v.clientes.nombre : 'Consumidor Final',
+        v.metodo_pago,
+        `$${Number(v.total).toFixed(2)}`
+    ]);
+
+    // Crear la tabla automáticamente
+    doc.autoTable({
+        startY: 35,
+        head: [columnas],
+        body: filas,
+        theme: 'striped',
+        headStyles: { fillColor: [16, 185, 129] } // Color verde esmeralda
+    });
+
+    // Guardar archivo
+    doc.save(`Reporte_Ventas_${new Date().toLocaleDateString()}.pdf`);
+};
+
 inicializarReportes();
