@@ -66,8 +66,12 @@
                         <label for="esFiado" class="text-xs font-bold text-slate-600 uppercase">Dar Fiado</label>
                     </div>
 
-                    <div id="contenedorCliente" class="hidden space-y-2">
-                        <select id="selectCliente" class="w-full p-3 rounded-xl border-2 border-emerald-100 text-xs font-bold outline-none focus:border-emerald-500"></select>
+                    <div id="contenedorSelectorCliente" class="mt-3 hidden">
+                        <label class="text-[10px] font-black text-gray-400 uppercase">Seleccionar Cliente:</label>
+                        <select id="seleccionarCliente" class="w-full p-2 border-2 border-orange-400 rounded-xl font-bold text-gray-700 outline-none mt-1">
+                            <option value="">-- Elige un cliente --</option>
+                        </select>
+                        <p class="text-[9px] text-orange-500 mt-1 font-bold">* El monto se sumará a su deuda actual.</p>
                     </div>
 
                     <div class="bg-white p-4 rounded-2xl border border-slate-100">

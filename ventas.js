@@ -33,7 +33,6 @@ function emitirBeep() {
     } catch (e) { console.log("Audio bloqueado"); }
 }
 
-// Toast Notification (Mejora #4)
 function mostrarNotificacion(mensaje, tipo = 'success') {
     const toast = document.createElement('div');
     toast.className = `fixed bottom-5 right-5 px-6 py-3 rounded-lg text-white font-bold z-50 shadow-2xl transition-all transform translate-y-0 ${tipo === 'success' ? 'bg-emerald-500' : 'bg-red-500'}`;
@@ -53,15 +52,16 @@ async function inicializar() {
     if (user) {
         const display = document.getElementById('user-display');
         if(display) display.textContent = `Vendedor: ${user.email}`;
-        await cargarProductos(user.id); 
         
-        // Mejorar el foco inicial (Mejora #3)
+        await cargarProductos(user.id); 
         enfocarBuscador();
+
+        // Configurar el evento del checkbox de fiado
+        configurarEventosFiado();
 
         const btnFinalizar = document.getElementById('btnFinalizarVenta');
         if(btnFinalizar) btnFinalizar.onclick = finalizarVenta;
 
-        // Inyectar botones de pago rápido si no existen (Mejora #1)
         crearBotonesPagoRapido();
     } else {
         window.location.href = 'index.html';
@@ -84,7 +84,51 @@ async function cargarProductos(userId) {
 }
 
 // ==========================================
-// LÓGICA DE LA CÁMARA (ANTI-REPETICIÓN)
+// GESTIÓN DE FIADOS Y CLIENTES
+// ==========================================
+function configurarEventosFiado() {
+    const checkFiado = document.getElementById('esFiado');
+    const contenedorSelector = document.getElementById('contenedorSelectorCliente');
+
+    if (!checkFiado) return;
+
+    checkFiado.addEventListener('change', async () => {
+        if (checkFiado.checked) {
+            if (contenedorSelector) contenedorSelector.classList.remove('hidden');
+            await cargarClientesAlSelector();
+        } else {
+            if (contenedorSelector) contenedorSelector.classList.add('hidden');
+        }
+    });
+}
+
+async function cargarClientesAlSelector() {
+    const selectCliente = document.getElementById('selectCliente');
+    if (!selectCliente) return;
+
+    const { data: { user } } = await _supabase.auth.getUser();
+    const { data: clientes, error } = await _supabase
+        .from('clientes')
+        .select('id, nombre')
+        .eq('user_id', user.id)
+        .order('nombre', { ascending: true });
+
+    if (error) {
+        console.error("Error cargando clientes:", error);
+        return;
+    }
+
+    selectCliente.innerHTML = '<option value="">-- Elige un cliente --</option>';
+    clientes.forEach(c => {
+        const option = document.createElement('option');
+        option.value = c.id;
+        option.textContent = c.nombre;
+        selectCliente.appendChild(option);
+    });
+}
+
+// ==========================================
+// LÓGICA DE LA CÁMARA
 // ==========================================
 window.toggleLector = async function() {
     const container = document.getElementById('lectorContainer');
@@ -133,7 +177,7 @@ async function cerrarCamara() {
 }
 
 // ==========================================
-// PROCESAMIENTO DE ESCANEO
+// PROCESAMIENTO DE BÚSQUEDA Y ESCANEO
 // ==========================================
 function procesarEscaneo(codigo) {
     const producto = productosBaseDeDatos.find(p => p.codigo_barras === codigo);
@@ -147,7 +191,7 @@ function procesarEscaneo(codigo) {
         totalElem.classList.add('scale-110', 'text-blue-500');
         setTimeout(() => {
             totalElem.classList.remove('scale-110', 'text-blue-500');
-            enfocarBuscador(); // (Mejora #3)
+            enfocarBuscador();
         }, 200);
     }
 }
@@ -201,7 +245,7 @@ window.agregarAlCarrito = (id) => {
         }
     }
     renderizarCarrito();
-    enfocarBuscador(); // (Mejora #3)
+    enfocarBuscador();
 };
 
 function renderizarCarrito() {
@@ -221,7 +265,6 @@ function renderizarCarrito() {
 
     carrito.forEach((item, index) => {
         total += item.precio * item.cantidadSeleccionada;
-        // Alerta de stock crítico en el carrito (Mejora #2)
         const stockCritico = item.cantidad - item.cantidadSeleccionada < 3;
 
         const div = document.createElement('div');
@@ -266,14 +309,18 @@ window.quitarDelCarrito = (index) => {
 };
 
 // ==========================================
-// PAGO RÁPIDO Y VUELTO (Mejora #1)
+// PAGO RÁPIDO Y VUELTO
 // ==========================================
 function crearBotonesPagoRapido() {
     const contenedorVuelto = document.getElementById('panelVuelto');
     if(!contenedorVuelto) return;
 
+    // Limpiar botones previos si existen
+    const existentes = contenedorVuelto.querySelector('.pago-rapido-container');
+    if(existentes) existentes.remove();
+
     const divBotones = document.createElement('div');
-    divBotones.className = "flex flex-wrap gap-2 mt-2";
+    divBotones.className = "pago-rapido-container flex flex-wrap gap-2 mt-2";
     const montos = [10, 20, 50, 100];
     
     montos.forEach(monto => {
@@ -289,7 +336,6 @@ function crearBotonesPagoRapido() {
         divBotones.appendChild(btn);
     });
     
-    // Boton de Pago Exacto
     const btnExacto = document.createElement('button');
     btnExacto.className = "bg-emerald-100 hover:bg-emerald-200 text-emerald-700 text-xs px-2 py-1 rounded border border-emerald-200 font-bold";
     btnExacto.textContent = "Pago Exacto";
@@ -299,7 +345,6 @@ function crearBotonesPagoRapido() {
         actualizarVuelto();
     };
     divBotones.appendChild(btnExacto);
-
     contenedorVuelto.appendChild(divBotones);
 }
 
@@ -330,11 +375,18 @@ document.getElementById('pagaCon').addEventListener('input', actualizarVuelto);
 // ==========================================
 async function finalizarVenta() {
     if (carrito.length === 0) return;
-    const btn = document.getElementById('btnFinalizarVenta');
-    const esFiado = document.getElementById('esFiado').checked;
-    const clienteId = document.getElementById('selectCliente').value;
 
-    if (esFiado && !clienteId) return alert("⚠️ Selecciona un cliente.");
+    const btn = document.getElementById('btnFinalizarVenta');
+    const checkFiado = document.getElementById('esFiado');
+    const selectCliente = document.getElementById('selectCliente');
+    
+    const esFiado = checkFiado ? checkFiado.checked : false;
+    const clienteId = selectCliente ? selectCliente.value : null;
+
+    if (esFiado && !clienteId) {
+        alert("⚠️ Selecciona un cliente para registrar la deuda.");
+        return;
+    }
 
     btn.disabled = true;
     btn.textContent = "PROCESANDO...";
@@ -343,36 +395,49 @@ async function finalizarVenta() {
         const { data: { user } } = await _supabase.auth.getUser();
         const totalVenta = parseFloat(document.getElementById('totalVenta').textContent.replace('$', ''));
 
+        // 1. Insertar Venta
         const { error: errorVenta } = await _supabase.from('ventas').insert([{
             total: totalVenta,
             metodo_pago: esFiado ? 'Fiado' : metodoSeleccionado,
             estado_pago: esFiado ? 'pendiente' : 'pagado',
             cliente_id: esFiado ? clienteId : null,
-            vendedor_id: user.id,
+            user_id: user.id, // Multiusuario
             productos_vendidos: carrito 
         }]);
 
         if (errorVenta) throw errorVenta;
 
+        // 2. Actualizar Deuda si es Fiado
         if (esFiado) {
-            const { data: cl } = await _supabase.from('clientes').select('deuda').eq('id', clienteId).single();
-            await _supabase.from('clientes').update({ deuda: (cl.deuda || 0) + totalVenta }).eq('id', clienteId);
+            const { data: cl, error: errorCl } = await _supabase
+                .from('clientes')
+                .select('deuda')
+                .eq('id', clienteId)
+                .single();
+            
+            if (!errorCl) {
+                const nuevaDeuda = (Number(cl.deuda) || 0) + totalVenta;
+                await _supabase.from('clientes').update({ deuda: nuevaDeuda }).eq('id', clienteId);
+            }
         }
 
+        // 3. Actualizar Stock
         for (const item of carrito) {
-            await _supabase.from('productos').update({ cantidad: item.cantidad - item.cantidadSeleccionada }).eq('id', item.id);
+            const nuevoStock = item.cantidad - item.cantidadSeleccionada;
+            await _supabase.from('productos').update({ cantidad: nuevoStock }).eq('id', item.id);
         }
 
         mostrarNotificacion("🎯 Venta registrada con éxito");
         setTimeout(() => location.reload(), 1000); 
     } catch (e) {
-        console.error(e);
+        console.error("Error en venta:", e);
+        mostrarNotificacion("Error al procesar la venta", "error");
         btn.disabled = false;
         btn.textContent = "Finalizar Venta (F2)";
     }
 }
 
-// Listeners
+// Listeners finales
 const inputBusq = document.getElementById('inputBusqueda');
 if(inputBusq) {
     inputBusq.addEventListener('input', manejarBusqueda);
