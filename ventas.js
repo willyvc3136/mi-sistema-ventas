@@ -409,13 +409,14 @@ async function finalizarVenta() {
         const totalVenta = parseFloat(document.getElementById('totalVenta').textContent.replace('$', ''));
 
         // 1. Insertar Venta
+        // Busca esta parte en tu función finalizarVenta y corrígela así:
         const { error: errorVenta } = await _supabase.from('ventas').insert([{
             total: totalVenta,
             metodo_pago: esFiado ? 'Fiado' : metodoSeleccionado,
             estado_pago: esFiado ? 'pendiente' : 'pagado',
             cliente_id: esFiado ? clienteId : null,
-            user_id: user.id, // Multiusuario
-            productos_vendidos: carrito 
+            vendedor_id: user.id, // <--- Verifica si es 'vendedor_id' o 'user_id'
+            productos_vendidos: JSON.stringify(carrito) 
         }]);
 
         if (errorVenta) throw errorVenta;
@@ -429,7 +430,8 @@ async function finalizarVenta() {
                 .single();
             
             if (!errorCl) {
-                const nuevaDeuda = (Number(cl.deuda) || 0) + totalVenta;
+                const deudaActual = parseFloat(cl.deuda) || 0;
+                const nuevaDeuda = deudaActual + totalVenta;
                 await _supabase.from('clientes').update({ deuda: nuevaDeuda }).eq('id', clienteId);
             }
         }
@@ -443,8 +445,8 @@ async function finalizarVenta() {
         mostrarNotificacion("🎯 Venta registrada con éxito");
         setTimeout(() => location.reload(), 1000); 
     } catch (e) {
-        console.error("Error en venta:", e);
-        mostrarNotificacion("Error al procesar la venta", "error");
+        console.error("Error completo de Supabase:", e); // Esto te dirá qué columna falta
+        alert("Error al procesar la venta. Revisa la consola para ver qué columna falla.");
         btn.disabled = false;
         btn.textContent = "Finalizar Venta (F2)";
     }
