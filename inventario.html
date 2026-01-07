@@ -89,14 +89,9 @@
                 <input type="text" id="nombreProducto" placeholder="Nombre completo del producto" class="w-full bg-slate-50 border-2 border-slate-100 p-3 rounded-xl outline-none font-bold">
                 
                 <div class="grid grid-cols-2 gap-4">
-                    <div class="relative">
-                        <select id="categoriaProducto" class="w-full bg-slate-50 border-2 border-slate-100 p-3 rounded-xl outline-none font-bold text-sm text-slate-500 appearance-none">
-                            <option value="Abarrotes">Abarrotes</option>
-                            <option value="Bebidas">Bebidas</option>
-                            <option value="Lácteos">Lácteos</option>
-                            <option value="Limpieza">Limpieza</option>
-                            <option value="Otros">Otros</option>
-                        </select>
+                    <div class="flex gap-2"> <select id="categoriaProducto" class="flex-1 bg-slate-50 border-2 border-slate-100 p-3 rounded-xl outline-none font-bold text-sm text-slate-500 appearance-none">
+                            </select>
+                        <button onclick="nuevaCategoriaPrompt()" type="button" class="bg-emerald-500 text-white px-3 rounded-xl font-bold">+</button>
                     </div>
                     <input type="number" id="cantidadProducto" placeholder="Stock Inicial" class="bg-slate-50 border-2 border-slate-100 p-3 rounded-xl outline-none font-bold">
                 </div>
@@ -120,12 +115,11 @@
             <div class="space-y-4">
                 <input type="text" id="editNombre" class="w-full p-3 border-2 border-slate-100 rounded-xl font-bold" placeholder="Nombre">
                 <input type="text" id="editCodigo" class="w-full p-3 border-2 border-slate-100 rounded-xl font-mono text-sm" placeholder="Código">
-                <select id="editCategoria" class="w-full p-3 border-2 border-slate-100 rounded-xl font-bold">
-                    <option value="Abarrotes">Abarrotes</option>
-                    <option value="Bebidas">Bebidas</option>
-                    <option value="Lácteos">Lácteos</option>
-                    <option value="Otros">Otros</option>
-                </select>
+                <div class="flex gap-2">
+                    <select id="editCategoria" class="flex-1 p-3 border-2 border-slate-100 rounded-xl font-bold">
+                        </select>
+                    <button onclick="nuevaCategoriaPrompt()" type="button" class="bg-emerald-500 text-white px-3 rounded-xl font-bold">+</button>
+                </div>
                 
                 <div class="grid grid-cols-2 gap-4">
                     <input type="number" id="editCantidad" class="p-3 border-2 border-slate-100 rounded-xl font-bold" placeholder="Stock">

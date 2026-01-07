@@ -15,6 +15,7 @@ async function checkAuth() {
     if (user) {
         if(userEmailDisplay) userEmailDisplay.textContent = user.email; 
         obtenerProductos(user.id);
+        cargarCategorias(); // <--- AGREGA ESTA LÍNEA AQUÍ
     } else {
         window.location.href = 'index.html';
     }
@@ -302,4 +303,48 @@ window.toggleAlertas = function() {
     btn.textContent = filtrandoAlertas ? "Ver Todo" : "Ver Faltantes";
 };
 
+// FUNCIÓN 1: Para leer las categorías de Supabase y ponerlas en los menús
+async function cargarCategorias() {
+    try {
+        const { data: { user } } = await _supabase.auth.getUser();
+        const { data: categorias, error } = await _supabase
+            .from('categorias')
+            .select('nombre')
+            .eq('user_id', user.id);
+
+        if (error) throw error;
+
+        const selectRegistro = document.getElementById('categoriaProducto');
+        const selectEditar = document.getElementById('editCategoria');
+
+        if (selectRegistro && selectEditar) {
+            // Limpiar y llenar
+            const opciones = categorias.map(cat => `<option value="${cat.nombre}">${cat.nombre}</option>`).join('');
+            const finalHtml = opciones + `<option value="Otros">Otros</option>`;
+            
+            selectRegistro.innerHTML = finalHtml;
+            selectEditar.innerHTML = finalHtml;
+        }
+    } catch (err) {
+        console.error("Error:", err.message);
+    }
+}
+
+// FUNCIÓN 2: La que tú pusiste, para crear categorías nuevas con el botón "+"
+window.nuevaCategoriaPrompt = async () => {
+    const nombreCat = prompt("Escribe el nombre de la nueva categoría:");
+    if (nombreCat && nombreCat.trim() !== "") {
+        const { data: { user } } = await _supabase.auth.getUser();
+        const { error } = await _supabase
+            .from('categorias')
+            .insert([{ nombre: nombreCat.trim(), user_id: user.id }]);
+
+        if (error) {
+            alert("Error: " + error.message);
+        } else {
+            alert("Categoría '" + nombreCat + "' agregada.");
+            await cargarCategorias(); // Recarga los selectores
+        }
+    }
+};
 checkAuth();
