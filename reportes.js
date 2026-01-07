@@ -8,7 +8,6 @@ let ventasActualesParaExportar = [];
 async function inicializarReportes() {
     const { data: { session } } = await _supabase.auth.getSession();
     if (session && session.user) {
-        // Eventos
         document.getElementById('filtroTiempo').addEventListener('change', () => {
             document.getElementById('fechaInicio').value = "";
             document.getElementById('fechaFin').value = "";
@@ -24,9 +23,7 @@ async function inicializarReportes() {
     }
 }
 
-// 2. FUNCIÓN CARGAR REPORTE ACTUALIZADA
 async function cargarReporte() {
-    // Referencia a la tabla para mostrar un estado de "Cargando"
     const tabla = document.getElementById('listaVentas');
     if(tabla) tabla.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-slate-400 italic">Buscando datos...</td></tr>';
 
@@ -39,7 +36,6 @@ async function cargarReporte() {
     let hasta = new Date();
     hasta.setHours(23, 59, 59, 999);
 
-    // Lógica de fechas
     if (fInicio !== "" && fFin !== "") {
         desde = new Date(fInicio + "T00:00:00");
         hasta = new Date(fFin + "T23:59:59");
@@ -48,11 +44,11 @@ async function cargarReporte() {
         hasta = new Date(fInicio + "T23:59:59");
     } else {
         if (filtro === 'semanal') desde.setDate(desde.getDate() - 7);
-        else if (filtro === 'mensual') desde.setMonth(desde.getMonth(), 1); // Optimizado: Primer día del mes actual
-        else if (filtro === 'anual') desde.setMonth(0, 1);
+        else if (filtro === 'mensual') desde.setDate(1); 
+        else if (filtro === 'anual') { desde.setMonth(0); desde.setDate(1); }
     }
 
-    // Consulta de ventas y deuda de forma paralela (más rápido)
+    // Consulta paralela: Ventas y Clientes
     const [resVentas, resClientes] = await Promise.all([
         _supabase
             .from('ventas')
@@ -65,14 +61,10 @@ async function cargarReporte() {
 
     if (resVentas.error) {
         console.error("Error cargando ventas:", resVentas.error);
-        tabla.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-red-500 font-bold">Error al conectar con la base de datos</td></tr>';
         return;
     }
 
-    // ACTUALIZACIÓN CLAVE: Guardamos los datos para que Excel y PDF puedan verlos
     ventasActualesParaExportar = resVentas.data;
-
-    // Procesar y mostrar
     procesarYMostrarDatos(resVentas.data, resClientes.data || []); 
 }
 
@@ -81,17 +73,20 @@ function procesarYMostrarDatos(ventas, clientes) {
     
     ventas.forEach(v => {
         const monto = Number(v.total || 0);
-        if (v.metodo_pago === 'Efectivo') efectivo += monto;
-        else if (v.metodo_pago === 'Yape') yape += monto;
-        else if (v.metodo_pago === 'Plin') plin += monto;
-        else if (v.metodo_pago === 'Fiado') fiado += monto;
+        // Normalizamos a MAYÚSCULAS para que no falle si es "Yape" o "YAPE"
+        const metodo = (v.metodo_pago || "").toUpperCase();
+
+        if (metodo === 'EFECTIVO') efectivo += monto;
+        else if (metodo === 'YAPE') yape += monto;
+        else if (metodo === 'PLIN') plin += monto;
+        else if (metodo === 'FIADO') fiado += monto;
     });
 
-    const granTotalReal = efectivo + yape + plin;
     const totalDigital = yape + plin;
+    const granTotalReal = efectivo + totalDigital; // Dinero que realmente entró (No incluye fiados)
     const totalDeudaReal = clientes.reduce((acc, c) => acc + (Number(c.deuda) || 0), 0);
 
-    // UI Updates con animación sencilla
+    // Actualización de la Interfaz
     document.getElementById('totalEfectivo').textContent = `$${efectivo.toFixed(2)}`;
     document.getElementById('totalDigital').textContent = `$${totalDigital.toFixed(2)}`;
     document.getElementById('granTotal').textContent = `$${granTotalReal.toFixed(2)}`;
@@ -113,6 +108,7 @@ function renderizarTabla(ventas) {
     ventas.forEach(v => {
         const fecha = new Date(v.created_at).toLocaleDateString('es-ES', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
         const clienteNombre = v.clientes ? v.clientes.nombre : 'Consumidor Final';
+        const metodo = (v.metodo_pago || "").toUpperCase();
         
         const fila = document.createElement('tr');
         fila.className = "group border-b border-slate-50 hover:bg-slate-50 transition-colors";
@@ -123,9 +119,11 @@ function renderizarTabla(ventas) {
             </td>
             <td class="p-5 text-center">
                 <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
-                    v.metodo_pago === 'Fiado' ? 'bg-orange-100 text-orange-600' : 'bg-slate-100 text-slate-500'
+                    metodo === 'FIADO' ? 'bg-orange-100 text-orange-600' : 
+                    metodo === 'YAPE' ? 'bg-purple-100 text-purple-600' :
+                    metodo === 'PLIN' ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-500'
                 }">
-                    ${v.metodo_pago}
+                    ${metodo}
                 </span>
             </td>
             <td class="p-5 text-right font-extrabold text-slate-700">$${Number(v.total).toFixed(2)}</td>
