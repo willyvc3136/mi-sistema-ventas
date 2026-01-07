@@ -107,24 +107,37 @@ async function cargarClientesAlSelector() {
     if (!selectCliente) return;
 
     const { data: { user } } = await _supabase.auth.getUser();
-    const { data: clientes, error } = await _supabase
+
+    // Intentamos cargar clientes vinculados a tu usuario
+    let { data: clientes, error } = await _supabase
         .from('clientes')
         .select('id, nombre')
         .eq('user_id', user.id)
         .order('nombre', { ascending: true });
 
-    if (error) {
-        console.error("Error cargando clientes:", error);
-        return;
+    // Si no hay clientes con tu ID (porque son antiguos), cargamos todos para que no se quede vacío
+    if (!clientes || clientes.length === 0) {
+        const { data: todos } = await _supabase
+            .from('clientes')
+            .select('id, nombre')
+            .order('nombre', { ascending: true });
+        clientes = todos;
     }
 
+    if (error) return console.error("Error cargando clientes:", error);
+
     selectCliente.innerHTML = '<option value="">-- Elige un cliente --</option>';
-    clientes.forEach(c => {
-        const option = document.createElement('option');
-        option.value = c.id;
-        option.textContent = c.nombre;
-        selectCliente.appendChild(option);
-    });
+    
+    if (clientes && clientes.length > 0) {
+        clientes.forEach(c => {
+            const option = document.createElement('option');
+            option.value = c.id;
+            option.textContent = c.nombre;
+            selectCliente.appendChild(option);
+        });
+    } else {
+        selectCliente.innerHTML = '<option value="">Sin clientes registrados</option>';
+    }
 }
 
 // ==========================================
