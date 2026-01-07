@@ -56,7 +56,6 @@ async function inicializar() {
         await cargarProductos(user.id); 
         enfocarBuscador();
 
-        // Configurar el evento del checkbox de fiado
         configurarEventosFiado();
 
         const btnFinalizar = document.getElementById('btnFinalizarVenta');
@@ -89,15 +88,22 @@ async function cargarProductos(userId) {
 function configurarEventosFiado() {
     const checkFiado = document.getElementById('esFiado');
     const contenedorSelector = document.getElementById('contenedorSelectorCliente');
+    const panelVuelto = document.getElementById('panelVuelto');
 
     if (!checkFiado) return;
 
     checkFiado.addEventListener('change', async () => {
         if (checkFiado.checked) {
+            // Mostrar selector de clientes y OCULTAR panel de vuelto
             if (contenedorSelector) contenedorSelector.classList.remove('hidden');
+            if (panelVuelto) panelVuelto.classList.add('hidden');
             await cargarClientesAlSelector();
         } else {
+            // Ocultar selector y MOSTRAR vuelto solo si el método es Efectivo
             if (contenedorSelector) contenedorSelector.classList.add('hidden');
+            if (metodoSeleccionado === 'Efectivo' && panelVuelto) {
+                panelVuelto.classList.remove('hidden');
+            }
         }
     });
 }
@@ -108,14 +114,12 @@ async function cargarClientesAlSelector() {
 
     const { data: { user } } = await _supabase.auth.getUser();
 
-    // Intentamos cargar clientes vinculados a tu usuario
     let { data: clientes, error } = await _supabase
         .from('clientes')
         .select('id, nombre')
         .eq('user_id', user.id)
         .order('nombre', { ascending: true });
 
-    // Si no hay clientes con tu ID (porque son antiguos), cargamos todos para que no se quede vacío
     if (!clientes || clientes.length === 0) {
         const { data: todos } = await _supabase
             .from('clientes')
@@ -328,7 +332,6 @@ function crearBotonesPagoRapido() {
     const contenedorVuelto = document.getElementById('panelVuelto');
     if(!contenedorVuelto) return;
 
-    // Limpiar botones previos si existen
     const existentes = contenedorVuelto.querySelector('.pago-rapido-container');
     if(existentes) existentes.remove();
 
@@ -363,6 +366,9 @@ function crearBotonesPagoRapido() {
 
 window.seleccionarMetodo = (metodo) => {
     metodoSeleccionado = metodo;
+    const checkFiado = document.getElementById('esFiado');
+    const panelVuelto = document.getElementById('panelVuelto');
+
     document.querySelectorAll('.metodo-pago').forEach(btn => {
         btn.classList.remove('border-emerald-500', 'bg-emerald-50', 'text-emerald-700');
         btn.classList.add('border-slate-100', 'bg-white', 'text-slate-500');
@@ -370,8 +376,12 @@ window.seleccionarMetodo = (metodo) => {
     const btnActivo = document.getElementById(`btn${metodo}`);
     if(btnActivo) btnActivo.classList.add('border-emerald-500', 'bg-emerald-50', 'text-emerald-700');
     
-    const panelVuelto = document.getElementById('panelVuelto');
-    metodo === 'Efectivo' ? panelVuelto.classList.remove('hidden') : panelVuelto.classList.add('hidden');
+    // Solo mostrar vuelto si el método es Efectivo y NO está en modo Fiado
+    if (metodo === 'Efectivo' && (!checkFiado || !checkFiado.checked)) {
+        panelVuelto.classList.remove('hidden');
+    } else {
+        panelVuelto.classList.add('hidden');
+    }
 };
 
 function actualizarVuelto() {
@@ -409,13 +419,12 @@ async function finalizarVenta() {
         const totalVenta = parseFloat(document.getElementById('totalVenta').textContent.replace('$', ''));
 
         // 1. Insertar Venta
-        // Busca esta parte en tu función finalizarVenta y corrígela así:
         const { error: errorVenta } = await _supabase.from('ventas').insert([{
             total: totalVenta,
             metodo_pago: esFiado ? 'Fiado' : metodoSeleccionado,
             estado_pago: esFiado ? 'pendiente' : 'pagado',
             cliente_id: esFiado ? clienteId : null,
-            vendedor_id: user.id, // <--- Verifica si es 'vendedor_id' o 'user_id'
+            vendedor_id: user.id, 
             productos_vendidos: JSON.stringify(carrito) 
         }]);
 
@@ -445,8 +454,8 @@ async function finalizarVenta() {
         mostrarNotificacion("🎯 Venta registrada con éxito");
         setTimeout(() => location.reload(), 1000); 
     } catch (e) {
-        console.error("Error completo de Supabase:", e); // Esto te dirá qué columna falta
-        alert("Error al procesar la venta. Revisa la consola para ver qué columna falla.");
+        console.error("Error completo de Supabase:", e);
+        alert("Error al procesar la venta. Revisa la consola.");
         btn.disabled = false;
         btn.textContent = "Finalizar Venta (F2)";
     }
