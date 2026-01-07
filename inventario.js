@@ -109,7 +109,7 @@ async function encenderCamara(targetInputId) {
     const container = document.getElementById('lectorContainer');
     if(!container) return;
     
-    // NUEVO: Si estamos en el modal de registro, lo ocultamos para ver la cámara
+    // Ocultamos modal de registro solo si venimos de ahí
     if(targetInputId === 'codigoProducto') {
         modalRegistro.classList.add('hidden');
     }
@@ -128,31 +128,28 @@ async function encenderCamara(targetInputId) {
         await html5QrCode.start(
             { facingMode: "environment" }, 
             { fps: 10, qrbox: { width: 250, height: 150 }, aspectRatio: 1.0 }, 
-            // Dentro de html5QrCode.start -> callback de éxito:
             async (decodedText) => {
                 const input = document.getElementById(targetInputId);
                 if(input) {
                     input.value = decodedText;
                     
-                    // PRIMERO cerramos cámara para liberar la vista
-                    cerrarCamara(); 
+                    // IMPORTANTE: Cerramos cámara ANTES de cualquier lógica de modales
+                    await cerrarCamara();
 
                     if(targetInputId === 'buscador') {
-                        // Disparamos la búsqueda y el filtro ocultará el resto
-                        input.dispatchEvent(new Event('input')); 
+                        // Si es buscador, SOLO filtramos la tabla
+                        input.dispatchEvent(new Event('input'));
                     } 
-                    
-                    if(targetInputId === 'codigoProducto') {
-                        modalRegistro.classList.remove('hidden');
+                    else if(targetInputId === 'codigoProducto') {
+                        // Si es registro, validamos duplicado
                         validarDuplicado(decodedText);
                     }
                 }
             }
         );
     } catch (err) {
-        alert("Error de cámara");
+        console.error("Error de cámara", err);
         container.classList.add('hidden');
-        // Si falló la cámara, al menos regresamos al modal
         if(targetInputId === 'codigoProducto') modalRegistro.classList.remove('hidden');
     }
 }
@@ -176,16 +173,27 @@ async function validarDuplicado(codigo) {
     const { data: { user } } = await _supabase.auth.getUser();
     const { data } = await _supabase
         .from('productos')
-        .select('*') // Traemos todo para poder editar
+        .select('*')
         .eq('codigo_barras', codigo)
         .eq('user_id', user.id)
         .maybeSingle();
 
     if(data) {
-        alert(`El producto "${data.nombre}" ya existe. Te llevaré a la edición.`);
-        cerrarModalRegistro(); // Cerramos el de "Nuevo"
-        // Abrimos el de "Editar" con los datos encontrados
-        prepararEdicion(data.id, data.nombre, data.cantidad, data.precio, data.categoria, data.precio_costo, data.codigo_barras);
+        // confirm() da opción de Aceptar o Cancelar
+        const respuesta = confirm(`El producto "${data.nombre}" ya existe.\n\n¿Deseas ir a la ventana de EDICIÓN?`);
+        
+        if(respuesta) {
+            cerrarModalRegistro();
+            // Pasamos todos los datos incluyendo el precio_costo
+            prepararEdicion(data.id, data.nombre, data.cantidad, data.precio, data.categoria, data.precio_costo, data.codigo_barras);
+        } else {
+            // Si dice que NO, regresamos al modal de registro pero limpiamos el código para que no guarde duplicado
+            document.getElementById('codigoProducto').value = '';
+            modalRegistro.classList.remove('hidden');
+        }
+    } else {
+        // Si el producto es realmente nuevo, simplemente mostramos el modal para seguir llenando
+        modalRegistro.classList.remove('hidden');
     }
 }
 
@@ -244,8 +252,12 @@ window.prepararEdicion = (id, nombre, cant, precio, cat, costo, cod) => {
     document.getElementById('editCantidad').value = cant;
     document.getElementById('editPrecio').value = precio;
     document.getElementById('editCategoria').value = cat || 'Otros';
-    document.getElementById('editPrecioCosto').value = costo;
     document.getElementById('editCodigo').value = cod || ''; 
+    
+    // CORRECCIÓN: Asignar el costo al campo oculto o visible del modal
+    const inputCosto = document.getElementById('editPrecioCosto');
+    if(inputCosto) inputCosto.value = costo || 0;
+
     modalEditar.classList.remove('hidden');
 };
 
