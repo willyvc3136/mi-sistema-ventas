@@ -71,14 +71,29 @@ function renderizarTabla(productos) {
 
 function actualizarDashboard(productos) {
     let valorVentaTotal = 0;
+    let inversionTotal = 0; // Nueva variable
     let stockBajo = 0;
+
     productos.forEach(prod => {
         const cant = parseInt(prod.cantidad) || 0;
-        valorVentaTotal += (parseFloat(prod.precio) || 0) * cant;
+        const precio = parseFloat(prod.precio) || 0;
+        const costo = parseFloat(prod.precio_costo) || 0;
+
+        valorVentaTotal += precio * cant;
+        inversionTotal += costo * cant; // Sumamos la inversión real
         if (cant < 5) stockBajo++;
     });
+
+    // Actualizamos los textos en el HTML
     const statValor = document.getElementById('stat-valor');
-    if(statValor) statValor.innerHTML = `<h3 class="text-3xl font-black text-slate-800">$${valorVentaTotal.toLocaleString('en-US', {minimumFractionDigits: 2})}</h3>`;
+    if(statValor) {
+        statValor.innerHTML = `
+            <div class="flex flex-col">
+                <h3 class="text-2xl font-black text-slate-800">$${valorVentaTotal.toLocaleString('en-US', {minimumFractionDigits: 2})} <span class="text-[10px] text-slate-400">P. VENTA</span></h3>
+                <h3 class="text-lg font-bold text-red-500">$${inversionTotal.toLocaleString('en-US', {minimumFractionDigits: 2})} <span class="text-[10px] text-slate-400">INVERSIÓN</span></h3>
+            </div>
+        `;
+    }
     document.getElementById('stat-cantidad').textContent = productos.length;
     document.getElementById('stat-alerta').textContent = stockBajo;
 }
