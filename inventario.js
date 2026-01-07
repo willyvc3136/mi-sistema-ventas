@@ -128,19 +128,25 @@ async function encenderCamara(targetInputId) {
         await html5QrCode.start(
             { facingMode: "environment" }, 
             { fps: 10, qrbox: { width: 250, height: 150 }, aspectRatio: 1.0 }, 
+            // Dentro de html5QrCode.start -> callback de éxito:
             async (decodedText) => {
                 const input = document.getElementById(targetInputId);
                 if(input) {
                     input.value = decodedText;
                     
+                    // PRIMERO cerramos cámara para liberar la vista
+                    cerrarCamara(); 
+
+                    if(targetInputId === 'buscador') {
+                        // Disparamos la búsqueda y el filtro ocultará el resto
+                        input.dispatchEvent(new Event('input')); 
+                    } 
+                    
                     if(targetInputId === 'codigoProducto') {
-                        // REABRIR MODAL: Una vez detectado el código, regresamos al formulario
                         modalRegistro.classList.remove('hidden');
                         validarDuplicado(decodedText);
                     }
-                    input.dispatchEvent(new Event('input'));
                 }
-                cerrarCamara();
             }
         );
     } catch (err) {
@@ -170,14 +176,16 @@ async function validarDuplicado(codigo) {
     const { data: { user } } = await _supabase.auth.getUser();
     const { data } = await _supabase
         .from('productos')
-        .select('nombre')
+        .select('*') // Traemos todo para poder editar
         .eq('codigo_barras', codigo)
         .eq('user_id', user.id)
         .maybeSingle();
 
     if(data) {
-        alert(`⚠️ El producto "${data.nombre}" ya existe con este código. Úsalo solo para editar.`);
-        document.getElementById('codigoProducto').value = '';
+        alert(`El producto "${data.nombre}" ya existe. Te llevaré a la edición.`);
+        cerrarModalRegistro(); // Cerramos el de "Nuevo"
+        // Abrimos el de "Editar" con los datos encontrados
+        prepararEdicion(data.id, data.nombre, data.cantidad, data.precio, data.categoria, data.precio_costo, data.codigo_barras);
     }
 }
 
