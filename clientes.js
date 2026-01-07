@@ -1,5 +1,5 @@
 const supabaseUrl = 'https://ijyhkbiukiqiqjabpubm.supabase.co';
-const supabaseKey = 'sb_publishable_EpJx4G5egW9GZdj8P7oudw_kDWWsj6p'; // USA TU LLAVE REAL
+const supabaseKey = 'sb_publishable_EpJx4G5egW9GZdj8P7oudw_kDWWsj6p'; 
 const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 async function registrarCliente() {
@@ -18,6 +18,8 @@ async function registrarCliente() {
 
 async function obtenerClientes() {
     const { data: { user } } = await _supabase.auth.getUser();
+    if (!user) return;
+
     const { data, error } = await _supabase
         .from('clientes')
         .select('*')
@@ -37,7 +39,7 @@ function renderizarClientes(clientes) {
             <td class="py-4 px-4 text-gray-500">${c.telefono || '-'}</td>
             <td class="py-4 px-4 text-center">
                 <span class="font-black ${c.deuda > 0 ? 'text-red-600' : 'text-green-600'}">
-                    $${parseFloat(c.deuda).toFixed(2)}
+                    $${parseFloat(c.deuda || 0).toFixed(2)}
                 </span>
             </td>
             <td class="py-4 px-4 text-center">
@@ -54,51 +56,47 @@ function renderizarClientes(clientes) {
 window.abrirModalAbono = (id, nombre) => {
     document.getElementById('idClienteAbono').value = id;
     document.getElementById('nombreClienteAbono').textContent = "Cliente: " + nombre;
+    document.getElementById('montoAbono').value = ''; // Limpiar monto anterior
+    document.getElementById('metodoAbonoSeleccionado').value = 'EFECTIVO'; // Resetear a efectivo por defecto
     document.getElementById('modalAbono').classList.remove('hidden');
 };
 
 window.cerrarModalAbono = () => document.getElementById('modalAbono').classList.add('hidden');
 
-async function guardarAbono() {
-    const idCliente = document.getElementById('idClienteAbono').value;
-    const monto = parseFloat(document.getElementById('montoAbono').value);
-    const { data: { user } } = await _supabase.auth.getUser();
+function seleccionarMetodoAbono(metodo, elemento) {
+    document.getElementById('metodoAbonoSeleccionado').value = metodo;
 
-    if(!monto || monto <= 0) return alert("Ingresa un monto válido");
+    document.querySelectorAll('.metodo-abono-btn').forEach(btn => {
+        btn.classList.remove('border-green-500', 'bg-green-50', 'text-green-700');
+        btn.classList.add('border-gray-100', 'text-gray-400');
+    });
 
-    // 1. Registrar el abono en la tabla 'abonos' (para el reporte de caja de HOY)
-    await _supabase.from('abonos').insert([
-        { cliente_id: idCliente, monto: monto, user_id: user.id }
-    ]);
-
-    // 2. Actualizar la deuda en la tabla 'clientes' (Restar el pago)
-    // Primero obtenemos la deuda actual
-    const { data: cliente } = await _supabase.from('clientes').select('deuda').eq('id', idCliente).single();
-    const nuevaDeuda = cliente.deuda - monto;
-
-    await _supabase.from('clientes').update({ deuda: nuevaDeuda }).eq('id', idCliente);
-
-    alert("¡Pago registrado con éxito!");
-    location.reload();
+    elemento.classList.remove('border-gray-100', 'text-gray-400');
+    elemento.classList.add('border-green-500', 'bg-green-50', 'text-green-700');
 }
 
-// ... (Todo tu código anterior de registrarCliente, obtenerClientes y abrirModal se mantiene igual)
-
+// ÚNICA FUNCIÓN guardarAbono (Corregida y completa)
 async function guardarAbono() {
     const idCliente = document.getElementById('idClienteAbono').value;
     const monto = parseFloat(document.getElementById('montoAbono').value);
+    const metodo = document.getElementById('metodoAbonoSeleccionado').value;
     const { data: { user } } = await _supabase.auth.getUser();
 
     if(!monto || monto <= 0) return alert("Ingresa un monto válido");
 
     try {
-        // 1. Registrar el abono en la tabla 'abonos' (Historial de pagos)
+        // 1. Registrar el abono en la tabla 'abonos' con el METODO DE PAGO
         const { error: errorAbono } = await _supabase.from('abonos').insert([
-            { cliente_id: idCliente, monto: monto, user_id: user.id }
+            { 
+                cliente_id: idCliente, 
+                monto: monto, 
+                user_id: user.id,
+                metodo_pago: metodo // Ahora guardamos si fue Yape, Plin o Efectivo
+            }
         ]);
         if (errorAbono) throw errorAbono;
 
-        // 2. Actualizar la deuda en la tabla 'clientes' (Restar el pago)
+        // 2. Obtener deuda actual y actualizarla
         const { data: cliente, error: errorCliente } = await _supabase
             .from('clientes')
             .select('deuda')
@@ -107,7 +105,6 @@ async function guardarAbono() {
         
         if (errorCliente) throw errorCliente;
 
-        // Usamos Number() para asegurar que la resta sea matemática
         const nuevaDeuda = Number(cliente.deuda || 0) - monto;
 
         const { error: errorUpdate } = await _supabase
@@ -117,21 +114,17 @@ async function guardarAbono() {
         
         if (errorUpdate) throw errorUpdate;
 
-        // ==========================================
-        // 3. NUEVO: REGISTRAR EN VENTAS PARA REPORTES
-        // ==========================================
-        // Esto hace que el dinero sume a tu "Total Efectivo" de hoy
+        // 3. REGISTRAR EN VENTAS PARA QUE APAREZCA EN EL DESGLOSE DE CAJA
         await _supabase.from('ventas').insert([{
             total: monto,
-            metodo_pago: 'Efectivo', // Puedes cambiarlo si el modal tiene opción de Yape/Plin
+            metodo_pago: metodo, // <--- AQUÍ ESTÁ LA MAGIA: Se sumará a Yape o Efectivo según elijas
             estado_pago: 'pagado',
             cliente_id: idCliente,
             vendedor_id: user.id,
-            productos_vendidos: [{ nombre: "PAGO/ABONO DE DEUDA", cantidad: 1 }]
+            productos_vendidos: [{ nombre: `ABONO DEUDA: ${metodo}`, cantidad: 1 }]
         }]);
-        // ==========================================
 
-        alert("¡Pago registrado con éxito y sumado a reportes!");
+        alert(`¡Pago de $${monto} por ${metodo} registrado con éxito!`);
         location.reload();
 
     } catch (error) {
