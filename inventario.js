@@ -83,10 +83,14 @@ function actualizarDashboard(productos) {
 window.abrirModalRegistro = () => modalRegistro.classList.remove('hidden');
 window.cerrarModalRegistro = () => {
     modalRegistro.classList.add('hidden');
-    document.getElementById('codigoProducto').value = '';
-    document.getElementById('nombreProducto').value = '';
-    document.getElementById('cantidadProducto').value = '';
-    document.getElementById('precioProducto').value = '';
+    // LIMPIEZA PROFUNDA: Ponemos todos los IDs en blanco
+    const campos = ['codigoProducto', 'nombreProducto', 'cantidadProducto', 'precioProducto', 'precioCosto'];
+    campos.forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.value = '';
+    });
+    // Regresamos la categoría a la primera opción por defecto
+    document.getElementById('categoriaProducto').selectedIndex = 0;
 };
 
 window.abrirModalRegistroDesdeBusqueda = () => {
@@ -105,7 +109,11 @@ async function encenderCamara(targetInputId) {
     const container = document.getElementById('lectorContainer');
     if(!container) return;
     
-    // Detener cualquier cámara abierta antes de iniciar otra
+    // NUEVO: Si estamos en el modal de registro, lo ocultamos para ver la cámara
+    if(targetInputId === 'codigoProducto') {
+        modalRegistro.classList.add('hidden');
+    }
+
     if (html5QrCode) {
         try {
             await html5QrCode.stop();
@@ -116,29 +124,30 @@ async function encenderCamara(targetInputId) {
     container.classList.remove('hidden');
     html5QrCode = new Html5Qrcode("reader");
 
-    const config = { fps: 10, qrbox: { width: 250, height: 150 }, aspectRatio: 1.0 };
-
     try {
         await html5QrCode.start(
             { facingMode: "environment" }, 
-            config, 
+            { fps: 10, qrbox: { width: 250, height: 150 }, aspectRatio: 1.0 }, 
             async (decodedText) => {
                 const input = document.getElementById(targetInputId);
                 if(input) {
                     input.value = decodedText;
-                    input.dispatchEvent(new Event('input'));
                     
-                    // Si estamos en registro, validar si existe
                     if(targetInputId === 'codigoProducto') {
+                        // REABRIR MODAL: Una vez detectado el código, regresamos al formulario
+                        modalRegistro.classList.remove('hidden');
                         validarDuplicado(decodedText);
                     }
+                    input.dispatchEvent(new Event('input'));
                 }
                 cerrarCamara();
             }
         );
     } catch (err) {
-        alert("Error de cámara: Asegúrate de usar HTTPS y dar permisos.");
+        alert("Error de cámara");
         container.classList.add('hidden');
+        // Si falló la cámara, al menos regresamos al modal
+        if(targetInputId === 'codigoProducto') modalRegistro.classList.remove('hidden');
     }
 }
 
@@ -146,6 +155,10 @@ function cerrarCamara() {
     if (html5QrCode) {
         html5QrCode.stop().then(() => {
             document.getElementById('lectorContainer').classList.add('hidden');
+            // Si el campo de código está vacío o activo, regresamos al modal
+            if(!modalEditar.classList.contains('hidden') === false) {
+                 modalRegistro.classList.remove('hidden');
+            }
         }).catch(() => {
             document.getElementById('lectorContainer').classList.add('hidden');
         });
