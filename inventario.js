@@ -318,15 +318,22 @@ async function cargarCategorias() {
         const selectEditar = document.getElementById('editCategoria');
 
         if (selectRegistro && selectEditar) {
-            // Limpiar y llenar
-            const opciones = categorias.map(cat => `<option value="${cat.nombre}">${cat.nombre}</option>`).join('');
-            const finalHtml = opciones + `<option value="Otros">Otros</option>`;
+            // 1. Empezamos con una opción de instrucción (Placeholder)
+            let htmlOpciones = `<option value="" disabled selected>Seleccionar Categoría</option>`;
+
+            // 2. Agregamos las categorías que vienen de la base de datos
+            categorias.forEach(cat => {
+                htmlOpciones += `<option value="${cat.nombre}">${cat.nombre}</option>`;
+            });
+
+            // 3. Agregamos "Otros" al final
+            htmlOpciones += `<option value="Otros">Otros</option>`;
             
-            selectRegistro.innerHTML = finalHtml;
-            selectEditar.innerHTML = finalHtml;
+            selectRegistro.innerHTML = htmlOpciones;
+            selectEditar.innerHTML = htmlOpciones;
         }
     } catch (err) {
-        console.error("Error:", err.message);
+        console.error("Error al cargar categorías:", err.message);
     }
 }
 
