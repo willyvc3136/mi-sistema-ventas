@@ -7,7 +7,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
-    <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
 </head>
 <body class="bg-white p-4"> 
     <div id="mainApp" class="max-w-7xl mx-auto">
@@ -17,66 +22,43 @@
                 <h1 class="text-white text-lg font-black uppercase tracking-widest">Gestión de Almacén</h1>
                 <p class="text-slate-400 text-[10px] font-bold uppercase">Usuario: <span id="user-email" class="text-emerald-400"></span></p>
             </div>
-            <span class="bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full text-[10px] font-black border border-emerald-500/20">SISTEMA ACTIVO</span>
+            <button onclick="abrirModalRegistro()" class="bg-emerald-500 text-slate-900 px-4 py-2 rounded-xl text-[10px] font-black uppercase hover:bg-emerald-400 transition-colors">
+                + Nuevo Producto
+            </button>
         </div>
 
         <div id="lectorContainer" class="hidden mb-6 bg-slate-900 p-4 rounded-3xl overflow-hidden border-4 border-emerald-500">
             <div id="reader" class="w-full"></div>
-            <button onclick="cerrarCamara()" class="w-full mt-4 bg-red-600 text-white font-bold py-2 rounded-xl">Cerrar Cámara</button>
+            <button onclick="cerrarCamara()" class="w-full mt-4 bg-red-600 text-white font-bold py-2 rounded-xl uppercase text-xs">Cancelar Escaneo</button>
         </div>
 
         <div id="dashboard-stats" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+            <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100 text-center md:text-left">
                 <p class="text-[10px] text-slate-400 font-black uppercase mb-1">Valor Venta Total</p>
                 <div id="stat-valor"><h3 class="text-3xl font-black text-slate-800">$0.00</h3></div>
             </div>
-            <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+            <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100 text-center md:text-left">
                 <p class="text-[10px] text-slate-400 font-black uppercase mb-1">Total Productos</p>
                 <h3 id="stat-cantidad" class="text-3xl font-black text-emerald-600">0</h3>
             </div>
-            <div class="bg-red-50 p-6 rounded-2xl border border-red-100">
+            <div class="bg-red-50 p-6 rounded-2xl border border-red-100 text-center md:text-left">
                 <p class="text-[10px] text-red-400 font-black uppercase mb-1">Stock Crítico</p>
                 <h3 id="stat-alerta" class="text-3xl font-black text-red-600">0</h3>
             </div>
         </div>
 
-        <div class="bg-white p-6 rounded-3xl shadow-sm mb-8 border border-slate-200">
-            <h2 class="text-sm font-black text-slate-800 mb-6 uppercase tracking-widest flex items-center gap-2">
-                <span class="w-2 h-6 bg-emerald-500 rounded-full"></span> Nuevo Registro
-            </h2>
-            <div class="grid grid-cols-1 md:grid-cols-7 gap-4">
-                <div class="relative md:col-span-1">
-                    <input type="text" id="codigoProducto" placeholder="Código" class="w-full bg-slate-50 border-2 border-slate-100 p-3 rounded-xl outline-none font-bold text-sm">
-                    <button onclick="encenderCamara('codigoProducto')" class="absolute right-3 top-3">📷</button>
-                </div>
-                <input type="text" id="nombreProducto" placeholder="Nombre" class="md:col-span-2 bg-slate-50 border-2 border-slate-100 p-3 rounded-xl outline-none">
-                
-                <select id="categoriaProducto" class="bg-slate-50 border-2 border-slate-100 p-3 rounded-xl outline-none font-bold text-sm">
-                    <option value="Abarrotes">Abarrotes</option>
-                    <option value="Bebidas">Bebidas</option>
-                    <option value="Otros">Otros</option>
-                </select>
-
-                <input type="number" id="precioCosto" placeholder="Costo $" step="0.01" class="bg-slate-50 border-2 border-slate-100 p-3 rounded-xl outline-none font-bold text-red-600">
-                <input type="number" id="precioProducto" placeholder="Venta $" step="0.01" class="bg-slate-50 border-2 border-slate-100 p-3 rounded-xl outline-none font-bold text-emerald-600">
-                
-                <input type="number" id="cantidadProducto" placeholder="Stock" class="bg-slate-50 border-2 border-slate-100 p-3 rounded-xl outline-none font-bold">
-
-                <button id="btnAgregar" class="bg-emerald-600 text-white p-4 rounded-xl font-black hover:bg-emerald-700 md:col-span-7 uppercase text-xs">Guardar en Sistema</button>
-            </div>
-        </div>
-
         <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-            <div class="mb-6 flex gap-4">
+            <div class="mb-6 flex flex-col md:flex-row gap-4">
                 <div class="relative flex-1">
-                    <input type="text" id="buscador" placeholder="Buscar productos..." class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none pr-14">
-                    <button onclick="encenderCamara('buscador')" class="absolute right-4 top-4">📷</button>
+                    <input type="text" id="buscador" placeholder="Buscar productos por nombre o código..." class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none pr-14 font-bold text-slate-700">
+                    <button onclick="encenderCamara('buscador')" class="absolute right-4 top-4 text-xl">📷</button>
                 </div>
-                <button id="btnFiltroAlertas" onclick="toggleAlertas()" class="bg-red-50 text-red-600 px-6 py-4 rounded-2xl border border-red-100 font-black text-[10px] uppercase">Faltantes</button>
+                <button id="btnFiltroAlertas" onclick="toggleAlertas()" class="bg-red-50 text-red-600 px-6 py-4 rounded-2xl border border-red-100 font-black text-[10px] uppercase">Ver Faltantes</button>
             </div>
-            <div class="overflow-x-auto">
+
+            <div class="overflow-x-auto max-h-[500px] overflow-y-auto custom-scroll">
                 <table class="w-full text-left">
-                    <thead>
+                    <thead class="sticky top-0 bg-white shadow-sm">
                         <tr class="text-slate-400 uppercase text-[10px] font-black border-b">
                             <th class="py-4 px-4">Producto</th>
                             <th class="py-4 px-4 text-center">Stock</th>
@@ -86,31 +68,73 @@
                     </thead>
                     <tbody id="listaProductos"></tbody>
                 </table>
+                <div id="sinResultados" class="hidden p-10 text-center">
+                    <p class="text-slate-400 font-bold mb-4 italic">El producto no existe en el inventario...</p>
+                    <button onclick="abrirModalRegistroDesdeBusqueda()" class="bg-emerald-100 text-emerald-600 px-4 py-2 rounded-lg font-black text-[10px] uppercase">Registrar Nuevo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalRegistro" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex justify-center items-center p-4 z-50">
+        <div class="bg-white p-8 rounded-3xl w-full max-w-lg shadow-2xl">
+            <h2 class="font-black mb-6 uppercase flex items-center gap-2 text-slate-800">
+                <span class="w-2 h-6 bg-emerald-500 rounded-full"></span> Nuevo Registro
+            </h2>
+            <div class="space-y-4">
+                <div class="relative">
+                    <input type="text" id="codigoProducto" placeholder="Código de Barras" class="w-full bg-slate-50 border-2 border-slate-100 p-3 rounded-xl outline-none font-bold">
+                    <button onclick="encenderCamara('codigoProducto')" class="absolute right-3 top-3">📷</button>
+                </div>
+                <input type="text" id="nombreProducto" placeholder="Nombre completo del producto" class="w-full bg-slate-50 border-2 border-slate-100 p-3 rounded-xl outline-none font-bold">
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="relative">
+                        <select id="categoriaProducto" class="w-full bg-slate-50 border-2 border-slate-100 p-3 rounded-xl outline-none font-bold text-sm text-slate-500 appearance-none">
+                            <option value="Abarrotes">Abarrotes</option>
+                            <option value="Bebidas">Bebidas</option>
+                            <option value="Lácteos">Lácteos</option>
+                            <option value="Limpieza">Limpieza</option>
+                            <option value="Otros">Otros</option>
+                        </select>
+                    </div>
+                    <input type="number" id="cantidadProducto" placeholder="Stock Inicial" class="bg-slate-50 border-2 border-slate-100 p-3 rounded-xl outline-none font-bold">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="number" id="precioCosto" placeholder="Costo $" step="0.01" class="bg-slate-50 border-2 border-slate-100 p-3 rounded-xl outline-none font-bold text-red-500">
+                    <input type="number" id="precioProducto" placeholder="Precio Venta $" step="0.01" class="bg-slate-50 border-2 border-slate-100 p-3 rounded-xl outline-none font-bold text-emerald-600">
+                </div>
+            </div>
+            <div class="flex gap-3 mt-8">
+                <button id="btnConfirmarGuardar" class="flex-1 bg-emerald-600 text-white p-4 rounded-2xl font-black uppercase text-xs">Guardar Producto</button>
+                <button onclick="cerrarModalRegistro()" class="flex-1 bg-slate-100 text-slate-500 p-4 rounded-2xl font-black uppercase text-xs">Cancelar</button>
             </div>
         </div>
     </div>
 
     <div id="modalEditar" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex justify-center items-center p-4 z-50">
-        <div class="bg-white p-8 rounded-3xl w-full max-w-md">
-            <h2 class="font-black mb-4 uppercase">Editar Producto</h2>
+        <div class="bg-white p-8 rounded-3xl w-full max-w-md shadow-2xl">
+            <h2 class="font-black mb-6 uppercase text-slate-800">Editar Producto</h2>
             <input type="hidden" id="editId">
             <div class="space-y-4">
-                <input type="text" id="editNombre" class="w-full p-3 border rounded-xl" placeholder="Nombre">
-                <input type="text" id="editCodigo" class="w-full p-3 border rounded-xl" placeholder="Código">
-                <select id="editCategoria" class="w-full p-3 border rounded-xl">
+                <input type="text" id="editNombre" class="w-full p-3 border-2 border-slate-100 rounded-xl font-bold" placeholder="Nombre">
+                <input type="text" id="editCodigo" class="w-full p-3 border-2 border-slate-100 rounded-xl font-mono text-sm" placeholder="Código">
+                <select id="editCategoria" class="w-full p-3 border-2 border-slate-100 rounded-xl font-bold">
                     <option value="Abarrotes">Abarrotes</option>
                     <option value="Bebidas">Bebidas</option>
+                    <option value="Lácteos">Lácteos</option>
                     <option value="Otros">Otros</option>
                 </select>
                 <div class="grid grid-cols-2 gap-4">
-                    <input type="number" id="editCantidad" class="p-3 border rounded-xl" placeholder="Stock">
-                    <input type="number" id="editPrecio" class="p-3 border rounded-xl" placeholder="Precio">
+                    <input type="number" id="editCantidad" class="p-3 border-2 border-slate-100 rounded-xl font-bold" placeholder="Stock">
+                    <input type="number" id="editPrecio" class="p-3 border-2 border-slate-100 rounded-xl font-bold text-emerald-600" placeholder="Precio">
                 </div>
                 <input type="hidden" id="editPrecioCosto">
             </div>
-            <div class="flex gap-2 mt-6">
-                <button id="btnGuardarCambios" class="flex-1 bg-emerald-600 text-white p-3 rounded-xl font-bold">Guardar</button>
-                <button onclick="cerrarModal()" class="flex-1 bg-slate-100 p-3 rounded-xl font-bold">Cancelar</button>
+            <div class="flex gap-3 mt-8">
+                <button id="btnGuardarCambios" class="flex-1 bg-emerald-600 text-white p-3 rounded-xl font-black uppercase text-xs">Actualizar</button>
+                <button onclick="cerrarModal()" class="flex-1 bg-slate-100 p-3 rounded-xl font-black uppercase text-xs text-slate-500">Volver</button>
             </div>
         </div>
     </div>
