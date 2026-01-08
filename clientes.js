@@ -160,23 +160,34 @@ async function verHistorial(idCliente, nombre) {
             .eq('cliente_id', idCliente);
 
         // 3. Unificar y Ordenar por fecha
+        // 3. Unificar y Ordenar por fecha (CORREGIDO Y SEGURO)
         let historial = [];
         
         ventas.forEach(v => {
-            const listaProd = v.productos_vendidos.map(p => `${p.cantidad} ${p.nombre}`).join(', ');
+            let listaProd = "Compra de productos";
+            
+            // Verificamos si productos_vendidos es una lista (Array)
+            if (v.productos_vendidos && Array.isArray(v.productos_vendidos)) {
+                listaProd = v.productos_vendidos.map(p => `${p.cantidad || 1} ${p.nombre}`).join(', ');
+            } 
+            // Si no es lista, vemos si es un objeto con nombre (como tus registros de abono)
+            else if (v.productos_vendidos && typeof v.productos_vendidos === 'object') {
+                listaProd = v.productos_vendidos.nombre || "Compra registrada";
+            }
+
             historial.push({
                 fecha: new Date(v.created_at),
                 concepto: `🛍️ COMPRA: ${listaProd}`,
-                monto: v.total,
+                monto: parseFloat(v.total || 0),
                 tipo: 'cargo'
             });
         });
 
         abonos.forEach(a => {
             historial.push({
-                fecha: new Date(a.fecha),
-                concepto: `✅ ABONO: (${a.metodo_pago})`,
-                monto: a.monto,
+                fecha: new Date(a.fecha || a.created_at),
+                concepto: `✅ ABONO: (${a.metodo_pago || 'EFECTIVO'})`,
+                monto: parseFloat(a.monto || 0),
                 tipo: 'abono'
             });
         });
@@ -185,6 +196,10 @@ async function verHistorial(idCliente, nombre) {
 
         // 4. Renderizar en la tabla
         tabla.innerHTML = '';
+        if (historial.length === 0) {
+            tabla.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-gray-400 italic">No hay movimientos registrados</td></tr>';
+        }
+
         historial.forEach(item => {
             const esAbono = item.tipo === 'abono';
             const fila = document.createElement('tr');
@@ -200,9 +215,8 @@ async function verHistorial(idCliente, nombre) {
         });
 
     } catch (e) {
-        console.error(e);
-        tabla.innerHTML = '<tr><td colspan="3" class="text-center text-red-500 py-4">Error al cargar.</td></tr>';
+        console.error("Error detallado:", e);
+        tabla.innerHTML = `<tr><td colspan="3" class="text-center text-red-500 py-4 font-bold">Error al cargar: ${e.message}</td></tr>`;
     }
 }
-
 obtenerClientes();
