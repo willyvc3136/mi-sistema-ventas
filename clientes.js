@@ -164,20 +164,24 @@ async function verHistorial(idCliente, nombre) {
         let historial = [];
         
         ventas.forEach(v => {
-            let listaProd = "Compra de productos";
+            let listaProd = "";
             
-            // Verificamos si productos_vendidos es una lista (Array)
+            // Caso 1: Es una lista de productos detallada (Lo ideal)
             if (v.productos_vendidos && Array.isArray(v.productos_vendidos)) {
                 listaProd = v.productos_vendidos.map(p => `${p.cantidad || 1} ${p.nombre}`).join(', ');
             } 
-            // Si no es lista, vemos si es un objeto con nombre (como tus registros de abono)
-            else if (v.productos_vendidos && typeof v.productos_vendidos === 'object') {
-                listaProd = v.productos_vendidos.nombre || "Compra registrada";
+            // Caso 2: Es un registro de abono guardado como venta
+            else if (v.productos_vendidos && v.productos_vendidos.nombre) {
+                listaProd = v.productos_vendidos.nombre;
+            }
+            // Caso 3: No hay datos claros
+            else {
+                listaProd = "Venta manual / Varios";
             }
 
             historial.push({
                 fecha: new Date(v.created_at),
-                concepto: `🛍️ COMPRA: ${listaProd}`,
+                concepto: `🛍️ ${listaProd}`, // Quitamos la palabra COMPRA repetida para que se vea más limpio
                 monto: parseFloat(v.total || 0),
                 tipo: 'cargo'
             });
