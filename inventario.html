@@ -79,63 +79,101 @@
     </div>
 
     <div id="modalRegistro" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex justify-center items-center p-4 z-50">
-        <div class="bg-white p-8 rounded-3xl w-full max-w-lg shadow-2xl">
+        <div class="bg-white p-6 md:p-8 rounded-3xl w-full max-w-lg shadow-2xl overflow-y-auto max-h-[90vh]">
             <h2 class="font-black mb-6 uppercase flex items-center gap-2 text-slate-800">
                 <span class="w-2 h-6 bg-emerald-500 rounded-full"></span> Nuevo Registro
             </h2>
             <div class="space-y-4">
-                <div class="relative">
-                    <input type="text" id="codigoProducto" placeholder="Código de Barras" class="w-full bg-slate-50 border-2 border-slate-100 p-3 rounded-xl outline-none font-bold">
-                    <button onclick="encenderCamara('codigoProducto')" class="absolute right-3 top-3">📷</button>
-                </div>
-                <input type="text" id="nombreProducto" placeholder="Nombre completo del producto" class="w-full bg-slate-50 border-2 border-slate-100 p-3 rounded-xl outline-none font-bold">
-                
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="flex gap-2"> <select id="categoriaProducto" class="flex-1 bg-slate-50 border-2 border-slate-100 p-3 rounded-xl outline-none font-bold text-sm text-slate-500 appearance-none">
-                            </select>
-                        <button onclick="nuevaCategoriaPrompt()" type="button" class="bg-emerald-500 text-white px-3 rounded-xl font-bold">+</button>
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase ml-1">Código de Barras</label>
+                    <div class="relative">
+                        <input type="text" id="codigoProducto" placeholder="Escanear o escribir..." class="w-full bg-slate-50 border-2 border-slate-100 p-3 rounded-xl outline-none font-bold">
+                        <button onclick="encenderCamara('codigoProducto')" class="absolute right-3 top-3">📷</button>
                     </div>
-                    <input type="number" id="cantidadProducto" placeholder="Stock Inicial" class="bg-slate-50 border-2 border-slate-100 p-3 rounded-xl outline-none font-bold">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase ml-1">Nombre del Producto</label>
+                    <input type="text" id="nombreProducto" placeholder="Ej: Arroz 1kg..." class="w-full bg-slate-50 border-2 border-slate-100 p-3 rounded-xl outline-none font-bold">
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase ml-1">Categoría</label>
+                        <div class="flex gap-1"> 
+                            <select id="categoriaProducto" class="flex-1 bg-slate-50 border-2 border-slate-100 p-3 rounded-xl outline-none font-bold text-xs text-slate-600 appearance-none min-w-0">
+                            </select>
+                            <button onclick="nuevaCategoriaPrompt()" type="button" class="bg-emerald-500 text-white px-4 rounded-xl font-bold shadow-sm">+</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase ml-1">Stock Inicial</label>
+                        <input type="number" id="cantidadProducto" placeholder="0" class="w-full bg-slate-50 border-2 border-slate-100 p-3 rounded-xl outline-none font-bold">
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
-                    <input type="number" id="precioCosto" placeholder="Costo $" step="0.01" class="bg-slate-50 border-2 border-slate-100 p-3 rounded-xl outline-none font-bold text-red-500">
-                    <input type="number" id="precioProducto" placeholder="Precio Venta $" step="0.01" class="bg-slate-50 border-2 border-slate-100 p-3 rounded-xl outline-none font-bold text-emerald-600">
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase ml-1">Costo Compra</label>
+                        <input type="number" id="precioCosto" placeholder="0.00" step="0.01" class="w-full bg-slate-50 border-2 border-slate-100 p-3 rounded-xl outline-none font-bold text-red-500">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase ml-1">Precio Venta</label>
+                        <input type="number" id="precioProducto" placeholder="0.00" step="0.01" class="w-full bg-slate-50 border-2 border-slate-100 p-3 rounded-xl outline-none font-bold text-emerald-600">
+                    </div>
                 </div>
             </div>
             <div class="flex gap-3 mt-8">
-                <button id="btnConfirmarGuardar" class="flex-1 bg-emerald-600 text-white p-4 rounded-2xl font-black uppercase text-xs">Guardar Producto</button>
+                <button id="btnConfirmarGuardar" class="flex-1 bg-emerald-600 text-white p-4 rounded-2xl font-black uppercase text-xs shadow-lg active:scale-95 transition-transform">Guardar</button>
                 <button onclick="cerrarModalRegistro()" class="flex-1 bg-slate-100 text-slate-500 p-4 rounded-2xl font-black uppercase text-xs">Cancelar</button>
             </div>
         </div>
     </div>
 
     <div id="modalEditar" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex justify-center items-center p-4 z-50">
-        <div class="bg-white p-8 rounded-3xl w-full max-w-md shadow-2xl">
-            <h2 class="font-black mb-6 uppercase text-slate-800">Editar Producto</h2>
+        <div class="bg-white p-6 md:p-8 rounded-3xl w-full max-w-md shadow-2xl overflow-y-auto max-h-[90vh]">
+            <h2 class="font-black mb-6 uppercase text-slate-800 flex items-center gap-2">
+                <span class="w-2 h-6 bg-blue-500 rounded-full"></span> Editar Producto
+            </h2>
             <input type="hidden" id="editId">
             <div class="space-y-4">
-                <input type="text" id="editNombre" class="w-full p-3 border-2 border-slate-100 rounded-xl font-bold" placeholder="Nombre">
-                <input type="text" id="editCodigo" class="w-full p-3 border-2 border-slate-100 rounded-xl font-mono text-sm" placeholder="Código">
-                <div class="flex gap-2">
-                    <select id="editCategoria" class="flex-1 p-3 border-2 border-slate-100 rounded-xl font-bold">
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase ml-1">Nombre</label>
+                    <input type="text" id="editNombre" class="w-full p-3 border-2 border-slate-100 rounded-xl font-bold bg-slate-50" placeholder="Nombre">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase ml-1">Código de Barras</label>
+                    <input type="text" id="editCodigo" class="w-full p-3 border-2 border-slate-100 rounded-xl font-mono text-sm bg-slate-50" placeholder="Código">
+                </div>
+                
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase ml-1">Categoría</label>
+                    <div class="flex gap-1">
+                        <select id="editCategoria" class="flex-1 p-3 border-2 border-slate-100 rounded-xl font-bold bg-slate-50 text-xs text-slate-600 min-w-0">
                         </select>
-                    <button onclick="nuevaCategoriaPrompt()" type="button" class="bg-emerald-500 text-white px-3 rounded-xl font-bold">+</button>
+                        <button onclick="nuevaCategoriaPrompt()" type="button" class="bg-emerald-500 text-white px-4 rounded-xl font-bold shadow-sm">+</button>
+                    </div>
                 </div>
                 
                 <div class="grid grid-cols-2 gap-4">
-                    <input type="number" id="editCantidad" class="p-3 border-2 border-slate-100 rounded-xl font-bold" placeholder="Stock">
-                    <input type="number" id="editPrecio" class="p-3 border-2 border-slate-100 rounded-xl font-bold text-emerald-600" placeholder="Precio Venta">
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase ml-1">Stock</label>
+                        <input type="number" id="editCantidad" class="w-full p-3 border-2 border-slate-100 rounded-xl font-bold bg-slate-50" placeholder="Stock">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase ml-1">Precio Venta</label>
+                        <input type="number" id="editPrecio" class="w-full p-3 border-2 border-slate-100 rounded-xl font-bold text-emerald-600 bg-slate-50" placeholder="Precio">
+                    </div>
                 </div>
                 
-                <div class="w-full">
+                <div>
                     <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase ml-1">Costo de compra ($)</label>
-                    <input type="number" id="editPrecioCosto" step="0.01" class="w-full p-3 border-2 border-slate-100 rounded-xl font-bold text-red-500" placeholder="Costo $">
+                    <input type="number" id="editPrecioCosto" step="0.01" class="w-full p-3 border-2 border-slate-100 rounded-xl font-bold text-red-500 bg-slate-50" placeholder="Costo">
                 </div>
             </div>
             
             <div class="flex gap-3 mt-8">
-                <button id="btnGuardarCambios" class="flex-1 bg-emerald-600 text-white p-3 rounded-xl font-black uppercase text-xs">Actualizar</button>
+                <button id="btnGuardarCambios" class="flex-1 bg-emerald-600 text-white p-3 rounded-xl font-black uppercase text-xs shadow-lg active:scale-95 transition-transform">Actualizar</button>
                 <button onclick="cerrarModal()" class="flex-1 bg-slate-100 p-3 rounded-xl font-black uppercase text-xs text-slate-500">Volver</button>
             </div>
         </div>
