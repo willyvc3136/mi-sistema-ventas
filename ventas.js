@@ -418,6 +418,14 @@ async function finalizarVenta() {
         const { data: { user } } = await _supabase.auth.getUser();
         const totalVenta = parseFloat(document.getElementById('totalVenta').textContent.replace('$', ''));
 
+        // --- CORRECCIÓN AQUÍ: Limpiamos los productos para el historial ---
+        const productosParaHistorial = carrito.map(p => ({
+            id: p.id,
+            nombre: p.nombre,
+            cantidad: p.cantidadSeleccionada, // <--- Ahora guardamos lo vendido, no el stock
+            precio: p.precio_venta
+        }));
+
         // 1. Insertar Venta
         const { error: errorVenta } = await _supabase.from('ventas').insert([{
             total: totalVenta,
@@ -425,7 +433,7 @@ async function finalizarVenta() {
             estado_pago: esFiado ? 'pendiente' : 'pagado',
             cliente_id: esFiado ? clienteId : null,
             vendedor_id: user.id, 
-            productos_vendidos: JSON.stringify(carrito) 
+            productos_vendidos: JSON.stringify(productosParaHistorial) // <--- Usamos la lista limpia
         }]);
 
         if (errorVenta) throw errorVenta;
@@ -445,7 +453,7 @@ async function finalizarVenta() {
             }
         }
 
-        // 3. Actualizar Stock
+        // 3. Actualizar Stock (Se mantiene igual, esto funciona bien)
         for (const item of carrito) {
             const nuevoStock = item.cantidad - item.cantidadSeleccionada;
             await _supabase.from('productos').update({ cantidad: nuevoStock }).eq('id', item.id);

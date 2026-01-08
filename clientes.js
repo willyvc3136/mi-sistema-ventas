@@ -142,46 +142,41 @@ window.cerrarModalHistorial = () => document.getElementById('modalHistorial').cl
 async function verHistorial(idCliente, nombre) {
     document.getElementById('nombreClienteHistorial').textContent = nombre;
     const tabla = document.getElementById('contenidoHistorial');
-    tabla.innerHTML = '<tr><td colspan="3" class="text-center py-4">Cargando...</td></tr>';
+    tabla.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-indigo-500 font-bold">Buscando movimientos...</td></tr>';
     document.getElementById('modalHistorial').classList.remove('hidden');
 
     try {
-        // 1. Obtener Ventas Fiadas
-        const { data: ventas } = await _supabase
-            .from('ventas')
-            .select('*')
-            .eq('cliente_id', idCliente)
-            .eq('metodo_pago', 'Fiado');
+        const { data: ventas } = await _supabase.from('ventas').select('*').eq('cliente_id', idCliente).eq('metodo_pago', 'Fiado');
+        const { data: abonos } = await _supabase.from('abonos').select('*').eq('cliente_id', idCliente);
 
-        // 2. Obtener Abonos Realizados
-        const { data: abonos } = await _supabase
-            .from('abonos')
-            .select('*')
-            .eq('cliente_id', idCliente);
-
-        // 3. Unificar y Ordenar por fecha
-        // 3. Unificar y Ordenar por fecha (CORREGIDO Y SEGURO)
         let historial = [];
         
         ventas.forEach(v => {
             let listaProd = "";
-            
-            // Caso 1: Es una lista de productos detallada (Lo ideal)
-            if (v.productos_vendidos && Array.isArray(v.productos_vendidos)) {
-                listaProd = v.productos_vendidos.map(p => `${p.cantidad || 1} ${p.nombre}`).join(', ');
+            let data = v.productos_vendidos;
+
+            // SI ES UNA LISTA (ARRAY)
+            if (Array.isArray(data)) {
+                listaProd = data.map(p => `${p.cantidad || 1} ${p.nombre || 'Producto'}`).join(', ');
             } 
-            // Caso 2: Es un registro de abono guardado como venta
-            else if (v.productos_vendidos && v.productos_vendidos.nombre) {
-                listaProd = v.productos_vendidos.nombre;
+            // SI ES UN TEXTO QUE PARECE UNA LISTA (Caso de tu última imagen)
+            else if (typeof data === 'string' && data.startsWith('[')) {
+                try {
+                    const parsed = JSON.parse(data);
+                    listaProd = parsed.map(p => `${p.cantidad || 1} ${p.nombre || 'Producto'}`).join(', ');
+                } catch(e) { listaProd = "Compra registrada"; }
             }
-            // Caso 3: No hay datos claros
+            // SI ES UN OBJETO ÚNICO
+            else if (data && typeof data === 'object') {
+                listaProd = data.nombre || "Venta manual";
+            }
             else {
-                listaProd = "Venta manual / Varios";
+                listaProd = data || "Venta manual";
             }
 
             historial.push({
                 fecha: new Date(v.created_at),
-                concepto: `🛍️ ${listaProd}`, // Quitamos la palabra COMPRA repetida para que se vea más limpio
+                concepto: `🛍️ ${listaProd}`,
                 monto: parseFloat(v.total || 0),
                 tipo: 'cargo'
             });
@@ -196,22 +191,22 @@ async function verHistorial(idCliente, nombre) {
             });
         });
 
-        historial.sort((a, b) => b.fecha - a.fecha); // Más reciente primero
+        historial.sort((a, b) => b.fecha - a.fecha);
 
-        // 4. Renderizar en la tabla
         tabla.innerHTML = '';
         if (historial.length === 0) {
-            tabla.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-gray-400 italic">No hay movimientos registrados</td></tr>';
+            tabla.innerHTML = '<tr><td colspan="3" class="text-center py-8 text-gray-400 italic text-base">Sin movimientos.</td></tr>';
+            return;
         }
 
         historial.forEach(item => {
             const esAbono = item.tipo === 'abono';
             const fila = document.createElement('tr');
-            fila.className = "border-b border-gray-50";
+            fila.className = "border-b border-gray-100 hover:bg-gray-50 transition-colors";
             fila.innerHTML = `
-                <td class="py-3 text-gray-400 text-[10px]">${item.fecha.toLocaleDateString()}</td>
-                <td class="py-3 font-medium ${esAbono ? 'text-green-600' : 'text-gray-700'}">${item.concepto}</td>
-                <td class="py-3 text-right font-black ${esAbono ? 'text-green-600' : 'text-red-600'}">
+                <td class="py-4 text-gray-400 text-[10px] font-medium">${item.fecha.toLocaleDateString()}</td>
+                <td class="py-4 font-semibold ${esAbono ? 'text-green-600' : 'text-gray-700'} text-xs">${item.concepto}</td>
+                <td class="py-4 text-right font-black ${esAbono ? 'text-green-600' : 'text-red-600'} text-sm">
                     ${esAbono ? '-' : '+'}$${item.monto.toFixed(2)}
                 </td>
             `;
@@ -219,8 +214,8 @@ async function verHistorial(idCliente, nombre) {
         });
 
     } catch (e) {
-        console.error("Error detallado:", e);
-        tabla.innerHTML = `<tr><td colspan="3" class="text-center text-red-500 py-4 font-bold">Error al cargar: ${e.message}</td></tr>`;
+        console.error("Error en historial:", e);
+        tabla.innerHTML = '<tr><td colspan="3" class="text-center text-red-500 py-4 font-bold">Error al cargar datos.</td></tr>';
     }
 }
 obtenerClientes();
