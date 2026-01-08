@@ -42,9 +42,12 @@ function renderizarClientes(clientes) {
                     $${parseFloat(c.deuda || 0).toFixed(2)}
                 </span>
             </td>
-            <td class="py-4 px-4 text-center">
+            <td class="py-4 px-4 text-center flex gap-2 justify-center">
+                <button onclick="verHistorial(${c.id}, '${c.nombre}')" class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-lg font-bold text-xs hover:bg-indigo-600 hover:text-white transition-all">
+                    👁️ Detalle
+                </button>
                 <button onclick="abrirModalAbono(${c.id}, '${c.nombre}')" class="bg-green-100 text-green-700 px-3 py-1 rounded-lg font-bold text-xs hover:bg-green-600 hover:text-white transition-all">
-                    Cobrar / Abonar
+                    $ Abonar
                 </button>
             </td>
         `;
@@ -130,6 +133,75 @@ async function guardarAbono() {
     } catch (error) {
         console.error("Error procesando abono:", error);
         alert("Hubo un error: " + error.message);
+    }
+}
+
+// Abrir y cerrar historial
+window.cerrarModalHistorial = () => document.getElementById('modalHistorial').classList.add('hidden');
+
+async function verHistorial(idCliente, nombre) {
+    document.getElementById('nombreClienteHistorial').textContent = nombre;
+    const tabla = document.getElementById('contenidoHistorial');
+    tabla.innerHTML = '<tr><td colspan="3" class="text-center py-4">Cargando...</td></tr>';
+    document.getElementById('modalHistorial').classList.remove('hidden');
+
+    try {
+        // 1. Obtener Ventas Fiadas
+        const { data: ventas } = await _supabase
+            .from('ventas')
+            .select('*')
+            .eq('cliente_id', idCliente)
+            .eq('metodo_pago', 'Fiado');
+
+        // 2. Obtener Abonos Realizados
+        const { data: abonos } = await _supabase
+            .from('abonos')
+            .select('*')
+            .eq('cliente_id', idCliente);
+
+        // 3. Unificar y Ordenar por fecha
+        let historial = [];
+        
+        ventas.forEach(v => {
+            const listaProd = v.productos_vendidos.map(p => `${p.cantidad} ${p.nombre}`).join(', ');
+            historial.push({
+                fecha: new Date(v.created_at),
+                concepto: `🛍️ COMPRA: ${listaProd}`,
+                monto: v.total,
+                tipo: 'cargo'
+            });
+        });
+
+        abonos.forEach(a => {
+            historial.push({
+                fecha: new Date(a.fecha),
+                concepto: `✅ ABONO: (${a.metodo_pago})`,
+                monto: a.monto,
+                tipo: 'abono'
+            });
+        });
+
+        historial.sort((a, b) => b.fecha - a.fecha); // Más reciente primero
+
+        // 4. Renderizar en la tabla
+        tabla.innerHTML = '';
+        historial.forEach(item => {
+            const esAbono = item.tipo === 'abono';
+            const fila = document.createElement('tr');
+            fila.className = "border-b border-gray-50";
+            fila.innerHTML = `
+                <td class="py-3 text-gray-400 text-[10px]">${item.fecha.toLocaleDateString()}</td>
+                <td class="py-3 font-medium ${esAbono ? 'text-green-600' : 'text-gray-700'}">${item.concepto}</td>
+                <td class="py-3 text-right font-black ${esAbono ? 'text-green-600' : 'text-red-600'}">
+                    ${esAbono ? '-' : '+'}$${item.monto.toFixed(2)}
+                </td>
+            `;
+            tabla.appendChild(fila);
+        });
+
+    } catch (e) {
+        console.error(e);
+        tabla.innerHTML = '<tr><td colspan="3" class="text-center text-red-500 py-4">Error al cargar.</td></tr>';
     }
 }
 
