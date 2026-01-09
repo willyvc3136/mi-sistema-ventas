@@ -7,9 +7,12 @@ const userEmailDisplay = document.getElementById('user-email');
 const modalEditar = document.getElementById('modalEditar');
 const modalRegistro = document.getElementById('modalRegistro');
 let html5QrCode;
-let filtrandoAlertas = false;
 let mostrandoFaltantes = false;
-let timerEscaner
+
+// --- VARIABLES GLOBALES PARA EL ESCÁNER PRO ---
+let barcodeBuffer = "";
+let lastKeyTime = Date.now();
+let isProcessing = false;
 
 // --- AUTENTICACIÓN ---
 async function checkAuth() {
@@ -17,7 +20,7 @@ async function checkAuth() {
     if (user) {
         if(userEmailDisplay) userEmailDisplay.textContent = user.email; 
         obtenerProductos(user.id);
-        cargarCategorias(); // <--- AGREGA ESTA LÍNEA AQUÍ
+        cargarCategorias();
     } else {
         window.location.href = 'index.html';
     }
@@ -72,20 +75,18 @@ function renderizarTabla(productos) {
 
 function actualizarDashboard(productos) {
     let valorVentaTotal = 0;
-    let inversionTotal = 0; // Nueva variable
+    let inversionTotal = 0;
     let stockBajo = 0;
 
     productos.forEach(prod => {
         const cant = parseInt(prod.cantidad) || 0;
         const precio = parseFloat(prod.precio) || 0;
         const costo = parseFloat(prod.precio_costo) || 0;
-
         valorVentaTotal += precio * cant;
-        inversionTotal += costo * cant; // Sumamos la inversión real
+        inversionTotal += costo * cant;
         if (cant < 5) stockBajo++;
     });
 
-    // Actualizamos los textos en el HTML
     const statValor = document.getElementById('stat-valor');
     if(statValor) {
         statValor.innerHTML = `
@@ -95,12 +96,15 @@ function actualizarDashboard(productos) {
             </div>
         `;
     }
-    document.getElementById('stat-cantidad').textContent = productos.length;
-    document.getElementById('stat-alerta').textContent = stockBajo;
+    if(document.getElementById('stat-cantidad')) document.getElementById('stat-cantidad').textContent = productos.length;
+    if(document.getElementById('stat-alerta')) document.getElementById('stat-alerta').textContent = stockBajo;
 }
 
 // --- MODALES Y LIMPIEZA ---
-window.abrirModalRegistro = () => modalRegistro.classList.remove('hidden');
+window.abrirModalRegistro = () => {
+    modalRegistro.classList.remove('hidden');
+    setTimeout(() => document.getElementById('codigoProducto').focus(), 100);
+};
 
 window.cerrarModalRegistro = () => {
     modalRegistro.classList.add('hidden');
@@ -109,83 +113,13 @@ window.cerrarModalRegistro = () => {
         const el = document.getElementById(id);
         if(el) el.value = '';
     });
-    document.getElementById('categoriaProducto').selectedIndex = 0;
 };
 
-// --- LÓGICA DE CÁMARA MEJORADA ---
-async function encenderCamara(targetInputId) {
-    const container = document.getElementById('lectorContainer');
-    if(!container) return;
-    
-    // Si vamos a registrar, ocultamos el modal para ver la cámara
-    if(targetInputId === 'codigoProducto') {
-        modalRegistro.classList.add('hidden');
-    }
-
-    if (html5QrCode) {
-        try {
-            await html5QrCode.stop();
-            await html5QrCode.clear();
-        } catch (e) { console.log("Reinicio"); }
-    }
-
-    container.classList.remove('hidden');
-    html5QrCode = new Html5Qrcode("reader");
-
-    try {
-        await html5QrCode.start(
-            { facingMode: "environment" }, 
-            { fps: 10, qrbox: { width: 250, height: 150 }, aspectRatio: 1.0 }, 
-            // Busca esta parte dentro de encenderCamara
-            async (decodedText) => {
-                const input = document.getElementById(targetInputId);
-                if(input) {
-                    // CORRECCIÓN: Limpiamos el valor antes de asignar el nuevo
-                    // Esto evita que se peguen códigos anteriores (775...775...)
-                    input.value = ""; 
-                    input.value = decodedText;
-                    
-                    await cerrarCamaraPure(); 
-
-                    if(targetInputId === 'buscador') {
-                        input.dispatchEvent(new Event('input'));
-                    } 
-                    else if(targetInputId === 'codigoProducto') {
-                        validarDuplicado(decodedText);
-                    }
-                }
-            }
-        );
-    } catch (err) {
-        console.error(err);
-        container.classList.add('hidden');
-        if(targetInputId === 'codigoProducto') modalRegistro.classList.remove('hidden');
-    }
-}
-
-// Función auxiliar para cerrar la cámara sin efectos secundarios de modales
-async function cerrarCamaraPure() {
-    if (html5QrCode) {
-        try {
-            await html5QrCode.stop();
-            document.getElementById('lectorContainer').classList.add('hidden');
-        } catch (e) {
-            document.getElementById('lectorContainer').classList.add('hidden');
-        }
-    }
-}
-
-// Esta es la función que usa el botón "Cerrar" del lector
-window.cerrarCamara = async () => {
-    await cerrarCamaraPure();
-    // Solo si el input de código tiene algo y no estamos editando, re-abrimos registro
-    if (document.activeElement.id === 'codigoProducto' || !modalRegistro.classList.contains('hidden')) {
-        modalRegistro.classList.remove('hidden');
-    }
-};
-
-// --- VALIDACIÓN DE DUPLICADOS CON SALTO A EDICIÓN ---
+// --- VALIDACIÓN DE DUPLICADOS ---
 async function validarDuplicado(codigo) {
+    if(isProcessing) return;
+    isProcessing = true;
+
     const { data: { user } } = await _supabase.auth.getUser();
     const { data } = await _supabase
         .from('productos')
@@ -195,70 +129,106 @@ async function validarDuplicado(codigo) {
         .maybeSingle();
 
     if(data) {
-        const respuesta = confirm(`El producto "${data.nombre}" ya existe en tu inventario.\n\n¿Deseas abrirlo para EDITAR su stock o precio?`);
-        
+        const respuesta = confirm(`El producto "${data.nombre}" ya existe.\n¿Deseas EDITARLO?`);
         if(respuesta) {
             cerrarModalRegistro();
             prepararEdicion(data.id, data.nombre, data.cantidad, data.precio, data.categoria, data.precio_costo, data.codigo_barras);
         } else {
             document.getElementById('codigoProducto').value = '';
-            modalRegistro.classList.remove('hidden');
         }
     } else {
-        // Es un producto nuevo, volvemos al modal para terminar de llenar datos
-        modalRegistro.classList.remove('hidden');
+        document.getElementById('nombreProducto').focus();
     }
+    
+    setTimeout(() => { isProcessing = false; }, 500);
 }
 
 // --- BUSCADOR ---
-const inputBuscador = document.getElementById('buscador');
-if(inputBuscador) {
-    inputBuscador.addEventListener('input', (e) => {
+function ejecutarBusqueda(cadena) {
+    const inputBuscador = document.getElementById('buscador');
+    if(inputBuscador) {
+        inputBuscador.value = cadena;
+        inputBuscador.dispatchEvent(new Event('input'));
+    }
+}
+
+const inputBuscadorElem = document.getElementById('buscador');
+if(inputBuscadorElem) {
+    inputBuscadorElem.addEventListener('input', (e) => {
         const filtro = e.target.value.toLowerCase();
         const filas = document.querySelectorAll('#listaProductos tr');
         let coincidencias = 0;
-
         filas.forEach(fila => {
             const texto = fila.innerText.toLowerCase();
             const coincide = texto.includes(filtro);
             fila.style.display = coincide ? "" : "none";
             if(coincide) coincidencias++;
         });
-
         const sinResultados = document.getElementById('sinResultados');
-        if(coincidencias === 0 && filtro !== "") {
-            sinResultados.classList.remove('hidden');
-        } else {
-            sinResultados.classList.add('hidden');
-        }
+        if(sinResultados) sinResultados.classList.toggle('hidden', coincidencias > 0 || filtro === "");
     });
 }
 
-// --- GUARDAR NUEVO ---
+// --- LÓGICA DE ESCÁNER PROFESIONAL (SIN REFRESCO Y SIN DUPLICADOS) ---
+document.addEventListener('keydown', (e) => {
+    const currentTime = Date.now();
+    
+    // Si escribimos en campos de texto normales (nombre, precio), no interferir
+    const activeElem = document.activeElement;
+    const isManualInput = activeElem.tagName === 'INPUT' && 
+                         !['buscador', 'codigoProducto'].includes(activeElem.id);
+    if (isManualInput) return;
+
+    // Detectar velocidad de escáner (las teclas de escáner llegan casi juntas)
+    if (currentTime - lastKeyTime > 100) {
+        barcodeBuffer = ""; // Si pasó mucho tiempo, es una tecla nueva/manual
+    }
+
+    if (e.key.length === 1) {
+        barcodeBuffer += e.key;
+    }
+
+    lastKeyTime = currentTime;
+
+    // AL RECIBIR "ENTER" (Fin de ráfaga del escáner)
+    if (e.key === 'Enter') {
+        e.preventDefault(); // <--- ESTO DETIENE EL PARPADEO/REFRESCO
+        e.stopImmediatePropagation();
+
+        const finalCode = barcodeBuffer.trim();
+        const modalReg = document.getElementById('modalRegistro');
+        const isModalOpen = modalReg && !modalReg.classList.contains('hidden');
+
+        if (finalCode.length > 2) {
+            if (isModalOpen) {
+                const inputReg = document.getElementById('codigoProducto');
+                inputReg.value = finalCode;
+                validarDuplicado(finalCode);
+            } else {
+                ejecutarBusqueda(finalCode);
+            }
+        }
+        barcodeBuffer = ""; // Limpiar buffer para el siguiente disparo
+    }
+});
+
+// --- GUARDAR Y CATEGORÍAS ---
 document.getElementById('btnConfirmarGuardar').onclick = async () => {
     const { data: { user } } = await _supabase.auth.getUser();
-    const nombre = document.getElementById('nombreProducto').value;
-    const codigo = document.getElementById('codigoProducto').value;
-    const cat = document.getElementById('categoriaProducto').value;
-    const cant = parseInt(document.getElementById('cantidadProducto').value);
-    const precio = parseFloat(document.getElementById('precioProducto').value);
-    const costo = parseFloat(document.getElementById('precioCosto').value) || 0;
-
-    if (!nombre || isNaN(cant)) return alert("Nombre y Stock son obligatorios");
-
-    const { error } = await _supabase.from('productos').insert([{ 
-        nombre, codigo_barras: codigo, categoria: cat, cantidad: cant, precio, precio_costo: costo, user_id: user.id 
-    }]);
-
-    if (!error) {
-        cerrarModalRegistro();
-        obtenerProductos(user.id);
-    } else {
-        alert("Error al guardar: " + error.message);
-    }
+    const updates = {
+        nombre: document.getElementById('nombreProducto').value,
+        codigo_barras: document.getElementById('codigoProducto').value,
+        categoria: document.getElementById('categoriaProducto').value,
+        cantidad: parseInt(document.getElementById('cantidadProducto').value),
+        precio: parseFloat(document.getElementById('precioProducto').value),
+        precio_costo: parseFloat(document.getElementById('precioCosto').value) || 0,
+        user_id: user.id
+    };
+    if (!updates.nombre || isNaN(updates.cantidad)) return alert("Datos obligatorios faltantes");
+    const { error } = await _supabase.from('productos').insert([updates]);
+    if (!error) { cerrarModalRegistro(); obtenerProductos(user.id); }
 };
 
-// --- EDITAR Y BORRAR ---
 window.prepararEdicion = (id, nombre, cant, precio, cat, costo, cod) => {
     document.getElementById('editId').value = id;
     document.getElementById('editNombre').value = nombre;
@@ -266,17 +236,9 @@ window.prepararEdicion = (id, nombre, cant, precio, cat, costo, cod) => {
     document.getElementById('editPrecio').value = precio;
     document.getElementById('editCategoria').value = cat || 'Otros';
     document.getElementById('editCodigo').value = cod || ''; 
-    
-    // CORREGIDO: Carga el precio costo en el campo correspondiente del modal editar
-    const inputCosto = document.getElementById('editPrecioCosto');
-    if(inputCosto) {
-        inputCosto.value = costo || 0;
-    }
-
+    document.getElementById('editPrecioCosto').value = costo || 0;
     modalEditar.classList.remove('hidden');
 };
-
-window.cerrarModal = () => modalEditar.classList.add('hidden');
 
 document.getElementById('btnGuardarCambios').onclick = async () => {
     const id = document.getElementById('editId').value;
@@ -289,157 +251,17 @@ document.getElementById('btnGuardarCambios').onclick = async () => {
         precio_costo: parseFloat(document.getElementById('editPrecioCosto').value) || 0
     };
     const { error } = await _supabase.from('productos').update(updates).eq('id', id);
-    if (!error) {
-        cerrarModal();
-        const { data: { user } } = await _supabase.auth.getUser();
-        obtenerProductos(user.id);
-    } else {
-        alert("Error al actualizar: " + error.message);
-    }
+    if (!error) { modalEditar.classList.add('hidden'); const { data: { user } } = await _supabase.auth.getUser(); obtenerProductos(user.id); }
 };
 
-window.eliminarProducto = async (id) => {
-    if(!confirm("¿Eliminar producto permanentemente?")) return;
-    const { error } = await _supabase.from('productos').delete().eq('id', id);
-    if (!error) {
-        const { data: { user } } = await _supabase.auth.getUser();
-        obtenerProductos(user.id);
-    }
-};
-
-// FUNCIÓN 1: Para leer las categorías de Supabase y ponerlas en los menús
 async function cargarCategorias() {
-    try {
-        const { data: { user } } = await _supabase.auth.getUser();
-        const { data: categorias, error } = await _supabase
-            .from('categorias')
-            .select('nombre')
-            .eq('user_id', user.id);
-
-        if (error) throw error;
-
-        const selectRegistro = document.getElementById('categoriaProducto');
-        const selectEditar = document.getElementById('editCategoria');
-
-        if (selectRegistro && selectEditar) {
-            // 1. Empezamos con una opción de instrucción (Placeholder)
-            let htmlOpciones = `<option value="" disabled selected>Seleccionar Categoría</option>`;
-
-            // 2. Agregamos las categorías que vienen de la base de datos
-            categorias.forEach(cat => {
-                htmlOpciones += `<option value="${cat.nombre}">${cat.nombre}</option>`;
-            });
-
-            // 3. Agregamos "Otros" al final
-            htmlOpciones += `<option value="Otros">Otros</option>`;
-            
-            selectRegistro.innerHTML = htmlOpciones;
-            selectEditar.innerHTML = htmlOpciones;
-        }
-    } catch (err) {
-        console.error("Error al cargar categorías:", err.message);
-    }
-}
-
-// FUNCIÓN 2: La que tú pusiste, para crear categorías nuevas con el botón "+"
-window.nuevaCategoriaPrompt = async () => {
-    const nombreCat = prompt("Escribe el nombre de la nueva categoría:");
-    if (nombreCat && nombreCat.trim() !== "") {
-        const { data: { user } } = await _supabase.auth.getUser();
-        const { error } = await _supabase
-            .from('categorias')
-            .insert([{ nombre: nombreCat.trim(), user_id: user.id }]);
-
-        if (error) {
-            alert("Error: " + error.message);
-        } else {
-            alert("Categoría '" + nombreCat + "' agregada.");
-            await cargarCategorias(); // Recarga los selectores
-        }
-    }
-};
-
-window.toggleFaltantes = async () => {
-    // Buscamos el botón por su clase original o por ID si prefieres agregárselo
-    const btn = document.querySelector('button[onclick="toggleFaltantes()"]'); 
     const { data: { user } } = await _supabase.auth.getUser();
-
-    if (!mostrandoFaltantes) {
-        const { data: productos, error } = await _supabase
-            .from('productos')
-            .select('*')
-            .eq('user_id', user.id) // <--- ANTES DECÍA usuario_id, DEBE SER user_id
-            .lt('cantidad', 5);
-
-        if (!error) {
-            renderizarTabla(productos);
-            btn.textContent = "VER TODOS";
-            btn.classList.add('bg-red-500', 'text-white');
-            mostrandoFaltantes = true;
-        } else {
-            console.error("Error filtrando:", error.message);
-        }
-    } else {
-        obtenerProductos(user.id); 
-        btn.textContent = "VER FALTANTES";
-        btn.classList.remove('bg-red-500', 'text-white');
-        mostrandoFaltantes = false;
-    }
-};
-
-// --- AUTO-FOCUS PARA ESCÁNER INALÁMBRICO ---
-
-// --- AUTO-FOCUS E INTELIGENCIA PARA ESCÁNER MEJORADA ---
-let isProcessingScanner = false; // "Seguro" para evitar duplicados
-
-document.addEventListener('keydown', (e) => {
-    const inputBuscador = document.getElementById('buscador');
-    const inputRegistro = document.getElementById('codigoProducto');
-    const modalReg = document.getElementById('modalRegistro');
-
-    // 1. Si estamos en campos de texto normales, no interferir
-    const esCampoTexto = e.target.tagName === 'TEXTAREA' || 
-                        (e.target.tagName === 'INPUT' && e.target.type !== 'search' && 
-                         e.target.id !== 'buscador' && e.target.id !== 'codigoProducto');
-    
-    if (esCampoTexto) return;
-
-    // 2. Determinar el destino
-    const inputDestino = (modalReg && !modalReg.classList.contains('hidden')) 
-                         ? inputRegistro 
-                         : inputBuscador;
-
-    if (!inputDestino) return;
-
-    // 3. LÓGICA ANTI-DUPLICADO: Si entra una tecla y no tenemos el foco, limpiamos e iniciamos
-    if (document.activeElement !== inputDestino && e.key.length === 1) {
-        inputDestino.value = ''; // Limpieza total antes de recibir el código
-        inputDestino.focus();
-    }
-
-    // 4. DETECTAR EL FINAL DEL ESCANEO (Tecla Enter)
-    if (e.key === 'Enter') {
-        e.preventDefault(); // Evita que se recargue la página o se cierre el modal accidentalmente
-
-        if (isProcessingScanner) return; // Si ya estamos procesando, ignorar ráfaga
-        
-        const codigoLimpio = inputDestino.value.trim();
-        
-        if (codigoLimpio.length > 0) {
-            isProcessingScanner = true; // Bloqueamos nuevas entradas un momento
-
-            if (inputDestino.id === 'codigoProducto') {
-                // Si es el modal de registro, validar inmediatamente
-                validarDuplicado(codigoLimpio);
-            } else {
-                // Si es el buscador, disparar la búsqueda
-                inputDestino.dispatchEvent(new Event('input'));
-            }
-
-            // Liberamos el seguro después de 500ms (tiempo suficiente para que el escáner termine)
-            setTimeout(() => { isProcessingScanner = false; }, 500);
-        }
-    }
-});
+    const { data: categorias } = await _supabase.from('categorias').select('nombre').eq('user_id', user.id);
+    const selects = [document.getElementById('categoriaProducto'), document.getElementById('editCategoria')];
+    let html = `<option value="" disabled selected>Seleccionar Categoría</option>`;
+    if(categorias) categorias.forEach(cat => { html += `<option value="${cat.nombre}">${cat.nombre}</option>`; });
+    html += `<option value="Otros">Otros</option>`;
+    selects.forEach(s => { if(s) s.innerHTML = html; });
+}
 
 checkAuth();
