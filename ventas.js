@@ -481,6 +481,28 @@ if(inputBusq) {
     });
 }
 
-document.addEventListener('keydown', (e) => { if (e.key === "F2") finalizarVenta(); });
+// Función para que el escáner siempre encuentre el buscador
+document.addEventListener('keydown', (e) => {
+    const inputBusqPrincipal = document.getElementById('inputBusqueda');
+    const inputModalInventario = document.getElementById('codigoBarrasNuevo'); // Asegúrate que este sea el ID de tu input en el modal
+
+    // Si estamos escribiendo en cualquier otro lado manualmente, no hacemos nada
+    if (document.activeElement.tagName === 'TEXTAREA' || 
+       (document.activeElement.tagName === 'INPUT' && document.activeElement.type !== 'search' && document.activeElement.id !== 'inputBusqueda')) return;
+
+    // Detectamos cuál es el buscador que debe recibir el foco
+    // Si el modal está visible, mandamos el foco al input del modal
+    const modalRegistro = document.getElementById('modalNuevoRegistro'); // El ID de tu modal
+    const inputDestino = (modalRegistro && !modalRegistro.classList.contains('hidden')) 
+                         ? inputModalInventario 
+                         : inputBusqPrincipal;
+
+    if (inputDestino && document.activeElement !== inputDestino) {
+        if (e.key.length === 1 || e.key === 'Enter') {
+            inputDestino.value = ''; // <--- LIMPIEZA: Borra lo anterior para que no se duplique
+            inputDestino.focus();
+        }
+    }
+});
 
 inicializar();

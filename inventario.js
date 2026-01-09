@@ -9,6 +9,7 @@ const modalRegistro = document.getElementById('modalRegistro');
 let html5QrCode;
 let filtrandoAlertas = false;
 let mostrandoFaltantes = false;
+let timerEscaner
 
 // --- AUTENTICACIÓN ---
 async function checkAuth() {
@@ -135,20 +136,21 @@ async function encenderCamara(targetInputId) {
         await html5QrCode.start(
             { facingMode: "environment" }, 
             { fps: 10, qrbox: { width: 250, height: 150 }, aspectRatio: 1.0 }, 
+            // Busca esta parte dentro de encenderCamara
             async (decodedText) => {
                 const input = document.getElementById(targetInputId);
                 if(input) {
+                    // CORRECCIÓN: Limpiamos el valor antes de asignar el nuevo
+                    // Esto evita que se peguen códigos anteriores (775...775...)
+                    input.value = ""; 
                     input.value = decodedText;
                     
-                    // Cerramos la cámara inmediatamente
                     await cerrarCamaraPure(); 
 
                     if(targetInputId === 'buscador') {
-                        // SOLO filtramos, NO abrimos el modal de registro
                         input.dispatchEvent(new Event('input'));
                     } 
                     else if(targetInputId === 'codigoProducto') {
-                        // Aquí sí validamos si el producto existe
                         validarDuplicado(decodedText);
                     }
                 }
@@ -384,5 +386,60 @@ window.toggleFaltantes = async () => {
         mostrandoFaltantes = false;
     }
 };
+
+// --- AUTO-FOCUS PARA ESCÁNER INALÁMBRICO ---
+
+// --- AUTO-FOCUS E INTELIGENCIA PARA ESCÁNER MEJORADA ---
+let isProcessingScanner = false; // "Seguro" para evitar duplicados
+
+document.addEventListener('keydown', (e) => {
+    const inputBuscador = document.getElementById('buscador');
+    const inputRegistro = document.getElementById('codigoProducto');
+    const modalReg = document.getElementById('modalRegistro');
+
+    // 1. Si estamos en campos de texto normales, no interferir
+    const esCampoTexto = e.target.tagName === 'TEXTAREA' || 
+                        (e.target.tagName === 'INPUT' && e.target.type !== 'search' && 
+                         e.target.id !== 'buscador' && e.target.id !== 'codigoProducto');
+    
+    if (esCampoTexto) return;
+
+    // 2. Determinar el destino
+    const inputDestino = (modalReg && !modalReg.classList.contains('hidden')) 
+                         ? inputRegistro 
+                         : inputBuscador;
+
+    if (!inputDestino) return;
+
+    // 3. LÓGICA ANTI-DUPLICADO: Si entra una tecla y no tenemos el foco, limpiamos e iniciamos
+    if (document.activeElement !== inputDestino && e.key.length === 1) {
+        inputDestino.value = ''; // Limpieza total antes de recibir el código
+        inputDestino.focus();
+    }
+
+    // 4. DETECTAR EL FINAL DEL ESCANEO (Tecla Enter)
+    if (e.key === 'Enter') {
+        e.preventDefault(); // Evita que se recargue la página o se cierre el modal accidentalmente
+
+        if (isProcessingScanner) return; // Si ya estamos procesando, ignorar ráfaga
+        
+        const codigoLimpio = inputDestino.value.trim();
+        
+        if (codigoLimpio.length > 0) {
+            isProcessingScanner = true; // Bloqueamos nuevas entradas un momento
+
+            if (inputDestino.id === 'codigoProducto') {
+                // Si es el modal de registro, validar inmediatamente
+                validarDuplicado(codigoLimpio);
+            } else {
+                // Si es el buscador, disparar la búsqueda
+                inputDestino.dispatchEvent(new Event('input'));
+            }
+
+            // Liberamos el seguro después de 500ms (tiempo suficiente para que el escáner termine)
+            setTimeout(() => { isProcessingScanner = false; }, 500);
+        }
+    }
+});
 
 checkAuth();
