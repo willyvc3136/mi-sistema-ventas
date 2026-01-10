@@ -182,70 +182,78 @@ window.imprimirTicket = (venta) => {
         day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true
     });
 
-    // --- PROCESAMIENTO DE PRODUCTOS (BOLETA) ---
-    let productosArr = [];
+    let productosHtml = "";
     try {
-        productosArr = typeof venta.productos_vendidos === 'string' 
-            ? JSON.parse(venta.productos_vendidos) 
-            : (venta.productos_vendidos || []);
-    } catch (e) {
-        productosArr = [];
-    }
+        let pArray = venta.productos_vendidos;
+        if (typeof pArray === 'string') pArray = JSON.parse(pArray);
 
-    const productosHtml = (Array.isArray(productosArr) && productosArr.length > 0)
-        ? productosArr.map(p => {
-            const cant = p.cantidadSeleccionada || p.cantidad || 1;
-            const nom = p.nombre || 'Producto';
-            const precio = p.precio || 0;
-            return `
-                <tr style="font-size: 12px;">
-                    <td style="padding: 4px 0;">${cant}</td>
-                    <td style="padding: 4px 0;">${nom}</td>
-                    <td style="padding: 4px 0; text-align: right;">$${(precio * cant).toFixed(2)}</td>
+        if (Array.isArray(pArray) && pArray.length > 0) {
+            productosHtml = pArray.map(p => {
+                const cant = Number(p.cantidadSeleccionada || p.cantidad || 1);
+                const precioUnit = Number(p.precio || p.precio_unitario || 0);
+                const subtotal = precioUnit * cant;
+
+                return `
+                <tr style="font-size: 11px;">
+                    <td style="padding: 5px 0;">${cant}</td>
+                    <td style="padding: 5px 0;">${p.nombre || 'Prod.'}</td>
+                    <td style="padding: 5px 0; text-align: right;">${precioUnit.toFixed(2)}</td>
+                    <td style="padding: 5px 0; text-align: right;">${subtotal.toFixed(2)}</td>
                 </tr>`;
-        }).join('')
-        : `<tr><td colspan="3" style="text-align:center; padding:15px; font-style:italic;">Venta General (Sin detalle)</td></tr>`;
+            }).join('');
+        } else {
+            productosHtml = `<tr><td colspan="4" style="padding:10px 0; text-align:center;">Venta General: $${Number(venta.total).toFixed(2)}</td></tr>`;
+        }
+    } catch (e) {
+        productosHtml = `<tr><td colspan="4" style="text-align:center;">Error en detalle</td></tr>`;
+    }
 
     const win = window.open('', '', 'width=350,height=600');
     win.document.write(`
         <html>
-        <head><title>Ticket</title></head>
-        <body style="font-family:'Courier New', monospace; width:280px; padding:10px; color: #000;">
-            <div style="text-align:center; margin-bottom: 10px;">
-                <h2 style="margin:0; font-size:16px;">MINIMARKET PRO</h2>
-                <p style="font-size:11px; margin:5px 0;">${fechaBoleta}</p>
-                <hr style="border:none; border-top:1px dashed #000;">
+        <head>
+            <style>
+                body { font-family: 'Courier New', monospace; width: 260px; padding: 10px; margin: 0; }
+                .text-center { text-align: center; }
+                .bold { font-weight: bold; }
+                .divider { border-top: 1px dashed #000; margin: 8px 0; }
+                table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+                th { font-size: 10px; border-bottom: 1px solid #000; padding-bottom: 4px; text-transform: uppercase; }
+                td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            </style>
+        </head>
+        <body>
+            <div class="text-center">
+                <h2 style="margin: 0; font-size: 16px;">MINIMARKET PRO</h2>
+                <p style="font-size: 10px; margin: 4px 0;">${fechaBoleta}</p>
             </div>
-            
-            <table style="width:100%; border-collapse:collapse; margin-bottom: 10px;">
+            <div class="divider"></div>
+            <table>
                 <thead>
-                    <tr style="font-size:10px; border-bottom:1px solid #000;">
-                        <th style="text-align:left;">CANT</th>
-                        <th style="text-align:left;">DESCRIPCIÓN</th>
-                        <th style="text-align:right;">TOTAL</th>
+                    <tr>
+                        <th style="width: 25px; text-align: left;">CT</th>
+                        <th style="text-align: left;">DESCRIP.</th>
+                        <th style="width: 50px; text-align: right;">UNIT</th>
+                        <th style="width: 50px; text-align: right;">TOTAL</th>
                     </tr>
                 </thead>
                 <tbody>
                     ${productosHtml}
                 </tbody>
             </table>
-
-            <div style="border-top:1px dashed #000; padding-top:5px;">
-                <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:15px;">
-                    <span>TOTAL:</span>
-                    <span>$${Number(venta.total).toFixed(2)}</span>
-                </div>
-                <div style="margin-top:5px; font-size:11px; text-align:right;">
-                    <p style="margin:2px 0;">Método: ${venta.metodo_pago}</p>
-                    <p style="margin:2px 0;">Cliente: ${venta.clientes ? venta.clientes.nombre : 'Consumidor Final'}</p>
-                </div>
+            <div class="divider"></div>
+            <div style="display: flex; justify-content: space-between; font-size: 15px;" class="bold">
+                <span>TOTAL:</span>
+                <span>$${Number(venta.total).toFixed(2)}</span>
             </div>
-
-            <div style="text-align:center; margin-top:20px; font-size:10px;">
-                ¡GRACIAS POR SU COMPRA!<br>
-                *** Minimarket Pro ***
+            <div style="margin-top: 8px; font-size: 10px;">
+                <p style="margin: 1px 0;">PAGO: ${(venta.metodo_pago || '').toUpperCase()}</p>
+                <p style="margin: 1px 0;">CLI: ${venta.clientes ? venta.clientes.nombre : 'C. FINAL'}</p>
             </div>
-            <script>window.onload = () => { window.print(); setTimeout(() => window.close(), 800); }</script>
+            <div class="text-center" style="margin-top: 20px; font-size: 10px;">
+                *** GRACIAS POR SU COMPRA ***
+            </div>
+            <script>window.onload = () => { window.print(); setTimeout(() => window.close(), 500); };</script>
         </body>
         </html>
     `);
