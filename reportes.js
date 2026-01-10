@@ -98,6 +98,7 @@ function procesarYMostrarDatos(ventas, clientes) {
 
 function renderizarTabla(ventas) {
     const tabla = document.getElementById('listaVentas');
+    if (!tabla) return;
     tabla.innerHTML = '';
 
     if (ventas.length === 0) {
@@ -106,15 +107,24 @@ function renderizarTabla(ventas) {
     }
 
     ventas.forEach(v => {
-        const fecha = new Date(v.created_at).toLocaleDateString('es-ES', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+        const fecha = new Date(v.created_at).toLocaleDateString('es-ES', { 
+            day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' 
+        });
+        
         const clienteNombre = v.clientes ? v.clientes.nombre : 'Consumidor Final';
         const metodo = (v.metodo_pago || "").toUpperCase();
         
+        // EXTRAEMOS EL DETALLE DE PRODUCTOS PARA EL HISTORIAL
+        const productosLista = Array.isArray(v.productos_vendidos) 
+            ? v.productos_vendidos.map(p => p.nombre).join(", ") 
+            : "Venta General";
+
         const fila = document.createElement('tr');
         fila.className = "group border-b border-slate-50 hover:bg-slate-50 transition-colors";
         fila.innerHTML = `
             <td class="p-5">
                 <p class="font-bold text-slate-700 group-hover:text-emerald-600 transition-colors">${clienteNombre}</p>
+                <p class="text-[11px] text-slate-500 italic mb-1 line-clamp-1">Detalle: ${productosLista}</p>
                 <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-tighter">${fecha}</p>
             </td>
             <td class="p-5 text-center">
@@ -128,7 +138,7 @@ function renderizarTabla(ventas) {
             </td>
             <td class="p-5 text-right font-extrabold text-slate-700">$${Number(v.total).toFixed(2)}</td>
             <td class="p-5 text-center">
-                <button onclick='imprimirTicket(${JSON.stringify(v)})' class="p-2 hover:bg-white hover:shadow-md rounded-xl transition-all">📄</button>
+                <button onclick='imprimirTicket(${JSON.stringify(v).replace(/'/g, "&apos;")})' class="p-2 hover:bg-white hover:shadow-md rounded-xl transition-all">📄</button>
             </td>
         `;
         tabla.appendChild(fila);
@@ -160,35 +170,67 @@ function actualizarGrafica(efectivo, digital, fiado) {
 }
 
 window.imprimirTicket = (venta) => {
-    const fecha = new Date(venta.created_at).toLocaleString();
-    const productosHtml = venta.productos_vendidos.map(p => `
-        <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 3px;">
-            <span>${p.cantidadSeleccionada} x ${p.nombre.substring(0,18)}</span>
-            <span>$${(p.precio * p.cantidadSeleccionada).toFixed(2)}</span>
-        </div>
-    `).join('');
+    const fechaBoleta = new Date(venta.created_at).toLocaleString('es-ES', {
+        day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true
+    });
 
-    const win = window.open('', '', 'width=300,height=600');
+    const productosArr = Array.isArray(venta.productos_vendidos) ? venta.productos_vendidos : [];
+
+    // CREAMOS EL DESGLOSE DE PRODUCTOS PARA LA BOLETA
+    const productosHtml = productosArr.length > 0 
+        ? productosArr.map(p => `
+            <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px;">
+                <span style="flex: 1;">${p.cantidadSeleccionada || 1} x ${p.nombre.substring(0,22)}</span>
+                <span style="width: 70px; text-align: right;">$${((p.precio || 0) * (p.cantidadSeleccionada || 1)).toFixed(2)}</span>
+            </div>
+        `).join('')
+        : `<div style="text-align:center; font-size:12px; padding: 10px 0;">Venta General / Sin detalle</div>`;
+
+    const win = window.open('', '', 'width=350,height=600');
     win.document.write(`
         <html>
-        <body style="font-family:monospace; width:250px; padding:10px;">
-            <div style="text-align:center; border-bottom:1px dashed #000; margin-bottom:10px; padding-bottom:10px;">
-                <h3 style="margin:0; font-size:16px;">MINIMARKET PRO</h3>
-                <small>${fecha}</small>
+        <head><title>Boleta de Venta</title></head>
+        <body style="font-family:'Courier New', monospace; width:280px; padding:15px; color: #000; line-height: 1.3;">
+            <div style="text-align:center; margin-bottom:15px;">
+                <h2 style="margin:0; font-size:18px;">MINIMARKET PRO</h2>
+                <p style="margin:5px 0; font-size:11px;">${fechaBoleta}</p>
+                <div style="border-bottom:1px dashed #000; margin-top:10px;"></div>
             </div>
-            ${productosHtml}
-            <div style="border-top:1px dashed #000; margin-top:10px; padding-top:5px; text-align:right;">
-                <strong style="font-size:14px;">TOTAL: $${Number(venta.total).toFixed(2)}</strong>
-                <br><small>Metodo: ${venta.metodo_pago}</small>
+            
+            <div style="margin-bottom:10px;">
+                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 11px; margin-bottom: 5px;">
+                    <span>DESCRIPCIÓN</span>
+                    <span>TOTAL</span>
+                </div>
+                ${productosHtml}
             </div>
-            <div style="text-align:center; margin-top:20px; font-size:10px;">*** Gracias por preferirnos ***</div>
-            <script>window.print(); setTimeout(()=>window.close(), 500);</script>
+
+            <div style="border-top:1px dashed #000; padding-top:10px; margin-top:10px;">
+                <div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: bold;">
+                    <span>TOTAL:</span>
+                    <span>$${Number(venta.total).toFixed(2)}</span>
+                </div>
+                <div style="margin-top:10px; font-size:12px; text-align: right;">
+                    <p style="margin:2px 0;">Método: <b>${venta.metodo_pago}</b></p>
+                    <p style="margin:2px 0;">Cliente: ${venta.clientes ? venta.clientes.nombre : 'C. Final'}</p>
+                </div>
+            </div>
+
+            <div style="text-align:center; margin-top:30px; font-size:11px;">
+                *** GRACIAS POR SU PREFERENCIA ***<br>
+                Conserve su comprobante
+            </div>
+            <script>
+                window.onload = function() {
+                    window.print();
+                    setTimeout(() => window.close(), 500);
+                }
+            </script>
         </body>
         </html>
     `);
     win.document.close();
 };
-
 // ==========================================
 // FUNCIONES DE EXPORTACIÓN (CORREGIDAS)
 // ==========================================
@@ -220,14 +262,24 @@ window.exportarPDF = () => {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
 
-    // Título del PDF
+    // --- CÁLCULOS PARA EL RESUMEN ---
+    let efectivo = 0, yapePlin = 0, fiado = 0;
+    ventasActualesParaExportar.forEach(v => {
+        const monto = Number(v.total || 0);
+        const metodo = (v.metodo_pago || "").toUpperCase();
+        if (metodo === 'EFECTIVO') efectivo += monto;
+        else if (metodo === 'YAPE' || metodo === 'PLIN') yapePlin += monto;
+        else if (metodo === 'FIADO') fiado += monto;
+    });
+
+    // --- CABECERA DEL PDF ---
     doc.setFontSize(18);
     doc.text("REPORTE DE VENTAS - MINIMARKET PRO", 14, 20);
     doc.setFontSize(10);
     doc.setTextColor(100);
     doc.text(`Generado el: ${new Date().toLocaleString()}`, 14, 28);
 
-    // Mapear datos para la tabla del PDF
+    // --- TABLA DE VENTAS ---
     const columnas = ["Fecha", "Cliente", "Método", "Monto"];
     const filas = ventasActualesParaExportar.map(v => [
         new Date(v.created_at).toLocaleString(),
@@ -236,17 +288,48 @@ window.exportarPDF = () => {
         `$${Number(v.total).toFixed(2)}`
     ]);
 
-    // Crear la tabla automáticamente
     doc.autoTable({
         startY: 35,
         head: [columnas],
         body: filas,
         theme: 'striped',
-        headStyles: { fillColor: [16, 185, 129] } // Color verde esmeralda
+        headStyles: { fillColor: [16, 185, 129] },
+        didDrawPage: (data) => {
+            // Guardamos la posición final de la tabla para saber dónde escribir el resumen
+            finalY = data.cursor.y;
+        }
     });
+
+    // --- BLOQUE DE RESUMEN AL FINAL ---
+    const posY = doc.lastAutoTable.finalY + 15; // Espacio después de la tabla
+    
+    doc.setFontSize(12);
+    doc.setTextColor(0);
+    doc.setFont("helvetica", "bold");
+    doc.text("RESUMEN DE CAJA", 140, posY);
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text(`Total Efectivo:`, 140, posY + 8);
+    doc.text(`$${efectivo.toFixed(2)}`, 190, posY + 8, { align: "right" });
+    
+    doc.text(`Total Digital (Y/P):`, 140, posY + 14);
+    doc.text(`$${yapePlin.toFixed(2)}`, 190, posY + 14, { align: "right" });
+    
+    doc.text(`Total Fiados:`, 140, posY + 20);
+    doc.text(`$${fiado.toFixed(2)}`, 190, posY + 20, { align: "right" });
+
+    // Línea divisoria
+    doc.setDrawColor(200);
+    doc.line(140, posY + 23, 190, posY + 23);
+
+    // Gran Total Real
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(16, 185, 129); // Color verde
+    doc.text(`VENTA REAL:`, 140, posY + 30);
+    doc.text(`$${(efectivo + yapePlin).toFixed(2)}`, 190, posY + 30, { align: "right" });
 
     // Guardar archivo
     doc.save(`Reporte_Ventas_${new Date().toLocaleDateString()}.pdf`);
 };
-
 inicializarReportes();
