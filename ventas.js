@@ -418,27 +418,28 @@ async function finalizarVenta() {
         const { data: { user } } = await _supabase.auth.getUser();
         const totalVenta = parseFloat(document.getElementById('totalVenta').textContent.replace('$', ''));
 
-        // --- CORRECCIÓN AQUÍ: Limpiamos los productos para el historial ---
+        // --- CORRECCIÓN CLAVE: Formato exacto para que el reporte lo entienda ---
         const productosParaHistorial = carrito.map(p => ({
             id: p.id,
-            nombre: p.nombre,
-            cantidad: p.cantidadSeleccionada, // <--- Ahora guardamos lo vendido, no el stock
-            precio: p.precio_venta
+            nombre: p.nombre, // Aseguramos que se guarde el nombre
+            cantidadSeleccionada: p.cantidadSeleccionada, // Coincidimos con reportes.js
+            precio: p.precio // Coincidimos con reportes.js
         }));
 
-        // 1. Insertar Venta
+        // 1. Insertar Venta (Enviamos el array directamente, Supabase lo manejará como JSONB)
         const { error: errorVenta } = await _supabase.from('ventas').insert([{
             total: totalVenta,
             metodo_pago: esFiado ? 'Fiado' : metodoSeleccionado,
             estado_pago: esFiado ? 'pendiente' : 'pagado',
             cliente_id: esFiado ? clienteId : null,
             vendedor_id: user.id, 
-            productos_vendidos: JSON.stringify(productosParaHistorial) // <--- Usamos la lista limpia
+            // ELIMINAMOS JSON.stringify para que Supabase lo guarde como objeto real
+            productos_vendidos: productosParaHistorial 
         }]);
 
         if (errorVenta) throw errorVenta;
 
-        // 2. Actualizar Deuda si es Fiado
+        // 2. Actualizar Deuda si es Fiado (Tu lógica estaba bien)
         if (esFiado) {
             const { data: cl, error: errorCl } = await _supabase
                 .from('clientes')
@@ -453,17 +454,19 @@ async function finalizarVenta() {
             }
         }
 
-        // 3. Actualizar Stock (Se mantiene igual, esto funciona bien)
+        // 3. Actualizar Stock (Tu lógica estaba bien)
         for (const item of carrito) {
-            const nuevoStock = item.cantidad - item.cantidadSeleccionada;
+            const original = productosBaseDeDatos.find(p => p.id === item.id);
+            const nuevoStock = original.cantidad - item.cantidadSeleccionada;
             await _supabase.from('productos').update({ cantidad: nuevoStock }).eq('id', item.id);
         }
 
         mostrarNotificacion("🎯 Venta registrada con éxito");
         setTimeout(() => location.reload(), 1000); 
+
     } catch (e) {
         console.error("Error completo de Supabase:", e);
-        alert("Error al procesar la venta. Revisa la consola.");
+        alert("Error al procesar la venta: " + (e.message || "Revisa la consola"));
         btn.disabled = false;
         btn.textContent = "Finalizar Venta (F2)";
     }

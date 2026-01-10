@@ -48,7 +48,6 @@ async function cargarReporte() {
         else if (filtro === 'anual') { desde.setMonth(0); desde.setDate(1); }
     }
 
-    // Consulta paralela: Ventas y Clientes
     const [resVentas, resClientes] = await Promise.all([
         _supabase
             .from('ventas')
@@ -73,7 +72,6 @@ function procesarYMostrarDatos(ventas, clientes) {
     
     ventas.forEach(v => {
         const monto = Number(v.total || 0);
-        // Normalizamos a MAYÚSCULAS para que no falle si es "Yape" o "YAPE"
         const metodo = (v.metodo_pago || "").toUpperCase();
 
         if (metodo === 'EFECTIVO') efectivo += monto;
@@ -83,10 +81,9 @@ function procesarYMostrarDatos(ventas, clientes) {
     });
 
     const totalDigital = yape + plin;
-    const granTotalReal = efectivo + totalDigital; // Dinero que realmente entró (No incluye fiados)
+    const granTotalReal = efectivo + totalDigital;
     const totalDeudaReal = clientes.reduce((acc, c) => acc + (Number(c.deuda) || 0), 0);
 
-    // Actualización de la Interfaz
     document.getElementById('totalEfectivo').textContent = `$${efectivo.toFixed(2)}`;
     document.getElementById('totalDigital').textContent = `$${totalDigital.toFixed(2)}`;
     document.getElementById('granTotal').textContent = `$${granTotalReal.toFixed(2)}`;
@@ -101,30 +98,39 @@ function renderizarTabla(ventas) {
     if (!tabla) return;
     tabla.innerHTML = '';
 
-    if (ventas.length === 0) {
-        tabla.innerHTML = '<tr><td colspan="4" class="p-20 text-center text-slate-400 font-medium italic">Sin registros en este periodo</td></tr>';
-        return;
-    }
-
-    ventas.forEach(v => {
+    ventas.forEach((v, index) => {
         const fecha = new Date(v.created_at).toLocaleDateString('es-ES', { 
-            day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' 
+            day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit', hour12: true
         });
         
         const clienteNombre = v.clientes ? v.clientes.nombre : 'Consumidor Final';
         const metodo = (v.metodo_pago || "").toUpperCase();
         
-        // EXTRAEMOS EL DETALLE DE PRODUCTOS PARA EL HISTORIAL
-        const productosLista = Array.isArray(v.productos_vendidos) 
-            ? v.productos_vendidos.map(p => p.nombre).join(", ") 
-            : "Venta General";
+        // --- PROCESAMIENTO DE PRODUCTOS (REPORTE) ---
+        let listaNombres = "Venta General";
+        try {
+            const productosArr = typeof v.productos_vendidos === 'string' 
+                ? JSON.parse(v.productos_vendidos) 
+                : (v.productos_vendidos || []);
+
+            if (Array.isArray(productosArr) && productosArr.length > 0) {
+                listaNombres = productosArr.map(p => {
+                    const cant = p.cantidadSeleccionada || p.cantidad || 1;
+                    const nom = p.nombre || "Producto";
+                    return `${cant}x ${nom}`;
+                }).join(", ");
+            }
+        } catch (e) {
+            listaNombres = "Venta General";
+        }
 
         const fila = document.createElement('tr');
         fila.className = "group border-b border-slate-50 hover:bg-slate-50 transition-colors";
+        
         fila.innerHTML = `
             <td class="p-5">
                 <p class="font-bold text-slate-700 group-hover:text-emerald-600 transition-colors">${clienteNombre}</p>
-                <p class="text-[11px] text-slate-500 italic mb-1 line-clamp-1">Detalle: ${productosLista}</p>
+                <p class="text-[11px] text-emerald-600 font-medium italic mb-1 line-clamp-2">${listaNombres}</p>
                 <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-tighter">${fecha}</p>
             </td>
             <td class="p-5 text-center">
@@ -138,10 +144,12 @@ function renderizarTabla(ventas) {
             </td>
             <td class="p-5 text-right font-extrabold text-slate-700">$${Number(v.total).toFixed(2)}</td>
             <td class="p-5 text-center">
-                <button onclick='imprimirTicket(${JSON.stringify(v).replace(/'/g, "&apos;")})' class="p-2 hover:bg-white hover:shadow-md rounded-xl transition-all">📄</button>
+                <button id="btn-print-${index}" class="p-2 hover:bg-white hover:shadow-md rounded-xl transition-all">📄</button>
             </td>
         `;
         tabla.appendChild(fila);
+
+        document.getElementById(`btn-print-${index}`).onclick = () => window.imprimirTicket(v);
     });
 }
 
@@ -174,58 +182,70 @@ window.imprimirTicket = (venta) => {
         day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true
     });
 
-    const productosArr = Array.isArray(venta.productos_vendidos) ? venta.productos_vendidos : [];
+    // --- PROCESAMIENTO DE PRODUCTOS (BOLETA) ---
+    let productosArr = [];
+    try {
+        productosArr = typeof venta.productos_vendidos === 'string' 
+            ? JSON.parse(venta.productos_vendidos) 
+            : (venta.productos_vendidos || []);
+    } catch (e) {
+        productosArr = [];
+    }
 
-    // CREAMOS EL DESGLOSE DE PRODUCTOS PARA LA BOLETA
-    const productosHtml = productosArr.length > 0 
-        ? productosArr.map(p => `
-            <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px;">
-                <span style="flex: 1;">${p.cantidadSeleccionada || 1} x ${p.nombre.substring(0,22)}</span>
-                <span style="width: 70px; text-align: right;">$${((p.precio || 0) * (p.cantidadSeleccionada || 1)).toFixed(2)}</span>
-            </div>
-        `).join('')
-        : `<div style="text-align:center; font-size:12px; padding: 10px 0;">Venta General / Sin detalle</div>`;
+    const productosHtml = (Array.isArray(productosArr) && productosArr.length > 0)
+        ? productosArr.map(p => {
+            const cant = p.cantidadSeleccionada || p.cantidad || 1;
+            const nom = p.nombre || 'Producto';
+            const precio = p.precio || 0;
+            return `
+                <tr style="font-size: 12px;">
+                    <td style="padding: 4px 0;">${cant}</td>
+                    <td style="padding: 4px 0;">${nom}</td>
+                    <td style="padding: 4px 0; text-align: right;">$${(precio * cant).toFixed(2)}</td>
+                </tr>`;
+        }).join('')
+        : `<tr><td colspan="3" style="text-align:center; padding:15px; font-style:italic;">Venta General (Sin detalle)</td></tr>`;
 
     const win = window.open('', '', 'width=350,height=600');
     win.document.write(`
         <html>
-        <head><title>Boleta de Venta</title></head>
-        <body style="font-family:'Courier New', monospace; width:280px; padding:15px; color: #000; line-height: 1.3;">
-            <div style="text-align:center; margin-bottom:15px;">
-                <h2 style="margin:0; font-size:18px;">MINIMARKET PRO</h2>
-                <p style="margin:5px 0; font-size:11px;">${fechaBoleta}</p>
-                <div style="border-bottom:1px dashed #000; margin-top:10px;"></div>
+        <head><title>Ticket</title></head>
+        <body style="font-family:'Courier New', monospace; width:280px; padding:10px; color: #000;">
+            <div style="text-align:center; margin-bottom: 10px;">
+                <h2 style="margin:0; font-size:16px;">MINIMARKET PRO</h2>
+                <p style="font-size:11px; margin:5px 0;">${fechaBoleta}</p>
+                <hr style="border:none; border-top:1px dashed #000;">
             </div>
             
-            <div style="margin-bottom:10px;">
-                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 11px; margin-bottom: 5px;">
-                    <span>DESCRIPCIÓN</span>
-                    <span>TOTAL</span>
-                </div>
-                ${productosHtml}
-            </div>
+            <table style="width:100%; border-collapse:collapse; margin-bottom: 10px;">
+                <thead>
+                    <tr style="font-size:10px; border-bottom:1px solid #000;">
+                        <th style="text-align:left;">CANT</th>
+                        <th style="text-align:left;">DESCRIPCIÓN</th>
+                        <th style="text-align:right;">TOTAL</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${productosHtml}
+                </tbody>
+            </table>
 
-            <div style="border-top:1px dashed #000; padding-top:10px; margin-top:10px;">
-                <div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: bold;">
+            <div style="border-top:1px dashed #000; padding-top:5px;">
+                <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:15px;">
                     <span>TOTAL:</span>
                     <span>$${Number(venta.total).toFixed(2)}</span>
                 </div>
-                <div style="margin-top:10px; font-size:12px; text-align: right;">
-                    <p style="margin:2px 0;">Método: <b>${venta.metodo_pago}</b></p>
-                    <p style="margin:2px 0;">Cliente: ${venta.clientes ? venta.clientes.nombre : 'C. Final'}</p>
+                <div style="margin-top:5px; font-size:11px; text-align:right;">
+                    <p style="margin:2px 0;">Método: ${venta.metodo_pago}</p>
+                    <p style="margin:2px 0;">Cliente: ${venta.clientes ? venta.clientes.nombre : 'Consumidor Final'}</p>
                 </div>
             </div>
 
-            <div style="text-align:center; margin-top:30px; font-size:11px;">
-                *** GRACIAS POR SU PREFERENCIA ***<br>
-                Conserve su comprobante
+            <div style="text-align:center; margin-top:20px; font-size:10px;">
+                ¡GRACIAS POR SU COMPRA!<br>
+                *** Minimarket Pro ***
             </div>
-            <script>
-                window.onload = function() {
-                    window.print();
-                    setTimeout(() => window.close(), 500);
-                }
-            </script>
+            <script>window.onload = () => { window.print(); setTimeout(() => window.close(), 800); }</script>
         </body>
         </html>
     `);
