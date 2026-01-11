@@ -326,74 +326,86 @@ window.exportarPDF = () => {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
 
-    // --- CÁLCULOS PARA EL RESUMEN ---
-    let efectivo = 0, yapePlin = 0, fiado = 0;
+    // 1. CÁLCULOS DEL REPORTE
+    let efectivo = 0, yapePlin = 0, fiadoHoy = 0;
     ventasActualesParaExportar.forEach(v => {
         const monto = Number(v.total || 0);
         const metodo = (v.metodo_pago || "").toUpperCase();
         if (metodo === 'EFECTIVO') efectivo += monto;
         else if (metodo === 'YAPE' || metodo === 'PLIN') yapePlin += monto;
-        else if (metodo === 'FIADO') fiado += monto;
+        else if (metodo === 'FIADO') fiadoHoy += monto;
     });
 
-    // --- CABECERA DEL PDF ---
+    // Obtenemos el monto que ya calculaste en la pantalla (Deuda total de todos los clientes)
+    const deudaTotalGlobal = document.getElementById('totalPorCobrar').textContent.replace('$', '') || "0.00";
+
+    // 2. CABECERA
     doc.setFontSize(18);
+    doc.setTextColor(30, 41, 59);
     doc.text("REPORTE DE VENTAS - MINIMARKET PRO", 14, 20);
+    
     doc.setFontSize(10);
     doc.setTextColor(100);
-    doc.text(`Generado el: ${new Date().toLocaleString()}`, 14, 28);
+    doc.text(`Periodo: ${document.getElementById('filtroTiempo').value.toUpperCase()}`, 14, 27);
+    doc.text(`Generado: ${new Date().toLocaleString()}`, 14, 32);
 
-    // --- TABLA DE VENTAS ---
+    // 3. TABLA DE VENTAS
     const columnas = ["Fecha", "Cliente", "Método", "Monto"];
     const filas = ventasActualesParaExportar.map(v => [
-        new Date(v.created_at).toLocaleString(),
+        new Date(v.created_at).toLocaleString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }),
         v.clientes ? v.clientes.nombre : 'Consumidor Final',
-        v.metodo_pago,
+        v.metodo_pago.toUpperCase(),
         `$${Number(v.total).toFixed(2)}`
     ]);
 
     doc.autoTable({
-        startY: 35,
+        startY: 38,
         head: [columnas],
         body: filas,
         theme: 'striped',
         headStyles: { fillColor: [16, 185, 129] },
-        didDrawPage: (data) => {
-            // Guardamos la posición final de la tabla para saber dónde escribir el resumen
-            finalY = data.cursor.y;
-        }
+        styles: { fontSize: 9 }
     });
 
-    // --- BLOQUE DE RESUMEN AL FINAL ---
-    const posY = doc.lastAutoTable.finalY + 15; // Espacio después de la tabla
+    // 4. BLOQUE DE RESUMEN TÉCNICO
+    const posY = doc.lastAutoTable.finalY + 15;
+    const startX = 125;
     
-    doc.setFontSize(12);
-    doc.setTextColor(0);
+    // Fondo gris claro para el resumen
+    doc.setFillColor(245, 247, 250);
+    doc.rect(startX - 5, posY - 7, 80, 55, 'F');
+
+    doc.setFontSize(11);
+    doc.setTextColor(30, 41, 59);
     doc.setFont("helvetica", "bold");
-    doc.text("RESUMEN DE CAJA", 140, posY);
+    doc.text("DESGLOSE DE CAJA", startX, posY);
     
-    doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
-    doc.text(`Total Efectivo:`, 140, posY + 8);
-    doc.text(`$${efectivo.toFixed(2)}`, 190, posY + 8, { align: "right" });
+    doc.setFont("helvetica", "normal");
     
-    doc.text(`Total Digital (Y/P):`, 140, posY + 14);
-    doc.text(`$${yapePlin.toFixed(2)}`, 190, posY + 14, { align: "right" });
+    doc.text(`Total Efectivo:`, startX, posY + 8);
+    doc.text(`$${efectivo.toFixed(2)}`, 198, posY + 8, { align: "right" });
     
-    doc.text(`Total Fiados:`, 140, posY + 20);
-    doc.text(`$${fiado.toFixed(2)}`, 190, posY + 20, { align: "right" });
+    doc.text(`Total Digital (Y/P):`, startX, posY + 14);
+    doc.text(`$${yapePlin.toFixed(2)}`, 198, posY + 14, { align: "right" });
 
-    // Línea divisoria
+    doc.text(`Fiado de hoy:`, startX, posY + 20);
+    doc.text(`$${fiadoHoy.toFixed(2)}`, 198, posY + 20, { align: "right" });
+
     doc.setDrawColor(200);
-    doc.line(140, posY + 23, 190, posY + 23);
+    doc.line(startX, posY + 24, 198, posY + 24);
 
-    // Gran Total Real
+    // Venta Real (Efectivo + Digital)
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(16, 185, 129); // Color verde
-    doc.text(`VENTA REAL:`, 140, posY + 30);
-    doc.text(`$${(efectivo + yapePlin).toFixed(2)}`, 190, posY + 30, { align: "right" });
+    doc.setTextColor(16, 185, 129);
+    doc.text(`VENTA REAL:`, startX, posY + 31);
+    doc.text(`$${(efectivo + yapePlin).toFixed(2)}`, 198, posY + 31, { align: "right" });
 
-    // Guardar archivo
-    doc.save(`Reporte_Ventas_${new Date().toLocaleDateString()}.pdf`);
+    // --- SECCIÓN DE DEUDA GLOBAL ---
+    doc.setTextColor(220, 38, 38); // Rojo para alertar deuda total
+    doc.text(`DEUDA TOTAL POR COBRAR:`, startX, posY + 42);
+    doc.text(`$${Number(deudaTotalGlobal).toFixed(2)}`, 198, posY + 42, { align: "right" });
+
+    doc.save(`Reporte_Minimarket_${new Date().toLocaleDateString()}.pdf`);
 };
 inicializarReportes();
