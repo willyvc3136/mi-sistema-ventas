@@ -52,7 +52,7 @@ async function cargarReporte() {
     const [resVentas, resClientes] = await Promise.all([
         _supabase
             .from('ventas')
-            .select('*, clientes(nombre), venta_detalles(*)') // Intentamos traer todo
+            .select(`*, clientes(nombre), venta_detalles:venta_detalles(cantidad, nombre_producto)`) // Intentamos traer todo
             .gte('created_at', desde.toISOString())
             .lte('created_at', hasta.toISOString())
             .order('created_at', { ascending: false }),
@@ -77,7 +77,7 @@ async function cargarReporte() {
     procesarYMostrarDatos(ventasActualesParaExportar, resClientes.data || []);
 
     ventasActualesParaExportar = resVentas.data;
-    procesarYMostrarDatos(resVentas.data, resClientes.data || []); 
+procesarYMostrarDatos(resVentas.data, resClientes.data || []); 
 }
 
 function procesarYMostrarDatos(ventas, clientes) {
