@@ -178,10 +178,15 @@ function actualizarGrafica(efectivo, digital, fiado) {
 }
 
 window.imprimirTicket = (venta) => {
+    // 1. Generar número de ticket (Usa el ID de la base de datos o un aleatorio si no existe)
+    const ticketID = venta.id ? String(venta.id).slice(-4).toUpperCase() : Math.floor(1000 + Math.random() * 9000);
+    
+    // 2. Formatear Fecha
     const fechaBoleta = new Date(venta.created_at).toLocaleString('es-ES', {
-        day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true
+        day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true
     });
 
+    // 3. Procesar Productos
     let productosHtml = "";
     try {
         let pArray = venta.productos_vendidos;
@@ -194,46 +199,64 @@ window.imprimirTicket = (venta) => {
                 const subtotal = precioUnit * cant;
 
                 return `
-                <tr style="font-size: 11px;">
-                    <td style="padding: 5px 0;">${cant}</td>
-                    <td style="padding: 5px 0;">${p.nombre || 'Prod.'}</td>
+                <tr style="font-size: 11px; border-bottom: 0.5px solid #eee;">
+                    <td style="padding: 5px 0; text-align: center;">${cant}</td>
+                    <td style="padding: 5px 0;">${p.nombre || 'Producto'}</td>
                     <td style="padding: 5px 0; text-align: right;">${precioUnit.toFixed(2)}</td>
-                    <td style="padding: 5px 0; text-align: right;">${subtotal.toFixed(2)}</td>
+                    <td style="padding: 5px 0; text-align: right; font-weight: bold;">${subtotal.toFixed(2)}</td>
                 </tr>`;
             }).join('');
         } else {
-            productosHtml = `<tr><td colspan="4" style="padding:10px 0; text-align:center;">Venta General: $${Number(venta.total).toFixed(2)}</td></tr>`;
+            productosHtml = `
+                <tr>
+                    <td colspan="4" style="padding: 15px 0; text-align: center; font-style: italic;">
+                        Venta General - Detalle no disponible
+                    </td>
+                </tr>`;
         }
     } catch (e) {
-        productosHtml = `<tr><td colspan="4" style="text-align:center;">Error en detalle</td></tr>`;
+        console.error("Error en detalle ticket:", e);
+        productosHtml = `<tr><td colspan="4" style="text-align:center; padding:10px;">Error al cargar productos</td></tr>`;
     }
 
+    // 4. Crear Ventana de Impresión
     const win = window.open('', '', 'width=350,height=600');
     win.document.write(`
         <html>
         <head>
+            <title>Ticket ${ticketID}</title>
             <style>
-                body { font-family: 'Courier New', monospace; width: 260px; padding: 10px; margin: 0; }
+                body { 
+                    font-family: 'Courier New', Courier, monospace; 
+                    width: 270px; 
+                    margin: 0; 
+                    padding: 10px; 
+                    color: #000;
+                }
                 .text-center { text-align: center; }
                 .bold { font-weight: bold; }
-                .divider { border-top: 1px dashed #000; margin: 8px 0; }
+                .divider { border-top: 1px dashed #000; margin: 10px 0; }
                 table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-                th { font-size: 10px; border-bottom: 1px solid #000; padding-bottom: 4px; text-transform: uppercase; }
-                td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+                th { font-size: 10px; border-bottom: 1px solid #000; padding-bottom: 5px; text-align: left; }
+                .total-section { font-size: 16px; margin-top: 10px; display: flex; justify-content: space-between; }
+                @media print { margin: 0; }
             </style>
         </head>
         <body>
             <div class="text-center">
-                <h2 style="margin: 0; font-size: 16px;">MINIMARKET PRO</h2>
-                <p style="font-size: 10px; margin: 4px 0;">${fechaBoleta}</p>
+                <h2 style="margin: 0; font-size: 18px;">MINIMARKET PRO</h2>
+                <p style="margin: 5px 0; font-size: 12px; font-weight: bold;">TICKET: #TK-${ticketID}</p>
+                <p style="font-size: 11px; margin: 0;">${fechaBoleta}</p>
             </div>
+
             <div class="divider"></div>
+
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 25px; text-align: left;">CT</th>
-                        <th style="text-align: left;">DESCRIP.</th>
-                        <th style="width: 50px; text-align: right;">UNIT</th>
+                        <th style="width: 30px; text-align: center;">CT</th>
+                        <th>DESCRIPCIÓN</th>
+                        <th style="width: 45px; text-align: right;">UNIT</th>
                         <th style="width: 50px; text-align: right;">TOTAL</th>
                     </tr>
                 </thead>
@@ -241,19 +264,32 @@ window.imprimirTicket = (venta) => {
                     ${productosHtml}
                 </tbody>
             </table>
+
             <div class="divider"></div>
-            <div style="display: flex; justify-content: space-between; font-size: 15px;" class="bold">
+
+            <div class="total-section bold">
                 <span>TOTAL:</span>
                 <span>$${Number(venta.total).toFixed(2)}</span>
             </div>
-            <div style="margin-top: 8px; font-size: 10px;">
-                <p style="margin: 1px 0;">PAGO: ${(venta.metodo_pago || '').toUpperCase()}</p>
-                <p style="margin: 1px 0;">CLI: ${venta.clientes ? venta.clientes.nombre : 'C. FINAL'}</p>
+
+            <div style="margin-top: 10px; font-size: 11px;">
+                <p style="margin: 2px 0;"><b>MÉTODO:</b> ${(venta.metodo_pago || 'Efectivo').toUpperCase()}</p>
+                <p style="margin: 2px 0;"><b>CLIENTE:</b> ${venta.clientes ? venta.clientes.nombre : 'CONSUMIDOR FINAL'}</p>
             </div>
-            <div class="text-center" style="margin-top: 20px; font-size: 10px;">
-                *** GRACIAS POR SU COMPRA ***
+
+            <div class="divider"></div>
+
+            <div class="text-center" style="font-size: 10px; margin-top: 15px;">
+                ¡GRACIAS POR SU PREFERENCIA!<br>
+                *** Vuelva pronto ***
             </div>
-            <script>window.onload = () => { window.print(); setTimeout(() => window.close(), 500); };</script>
+
+            <script>
+                window.onload = () => {
+                    window.print();
+                    setTimeout(() => { window.close(); }, 500);
+                };
+            </script>
         </body>
         </html>
     `);
