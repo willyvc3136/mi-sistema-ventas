@@ -52,7 +52,7 @@ async function cargarReporte() {
     const [resVentas, resClientes] = await Promise.all([
         _supabase
             .from('ventas')
-            .select('*, clientes(nombre)')
+            .select('*, clientes(nombre), venta_detalles(*)')
             .gte('created_at', desde.toISOString())
             .lte('created_at', hasta.toISOString())
             .order('created_at', { ascending: false }),
@@ -110,11 +110,17 @@ function renderizarTabla(ventas) {
         const clienteNombre = v.clientes ? v.clientes.nombre : 'Consumidor Final';
         const metodo = (v.metodo_pago || "").toUpperCase();
         
+        // --- NUEVA LÓGICA PARA PRODUCTOS ---
+        const listaProductos = v.venta_detalles 
+            ? v.venta_detalles.map(d => `${d.cantidad}x ${d.nombre_producto}`).join(', ') 
+            : 'Sin detalles';
+
         const fila = document.createElement('tr');
         fila.className = "group border-b border-slate-50 hover:bg-slate-50 transition-colors";
         fila.innerHTML = `
             <td class="p-5">
                 <p class="font-bold text-slate-700 group-hover:text-emerald-600 transition-colors">${clienteNombre}</p>
+                <p class="text-[11px] text-emerald-500 font-medium italic">${listaProductos}</p> 
                 <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-tighter">${fecha}</p>
             </td>
             <td class="p-5 text-center">
