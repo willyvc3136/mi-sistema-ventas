@@ -415,4 +415,5 @@ window.toggleFaltantes = () => {
         boton.classList.replace("text-slate-500", "text-red-500");
     }
 };
+
 checkAuth();
