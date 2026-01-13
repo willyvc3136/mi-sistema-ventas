@@ -239,19 +239,49 @@ window.exportarExcel = () => {
         return;
     }
 
-    // Preparamos los datos de forma plana para el Excel
-    const datosExcel = ventasActualesParaExportar.map(v => ({
-        Fecha: new Date(v.created_at).toLocaleString(),
-        Cliente: v.clientes ? v.clientes.nombre : 'Consumidor Final',
-        Productos: (v.productos_vendidos || []).map(p => `${p.cantidadSeleccionada || 1}x ${p.nombre}`).join(', '),
-        Metodo: v.metodo_pago,
-        Total: Number(v.total).toFixed(2)
+    // 1. Cálculos de Totales
+    let totalEfectivo = 0;
+    let totalDigital = 0;
+    ventasActualesParaExportar.forEach(v => {
+        const monto = Number(v.total || 0);
+        const metodo = (v.metodo_pago || "").toUpperCase();
+        if (metodo === 'EFECTIVO') totalEfectivo += monto;
+        else if (metodo === 'YAPE' || metodo === 'PLIN') totalDigital += monto;
+    });
+
+    // Obtenemos la deuda real de la interfaz (la de $36.30)
+    const totalDeudaReal = Number(document.getElementById('totalPorCobrar').textContent.replace('$', '')) || 0;
+    const totalEnCaja = totalEfectivo + totalDigital;
+
+    // 2. Preparar los datos para la tabla
+    const dataParaExcel = ventasActualesParaExportar.map(v => ({
+        "Fecha": new Date(v.created_at).toLocaleString(),
+        "Cliente": v.clientes ? v.clientes.nombre : 'Consumidor Final',
+        "Productos": (v.productos_vendidos || []).map(p => `${p.cantidadSeleccionada || 1}x ${p.nombre}`).join(', '),
+        "Método de Pago": v.metodo_pago,
+        "Monto ($)": Number(v.total).toFixed(2)
     }));
 
-    const hoja = XLSX.utils.json_to_sheet(datosExcel);
-    const libro = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(libro, hoja, "Ventas");
-    XLSX.writeFile(libro, `Reporte_Ventas_${new Date().toLocaleDateString()}.xlsx`);
+    // 3. Crear el libro y la hoja
+    const ws = XLSX.utils.json_to_sheet(dataParaExcel);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Reporte de Ventas");
+
+    // 4. Añadir el Resumen de Totales al final del Excel
+    const ultimaFila = dataParaExcel.length + 3; // Dejamos unas filas de espacio
+    
+    XLSX.utils.sheet_add_aoa(ws, [
+        ["RESUMEN FINANCIERO"],
+        ["Total Efectivo:", totalEfectivo.toFixed(2)],
+        ["Total Digital:", totalDigital.toFixed(2)],
+        ["TOTAL REAL EN CAJA:", totalEnCaja.toFixed(2)],
+        [""],
+        ["DEUDA PENDIENTE (POR COBRAR):", totalDeudaReal.toFixed(2)]
+    ], { origin: `D${ultimaFila}` }); // Se coloca en la columna D para que se vea ordenado
+
+    // 5. Descargar archivo
+    const fechaArchivo = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(wb, `Reporte_Ventas_${fechaArchivo}.xlsx`);
 };
 
 // ==========================================
