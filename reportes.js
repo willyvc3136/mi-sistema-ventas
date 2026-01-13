@@ -229,7 +229,90 @@ window.imprimirTicket = (v) => {
     ventana.document.close();
 };
 
-window.exportarExcel = () => { alert("Función Excel lista para configurar con SheetJS"); };
-window.exportarPDF = () => { window.print(); };
+
+// ==========================================
+// EXPORTAR A EXCEL (Usando SheetJS)
+// ==========================================
+window.exportarExcel = () => {
+    if (ventasActualesParaExportar.length === 0) {
+        alert("No hay datos para exportar");
+        return;
+    }
+
+    // Preparamos los datos de forma plana para el Excel
+    const datosExcel = ventasActualesParaExportar.map(v => ({
+        Fecha: new Date(v.created_at).toLocaleString(),
+        Cliente: v.clientes ? v.clientes.nombre : 'Consumidor Final',
+        Productos: (v.productos_vendidos || []).map(p => `${p.cantidadSeleccionada || 1}x ${p.nombre}`).join(', '),
+        Metodo: v.metodo_pago,
+        Total: Number(v.total).toFixed(2)
+    }));
+
+    const hoja = XLSX.utils.json_to_sheet(datosExcel);
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, "Ventas");
+    XLSX.writeFile(libro, `Reporte_Ventas_${new Date().toLocaleDateString()}.xlsx`);
+};
+
+// ==========================================
+// EXPORTAR A PDF (Generando una vista limpia)
+// ==========================================
+window.exportarPDF = () => {
+    if (ventasActualesParaExportar.length === 0) {
+        alert("No hay datos para imprimir");
+        return;
+    }
+
+    const ventana = window.open('', '', 'width=800,height=900');
+    
+    // Generamos las filas de la tabla para el PDF
+    const filas = ventasActualesParaExportar.map(v => `
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">${new Date(v.created_at).toLocaleString()}</td>
+            <td style="border: 1px solid #ddd; padding: 8px;">${v.clientes ? v.clientes.nombre : 'Consumidor Final'}</td>
+            <td style="border: 1px solid #ddd; padding: 8px;">${(v.productos_vendidos || []).map(p => `${p.cantidadSeleccionada || 1}x ${p.nombre}`).join(', ')}</td>
+            <td style="border: 1px solid #ddd; padding: 8px;">${v.metodo_pago}</td>
+            <td style="border: 1px solid #ddd; padding: 8px; font-weight:bold;">$${Number(v.total).toFixed(2)}</td>
+        </tr>
+    `).join('');
+
+    ventana.document.write(`
+        <html>
+        <head>
+            <title>Reporte de Ventas</title>
+            <style>
+                body { font-family: sans-serif; padding: 20px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }
+                th { background-color: #f3f4f6; border: 1px solid #ddd; padding: 12px; text-align: left; }
+                h2 { color: #1e293b; margin-bottom: 5px; }
+            </style>
+        </head>
+        <body>
+            <center>
+                <h2>REPORTE DE VENTAS</h2>
+                <p>Generado el: ${new Date().toLocaleString()}</p>
+            </center>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Cliente</th>
+                        <th>Productos</th>
+                        <th>Método</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${filas}
+                </tbody>
+            </table>
+            <script>
+                setTimeout(() => { window.print(); window.close(); }, 500);
+            </script>
+        </body>
+        </html>
+    `);
+    ventana.document.close();
+};
 
 inicializarReportes();
