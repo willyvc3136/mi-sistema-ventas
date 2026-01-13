@@ -48,11 +48,11 @@ async function cargarReporte() {
         else if (filtro === 'anual') { desde.setMonth(0); desde.setDate(1); }
     }
 
-    // Consulta paralela: Ventas y Clientes
+    // Consulta corregida para traer Clientes y Detalles
     const [resVentas, resClientes] = await Promise.all([
         _supabase
             .from('ventas')
-            .select(`*, clientes(nombre), venta_detalles:venta_detalles(cantidad, nombre_producto)`) // Intentamos traer todo
+            .select('*, clientes(nombre), venta_detalles(*)') 
             .gte('created_at', desde.toISOString())
             .lte('created_at', hasta.toISOString())
             .order('created_at', { ascending: false }),
@@ -60,24 +60,18 @@ async function cargarReporte() {
     ]);
 
     if (resVentas.error) {
-        console.warn("Error con detalles, cargando solo ventas básicas...");
-        const resBasica = await _supabase
-            .from('ventas')
-            .select('*, clientes(nombre)')
-            .gte('created_at', desde.toISOString())
-            .lte('created_at', hasta.toISOString())
-            .order('created_at', { ascending: false });
-        
-        if (resBasica.error) return console.error("Error crítico:", resBasica.error);
-        ventasActualesParaExportar = resBasica.data;
-    } else {
-        ventasActualesParaExportar = resVentas.data;
+        console.error("Error cargando ventas:", resVentas.error);
+        alert("Error de conexión: " + resVentas.error.message);
+        return;
     }
 
-    procesarYMostrarDatos(ventasActualesParaExportar, resClientes.data || []);
-
-    ventasActualesParaExportar = resVentas.data;
-procesarYMostrarDatos(resVentas.data, resClientes.data || []); 
+    // Guardamos los datos para exportar
+    ventasActualesParaExportar = resVentas.data || [];
+    
+    // Mostramos los datos
+    procesarYMostrarDatos(ventasActualesParaExportar, resClientes.data || []); 
+    
+    // IMPORTANTE: Se eliminó el código repetido que tenías aquí abajo que causaba el error
 }
 
 function procesarYMostrarDatos(ventas, clientes) {
