@@ -263,16 +263,31 @@ window.exportarPDF = () => {
         return;
     }
 
+    // Calculamos los totales específicamente para este reporte
+    let totalEfectivo = 0;
+    let totalDigital = 0; // Yape + Plin
+    let totalFiado = 0;
+    let granTotal = 0;
+
+    ventasActualesParaExportar.forEach(v => {
+        const monto = Number(v.total || 0);
+        const metodo = (v.metodo_pago || "").toUpperCase();
+        granTotal += monto;
+
+        if (metodo === 'EFECTIVO') totalEfectivo += monto;
+        else if (metodo === 'YAPE' || metodo === 'PLIN') totalDigital += monto;
+        else if (metodo === 'FIADO') totalFiado += monto;
+    });
+
     const ventana = window.open('', '', 'width=800,height=900');
     
-    // Generamos las filas de la tabla para el PDF
     const filas = ventasActualesParaExportar.map(v => `
         <tr>
             <td style="border: 1px solid #ddd; padding: 8px;">${new Date(v.created_at).toLocaleString()}</td>
             <td style="border: 1px solid #ddd; padding: 8px;">${v.clientes ? v.clientes.nombre : 'Consumidor Final'}</td>
             <td style="border: 1px solid #ddd; padding: 8px;">${(v.productos_vendidos || []).map(p => `${p.cantidadSeleccionada || 1}x ${p.nombre}`).join(', ')}</td>
-            <td style="border: 1px solid #ddd; padding: 8px;">${v.metodo_pago}</td>
-            <td style="border: 1px solid #ddd; padding: 8px; font-weight:bold;">$${Number(v.total).toFixed(2)}</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align:center;">${v.metodo_pago}</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align:right;">$${Number(v.total).toFixed(2)}</td>
         </tr>
     `).join('');
 
@@ -281,38 +296,69 @@ window.exportarPDF = () => {
         <head>
             <title>Reporte de Ventas</title>
             <style>
-                body { font-family: sans-serif; padding: 20px; }
-                table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }
-                th { background-color: #f3f4f6; border: 1px solid #ddd; padding: 12px; text-align: left; }
-                h2 { color: #1e293b; margin-bottom: 5px; }
+                body { font-family: sans-serif; padding: 30px; color: #333; }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                th { background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 10px; text-align: left; font-size: 12px; }
+                td { border: 1px solid #e2e8f0; padding: 8px; font-size: 11px; }
+                .resumen-container { margin-top: 30px; width: 100%; display: flex; justify-content: flex-end; }
+                .resumen-tabla { width: 250px; border-collapse: collapse; }
+                .resumen-tabla td { padding: 8px; border: none; border-bottom: 1px solid #eee; font-size: 13px; }
+                .total-final { font-weight: bold; font-size: 16px !important; color: #059669; }
+                h2 { margin-bottom: 5px; color: #1e293b; }
             </style>
         </head>
         <body>
-            <center>
+            <div style="text-align: center; border-bottom: 2px solid #10b981; padding-bottom: 10px;">
                 <h2>REPORTE DE VENTAS</h2>
-                <p>Generado el: ${new Date().toLocaleString()}</p>
-            </center>
+                <p style="margin: 0; color: #64748b;">Generado el: ${new Date().toLocaleString()}</p>
+            </div>
+
             <table>
                 <thead>
                     <tr>
-                        <th>Fecha</th>
+                        <th>Fecha/Hora</th>
                         <th>Cliente</th>
                         <th>Productos</th>
-                        <th>Método</th>
-                        <th>Total</th>
+                        <th style="text-align:center;">Método</th>
+                        <th style="text-align:right;">Total</th>
                     </tr>
                 </thead>
                 <tbody>
                     ${filas}
                 </tbody>
             </table>
+
+            <div class="resumen-container">
+                <table class="resumen-tabla">
+                    <tr>
+                        <td>Total Efectivo:</td>
+                        <td align="right">$${totalEfectivo.toFixed(2)}</td>
+                    </tr>
+                    <tr>
+                        <td>Total Digital:</td>
+                        <td align="right">$${totalDigital.toFixed(2)}</td>
+                    </tr>
+                    <tr>
+                        <td>Total Fiados:</td>
+                        <td align="right" style="color: #d97706;">$${totalFiado.toFixed(2)}</td>
+                    </tr>
+                    <tr class="total-final">
+                        <td>SUMA TOTAL:</td>
+                        <td align="right">$${granTotal.toFixed(2)}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div style="margin-top: 50px; text-align: center; font-size: 10px; color: #94a3b8;">
+                Fin del reporte de operaciones.
+            </div>
+
             <script>
-                setTimeout(() => { window.print(); window.close(); }, 500);
+                setTimeout(() => { window.print(); window.close(); }, 700);
             </script>
         </body>
         </html>
     `);
     ventana.document.close();
 };
-
 inicializarReportes();
