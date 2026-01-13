@@ -265,18 +265,19 @@ window.exportarPDF = () => {
 
     let totalEfectivo = 0;
     let totalDigital = 0;
-    let totalFiado = 0;
-
+    
+    // 1. Calculamos lo ingresado en las ventas del periodo
     ventasActualesParaExportar.forEach(v => {
         const monto = Number(v.total || 0);
         const metodo = (v.metodo_pago || "").toUpperCase();
 
         if (metodo === 'EFECTIVO') totalEfectivo += monto;
         else if (metodo === 'YAPE' || metodo === 'PLIN') totalDigital += monto;
-        else if (metodo === 'FIADO') totalFiado += monto;
     });
 
-    // DINERO QUE REALMENTE INGRESÓ
+    // 2. OBTENER LA DEUDA REAL (Global)
+    // Usamos el cálculo que ya tienes en procesarYMostrarDatos
+    const totalDeudaReal = Number(document.getElementById('totalPorCobrar').textContent.replace('$', '')) || 0;
     const totalEnCaja = totalEfectivo + totalDigital;
 
     const ventana = window.open('', '', 'width=800,height=900');
@@ -294,24 +295,24 @@ window.exportarPDF = () => {
     ventana.document.write(`
         <html>
         <head>
-            <title>Reporte de Ventas</title>
+            <title>Reporte Pro - Gestión de Ventas</title>
             <style>
                 body { font-family: sans-serif; padding: 30px; color: #333; }
                 table { width: 100%; border-collapse: collapse; margin-top: 20px; }
                 th { background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 10px; text-align: left; font-size: 12px; }
                 td { border: 1px solid #e2e8f0; padding: 8px; font-size: 11px; }
                 .resumen-container { margin-top: 30px; display: flex; justify-content: flex-end; }
-                .resumen-tabla { width: 300px; border-collapse: collapse; background: #fdfdfd; }
-                .resumen-tabla td { padding: 10px; border: none; border-bottom: 1px solid #eee; font-size: 14px; }
+                .resumen-tabla { width: 320px; border-collapse: collapse; background: #fdfdfd; border: 1px solid #eee; }
+                .resumen-tabla td { padding: 10px; border-bottom: 1px solid #eee; font-size: 14px; }
                 .caja-total { font-weight: bold; color: #059669; background-color: #ecfdf5; }
-                .fiado-total { font-weight: bold; color: #d97706; }
+                .deuda-total { font-weight: bold; color: #e11d48; background-color: #fff1f2; }
                 h2 { margin-bottom: 5px; color: #1e293b; }
             </style>
         </head>
         <body>
-            <div style="text-align: center; border-bottom: 2px solid #10b981; padding-bottom: 10px;">
-                <h2>REPORTE DE OPERACIONES</h2>
-                <p style="margin: 0; color: #64748b;">Fecha: ${new Date().toLocaleDateString()}</p>
+            <div style="text-align: center; border-bottom: 3px solid #10b981; padding-bottom: 10px;">
+                <h2 style="text-transform: uppercase;">Reporte de Operaciones</h2>
+                <p style="margin: 0; color: #64748b;">Estado al: ${new Date().toLocaleString()}</p>
             </div>
 
             <table>
@@ -319,9 +320,9 @@ window.exportarPDF = () => {
                     <tr>
                         <th>Fecha/Hora</th>
                         <th>Cliente</th>
-                        <th>Productos</th>
+                        <th>Detalle Productos</th>
                         <th style="text-align:center;">Método</th>
-                        <th style="text-align:right;">Monto</th>
+                        <th style="text-align:right;">Subtotal</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -336,20 +337,24 @@ window.exportarPDF = () => {
                         <td align="right">$${totalEfectivo.toFixed(2)}</td>
                     </tr>
                     <tr>
-                        <td>Total Digital (Y/P):</td>
+                        <td>Total Digital:</td>
                         <td align="right">$${totalDigital.toFixed(2)}</td>
                     </tr>
                     <tr class="caja-total">
-                        <td>TOTAL EN CAJA:</td>
+                        <td>DINERO EN CAJA (Ventas):</td>
                         <td align="right">$${totalEnCaja.toFixed(2)}</td>
                     </tr>
-                    <tr><td colspan="2" style="border:none; height:10px;"></td></tr>
-                    <tr class="fiado-total">
-                        <td>POR COBRAR (Fiados):</td>
-                        <td align="right">$${totalFiado.toFixed(2)}</td>
+                    <tr><td colspan="2" style="border:none; height:15px;"></td></tr>
+                    <tr class="deuda-total">
+                        <td>DEUDA PENDIENTE REAL:</td>
+                        <td align="right">$${totalDeudaReal.toFixed(2)}</td>
                     </tr>
                 </table>
             </div>
+
+            <p style="margin-top:30px; font-size: 10px; color: #94a3b8; text-align:center;">
+                * La deuda pendiente refleja el saldo actual de los clientes considerando abonos realizados.
+            </p>
 
             <script>
                 setTimeout(() => { window.print(); window.close(); }, 700);
