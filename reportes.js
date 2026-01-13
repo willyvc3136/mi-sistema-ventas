@@ -48,28 +48,20 @@ async function cargarReporte() {
         else if (filtro === 'anual') { desde.setMonth(0); desde.setDate(1); }
     }
 
-    // CONSULTA UNIFICADA: Si falla venta_detalles, resVentas.error nos avisará
+    // CONSULTA CORREGIDA: Eliminamos 'venta_detalles' porque tus productos están en 'productos_vendidos'
     const [resVentas, resClientes] = await Promise.all([
-        _supabase
-            .from('ventas')
-            .select('*, clientes(nombre), venta_detalles(*)') 
-            .gte('created_at', desde.toISOString())
-            .lte('created_at', hasta.toISOString())
-            .order('created_at', { ascending: false }),
-        _supabase.from('clientes').select('deuda')
-    ]);
+    _supabase
+        .from('ventas')
+        .select('*, clientes(nombre)') // QUITAMOS venta_detalles(*) porque causa el error
+        .gte('created_at', desde.toISOString())
+        .lte('created_at', hasta.toISOString())
+        .order('created_at', { ascending: false }),
+    _supabase.from('clientes').select('deuda')
+]);
 
     if (resVentas.error) {
         console.error("Error en consulta:", resVentas.error);
-        // Intento de rescate si la relación falla
-        const resSimple = await _supabase
-            .from('ventas')
-            .select('*, clientes(nombre)')
-            .gte('created_at', desde.toISOString())
-            .lte('created_at', hasta.toISOString())
-            .order('created_at', { ascending: false });
-        
-        ventasActualesParaExportar = resSimple.data || [];
+        ventasActualesParaExportar = [];
     } else {
         ventasActualesParaExportar = resVentas.data || [];
     }
@@ -180,28 +172,59 @@ function actualizarGrafica(efectivo, digital, fiado) {
 // FUNCIONES COMPLETADAS
 window.imprimirTicket = (v) => {
     const ventana = window.open('', '', 'width=400,height=600');
-    const productosHTML = (venta.productos_vendidos && venta.productos_vendidos.length > 0) 
-    ? venta.productos_vendidos.map(p => {
-        // Usamos los nombres exactos que vienen de tu archivo ventas.js
-        const cant = p.cantidadSeleccionada || p.cantidad || 1;
-        const nombre = p.nombre || 'Producto';
-        const precioUnit = p.precio || 0;
-        const subtotal = cant * precioUnit;
-        
-        // Formato de línea para ticket (Cantidad x Nombre ... Subtotal)
-        return `${cant}x ${nombre.padEnd(20, ' ')} $${subtotal.toFixed(2)}`;
-    }).join('\n')
-    : 'No hay detalles de productos';
+    
+    // 1. Corregido: Usamos 'v' que es el parámetro de la función
+    // 2. Corregido: Mapeamos los productos para que salgan en una tabla bonita
+    const filasProductos = (v.productos_vendidos && v.productos_vendidos.length > 0) 
+        ? v.productos_vendidos.map(p => {
+            const cant = p.cantidadSeleccionada || p.cantidad || 1;
+            const nombre = p.nombre || 'Producto';
+            const precioUnit = p.precio || 0;
+            const subtotal = cant * precioUnit;
+            
+            return `
+                <tr>
+                    <td style="padding: 2px 0;">${cant}x ${nombre}</td>
+                    <td align="right" style="padding: 2px 0;">$${subtotal.toFixed(2)}</td>
+                </tr>`;
+        }).join('')
+        : '<tr><td colspan="2">No hay detalles de productos</td></tr>';
 
     ventana.document.write(`
-        <html><body style="font-family:monospace;padding:20px;">
-            <center><b>MI NEGOCIO</b><br>Ticket #${v.id}</center><hr>
-            Fecha: ${new Date(v.created_at).toLocaleString()}<br>
-            Cliente: ${v.clientes ? v.clientes.nombre : 'General'}<hr>
-            <table width="100%">${productosHtml}</table><hr>
-            <div align="right"><b>TOTAL: $${Number(v.total).toFixed(2)}</b></div>
-            <script>window.print(); window.close();</script>
-        </body></html>
+        <html>
+        <body style="font-family:monospace; padding:20px; color:#333;">
+            <center>
+                <h2 style="margin:0;">MI NEGOCIO</h2>
+                <p style="margin:5px 0;">Ticket #${v.id}</p>
+            </center>
+            <hr style="border:none; border-top:1px dashed #000;">
+            <p style="margin:5px 0; font-size:12px;">
+                <b>Fecha:</b> ${new Date(v.created_at).toLocaleString()}<br>
+                <b>Cliente:</b> ${v.clientes?.nombre || 'General'}
+            </p>
+            <hr style="border:none; border-top:1px dashed #000;">
+            
+            <table width="100%" style="font-size:12px; border-collapse:collapse;">
+                ${filasProductos}
+            </table>
+            
+            <hr style="border:none; border-top:1px dashed #000;">
+            <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:14px;">
+                <span>TOTAL:</span>
+                <span>$${Number(v.total).toFixed(2)}</span>
+            </div>
+            <br>
+            <center><p style="font-size:10px;">¡Gracias por su compra!</p></center>
+
+            <script>
+                // Pequeño delay para asegurar que el contenido cargue antes de imprimir
+                setTimeout(() => {
+                    window.print();
+                    window.close();
+                }, 500);
+            </script>
+        </body>
+        </html>
     `);
     ventana.document.close();
 };
