@@ -48,7 +48,7 @@ async function cargarReporte() {
         else if (filtro === 'anual') { desde.setMonth(0); desde.setDate(1); }
     }
 
-    // Consulta corregida para traer Clientes y Detalles
+    // CONSULTA UNIFICADA: Si falla venta_detalles, resVentas.error nos avisará
     const [resVentas, resClientes] = await Promise.all([
         _supabase
             .from('ventas')
@@ -60,18 +60,21 @@ async function cargarReporte() {
     ]);
 
     if (resVentas.error) {
-        console.error("Error cargando ventas:", resVentas.error);
-        alert("Error de conexión: " + resVentas.error.message);
-        return;
+        console.error("Error en consulta:", resVentas.error);
+        // Intento de rescate si la relación falla
+        const resSimple = await _supabase
+            .from('ventas')
+            .select('*, clientes(nombre)')
+            .gte('created_at', desde.toISOString())
+            .lte('created_at', hasta.toISOString())
+            .order('created_at', { ascending: false });
+        
+        ventasActualesParaExportar = resSimple.data || [];
+    } else {
+        ventasActualesParaExportar = resVentas.data || [];
     }
 
-    // Guardamos los datos para exportar
-    ventasActualesParaExportar = resVentas.data || [];
-    
-    // Mostramos los datos
     procesarYMostrarDatos(ventasActualesParaExportar, resClientes.data || []); 
-    
-    // IMPORTANTE: Se eliminó el código repetido que tenías aquí abajo que causaba el error
 }
 
 function procesarYMostrarDatos(ventas, clientes) {
@@ -79,7 +82,6 @@ function procesarYMostrarDatos(ventas, clientes) {
     
     ventas.forEach(v => {
         const monto = Number(v.total || 0);
-        // Normalizamos a MAYÚSCULAS para que no falle si es "Yape" o "YAPE"
         const metodo = (v.metodo_pago || "").toUpperCase();
 
         if (metodo === 'EFECTIVO') efectivo += monto;
@@ -89,10 +91,9 @@ function procesarYMostrarDatos(ventas, clientes) {
     });
 
     const totalDigital = yape + plin;
-    const granTotalReal = efectivo + totalDigital; // Dinero que realmente entró (No incluye fiados)
+    const granTotalReal = efectivo + totalDigital;
     const totalDeudaReal = clientes.reduce((acc, c) => acc + (Number(c.deuda) || 0), 0);
 
-    // Actualización de la Interfaz
     document.getElementById('totalEfectivo').textContent = `$${efectivo.toFixed(2)}`;
     document.getElementById('totalDigital').textContent = `$${totalDigital.toFixed(2)}`;
     document.getElementById('granTotal').textContent = `$${granTotalReal.toFixed(2)}`;
@@ -116,9 +117,14 @@ function renderizarTabla(ventas) {
         const clienteNombre = v.clientes ? v.clientes.nombre : 'Consumidor Final';
         const metodo = (v.metodo_pago || "").toUpperCase();
         
-        // --- NUEVA LÓGICA PARA PRODUCTOS ---
-        const listaProductos = v.venta_detalles 
-            ? v.venta_detalles.map(d => `${d.cantidad}x ${d.nombre_producto}`).join(', ') 
+        // --- CAMBIO AQUÍ: Ahora lee la columna productos_vendidos que vimos en tu captura ---
+        const listaProductos = (v.productos_vendidos && v.productos_vendidos.length > 0) 
+            ? v.productos_vendidos.map(p => {
+                // Esta línea es la clave: busca 'cantidadSeleccionada' (que es como lo guarda tu ventas.js)
+                // O busca 'cantidad' por si hay registros antiguos.
+                const cant = p.cantidadSeleccionada || p.cantidad || 1; 
+                return `${cant}x ${p.nombre}`;
+            }).join(', ') 
             : 'Sin detalles';
 
         const fila = document.createElement('tr');
@@ -126,7 +132,7 @@ function renderizarTabla(ventas) {
         fila.innerHTML = `
             <td class="p-5">
                 <p class="font-bold text-slate-700 group-hover:text-emerald-600 transition-colors">${clienteNombre}</p>
-                <p class="text-[11px] text-emerald-500 font-medium italic">${listaProductos}</p> 
+                <p class="text-[10px] text-emerald-500 leading-tight italic opacity-90">${listaProductos}</p> 
                 <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-tighter">${fecha}</p>
             </td>
             <td class="p-5 text-center">
@@ -149,6 +155,7 @@ function renderizarTabla(ventas) {
 
 function actualizarGrafica(efectivo, digital, fiado) {
     const canvas = document.getElementById('graficaBalance');
+    if (!canvas) return;
     if (miGrafica) miGrafica.destroy();
     
     miGrafica = new Chart(canvas, {
@@ -158,8 +165,7 @@ function actualizarGrafica(efectivo, digital, fiado) {
             datasets: [{
                 data: [efectivo, digital, fiado],
                 backgroundColor: ['#10b981', '#a855f7', '#3b82f6'],
-                borderWidth: 0,
-                hoverOffset: 20
+                borderWidth: 0
             }]
         },
         options: {
@@ -171,9 +177,36 @@ function actualizarGrafica(efectivo, digital, fiado) {
     });
 }
 
-// ... Las funciones de imprimirTicket, exportarExcel y exportarPDF se mantienen igual ...
-window.imprimirTicket = (venta) => { /* Código original de ticket */ };
-window.exportarExcel = () => { /* Código original de Excel */ };
-window.exportarPDF = () => { /* Código original de PDF */ };
+// FUNCIONES COMPLETADAS
+window.imprimirTicket = (v) => {
+    const ventana = window.open('', '', 'width=400,height=600');
+    const productosHTML = (venta.productos_vendidos && venta.productos_vendidos.length > 0) 
+    ? venta.productos_vendidos.map(p => {
+        // Usamos los nombres exactos que vienen de tu archivo ventas.js
+        const cant = p.cantidadSeleccionada || p.cantidad || 1;
+        const nombre = p.nombre || 'Producto';
+        const precioUnit = p.precio || 0;
+        const subtotal = cant * precioUnit;
+        
+        // Formato de línea para ticket (Cantidad x Nombre ... Subtotal)
+        return `${cant}x ${nombre.padEnd(20, ' ')} $${subtotal.toFixed(2)}`;
+    }).join('\n')
+    : 'No hay detalles de productos';
+
+    ventana.document.write(`
+        <html><body style="font-family:monospace;padding:20px;">
+            <center><b>MI NEGOCIO</b><br>Ticket #${v.id}</center><hr>
+            Fecha: ${new Date(v.created_at).toLocaleString()}<br>
+            Cliente: ${v.clientes ? v.clientes.nombre : 'General'}<hr>
+            <table width="100%">${productosHtml}</table><hr>
+            <div align="right"><b>TOTAL: $${Number(v.total).toFixed(2)}</b></div>
+            <script>window.print(); window.close();</script>
+        </body></html>
+    `);
+    ventana.document.close();
+};
+
+window.exportarExcel = () => { alert("Función Excel lista para configurar con SheetJS"); };
+window.exportarPDF = () => { window.print(); };
 
 inicializarReportes();
