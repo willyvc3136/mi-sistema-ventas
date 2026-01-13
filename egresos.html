@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Registro de Egresos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-slate-50 p-6">
+    <div class="max-w-md mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+        <h2 class="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+            <span>💸</span> Nuevo Egreso
+        </h2>
+
+        <form id="formEgreso" class="space-y-4">
+            <div>
+                <label class="block text-sm font-semibold text-slate-600 mb-1">Monto ($)</label>
+                <input type="number" id="monto" step="0.01" required 
+                    class="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-600 mb-1">Categoría</label>
+                <select id="categoria" required class="w-full p-3 rounded-xl border border-slate-200 outline-none">
+                    <option value="Proveedores">Proveedores</option>
+                    <option value="Alquiler">Alquiler</option>
+                    <option value="Servicios">Servicios (Luz/Agua)</option>
+                    <option value="Personal">Personal / Sueldos</option>
+                    <option value="Varios">Varios / Otros</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-600 mb-1">Método de Pago</label>
+                <select id="metodo_pago" required class="w-full p-3 rounded-xl border border-slate-200 outline-none">
+                    <option value="Efectivo">Efectivo</option>
+                    <option value="Yape">Yape</option>
+                    <option value="Plin">Plin</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-600 mb-1">Descripción</label>
+                <textarea id="descripcion" rows="2" placeholder="Ej: Pago de internet"
+                    class="w-full p-3 rounded-xl border border-slate-200 outline-none"></textarea>
+            </div>
+
+            <button type="submit" 
+                class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-100">
+                Guardar Egreso
+            </button>
+        </form>
+    </div>
+
+    <script>
+        const supabaseUrl = 'https://ijyhkbiukiqiqjabpubm.supabase.co';
+        const supabaseKey = 'sb_publishable_EpJx4G5egW9GZdj8P7oudw_kDWWsj6p';
+        const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+        document.getElementById('formEgreso').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            btn.disabled = true;
+            btn.innerText = 'Guardando...';
+
+            const datos = {
+                monto: parseFloat(document.getElementById('monto').value),
+                categoria: document.getElementById('categoria').value,
+                metodo_pago: document.getElementById('metodo_pago').value,
+                descripcion: document.getElementById('descripcion').value
+            };
+
+            const { error } = await _supabase.from('egresos').insert([datos]);
+
+            if (error) {
+                alert("Error: " + error.message);
+            } else {
+                alert("Egreso registrado correctamente");
+                e.target.reset();
+            }
+            btn.disabled = false;
+            btn.innerText = 'Guardar Egreso';
+        };
+    </script>
+</body>
+</html>
