@@ -50,32 +50,37 @@ async function cargarReporte() {
     }
 
     // CONSULTA CORREGIDA: Eliminamos 'venta_detalles' porque tus productos están en 'productos_vendidos'
-    const [resVentas, resClientes] = await Promise.all([
-    _supabase
-        .from('ventas')
-        .select('*, clientes(nombre)') // QUITAMOS venta_detalles(*) porque causa el error
-        .gte('created_at', desde.toISOString())
-        .lte('created_at', hasta.toISOString())
-        .order('created_at', { ascending: false }),
-    _supabase.from('clientes').select('deuda'),
-    _supabase
+    // ... dentro de cargarReporte
+    // CONSULTA CORREGIDA
+    const [resVentas, resClientes, resEgresos] = await Promise.all([
+        _supabase
+            .from('ventas')
+            .select('*, clientes(nombre)')
+            .gte('created_at', desde.toISOString())
+            .lte('created_at', hasta.toISOString())
+            .order('created_at', { ascending: false }),
+        _supabase.from('clientes').select('deuda'),
+        _supabase
             .from('egresos')
             .select('*')
             .gte('created_at', desde.toISOString())
             .lte('created_at', hasta.toISOString())
-]);
+    ]);
 
     if (resVentas.error) {
-        console.error("Error en consulta:", resVentas.error);
+        console.error("Error en ventas:", resVentas.error);
         ventasActualesParaExportar = [];
     } else {
         ventasActualesParaExportar = resVentas.data || [];
     }
+
+    // Ahora resEgresos ya existe porque lo pusimos arriba
     egresosActualesParaExportar = resEgresos.data || [];
-    procesarYMostrarDatos(ventasActualesParaExportar, resClientes.data || [],egresosActualesParaExportar); 
+    procesarYMostrarDatos(ventasActualesParaExportar, resClientes.data || [], egresosActualesParaExportar); 
+ 
 }
 
-function procesarYMostrarDatos(ventas, clientes) {
+function procesarYMostrarDatos(ventas, clientes, egresos) { // Agregamos 'egresos' aquí
     let efectivo = 0, yape = 0, plin = 0, fiado = 0;
     
     ventas.forEach(v => {
@@ -88,25 +93,22 @@ function procesarYMostrarDatos(ventas, clientes) {
         else if (metodo === 'FIADO') fiado += monto;
     });
 
+    // Usamos la variable 'egresos' que viene por parámetro
     const totalEgresos = egresos.reduce((acc, e) => acc + (Number(e.monto) || 0), 0);
     const totalDigital = yape + plin;
-    const granTotalReal = efectivo + totalDigital;
-    const utilidadNeta = granTotalBruto - totalEgresos;
+    const granTotalVentas = efectivo + totalDigital; // Total que entró por ventas
+    const utilidadNeta = granTotalVentas - totalEgresos; // Ganancia Real
     const totalDeudaReal = clientes.reduce((acc, c) => acc + (Number(c.deuda) || 0), 0);
 
-    document.getElementById('totalEfectivo').textContent = `$${efectivo.toFixed(2)}`;
-    document.getElementById('totalDigital').textContent = `$${totalDigital.toFixed(2)}`;
-    document.getElementById('granTotal').textContent = `$${granTotalReal.toFixed(2)}`;
-    document.getElementById('totalPorCobrar').textContent = `$${totalDeudaReal.toFixed(2)}`;
-
+    // Actualización de la Interfaz
     if(document.getElementById('totalEfectivo')) document.getElementById('totalEfectivo').textContent = `$${efectivo.toFixed(2)}`;
     if(document.getElementById('totalDigital')) document.getElementById('totalDigital').textContent = `$${totalDigital.toFixed(2)}`;
     if(document.getElementById('totalEgresos')) document.getElementById('totalEgresos').textContent = `$${totalEgresos.toFixed(2)}`;
-    if(document.getElementById('granTotal')) document.getElementById('granTotal').textContent = `$${utilidadNeta.toFixed(2)}`; // Ahora muestra Ganancia Real
+    if(document.getElementById('granTotal')) document.getElementById('granTotal').textContent = `$${utilidadNeta.toFixed(2)}`;
     if(document.getElementById('totalPorCobrar')) document.getElementById('totalPorCobrar').textContent = `$${totalDeudaReal.toFixed(2)}`;
 
     renderizarTabla(ventas);
-    actualizarGrafica(efectivo, totalDigital, totalEgresos);
+    actualizarGrafica(efectivo, totalDigital, totalDeudaReal);
 }
 
 function renderizarTabla(ventas) {
