@@ -51,44 +51,50 @@
             </div>
         </div>
 
+
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
-                <div class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mb-4">💰</div>
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Venta Total (Real)</p>
-                <h2 id="granTotal" class="text-3xl font-black text-slate-800">$0.00</h2>
-            </div>
-
-            <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
-                <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-4">⏳</div>
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Por Cobrar (Global)</p>
-                <h2 id="totalPorCobrar" class="text-3xl font-black text-slate-800">$0.00</h2>
-            </div>
-
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <div class="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center mb-4">
-                    <span class="text-xl">💸</span>
+                <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
+                    <div class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mb-4">💰</div>
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Ventas Totales</p>
+                    <h2 id="granTotal" class="text-3xl font-black text-slate-800">$0.00</h2>
                 </div>
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Egresos</p>
-                <h3 id="totalEgresos" class="text-2xl font-black text-slate-800 mt-1">$0.00</h3>
-            </div>
 
-            <div class="md:col-span-2 bg-slate-900 p-6 rounded-[2rem] shadow-xl text-white flex justify-between items-center">
-                <div>
-                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Desglose de Caja</p>
-                    <div class="flex gap-6 mt-3">
-                        <div>
-                            <span class="block text-[10px] text-emerald-400 font-bold uppercase">Efectivo</span>
-                            <span id="totalEfectivo" class="text-xl font-black">$0.00</span>
-                        </div>
-                        <div>
-                            <span class="block text-[10px] text-purple-400 font-bold uppercase">Digital (Y/P)</span>
-                            <span id="totalDigital" class="text-xl font-black">$0.00</span>
+                <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
+                    <div class="w-10 h-10 bg-red-100 text-red-600 rounded-xl flex items-center justify-center mb-4">💸</div>
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Egresos</p>
+                    <h2 id="totalEgresos" class="text-3xl font-black text-slate-800">$0.00</h2>
+                </div>
+
+                <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-emerald-200 bg-emerald-50/30">
+                    <div class="w-10 h-10 bg-emerald-500 text-white rounded-xl flex items-center justify-center mb-4">✨</div>
+                    <p class="text-xs font-bold text-emerald-600 uppercase tracking-wider">Utilidad Neta</p>
+                    <h2 id="utilidadNeta" class="text-3xl font-black text-emerald-700">$0.00</h2>
+                </div>
+
+                <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
+                    <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-4">⏳</div>
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Por Cobrar (Global)</p>
+                    <h2 id="totalPorCobrar" class="text-3xl font-black text-slate-800">$0.00</h2>
+                </div>
+
+                <div class="md:col-span-4 bg-slate-900 p-6 rounded-[2rem] shadow-xl text-white flex justify-between items-center">
+                    <div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Dinero Disponible en Caja (Efectivo + Digital)</p>
+                        <div class="flex gap-10 mt-3">
+                            <div>
+                                <span class="block text-[10px] text-emerald-400 font-bold uppercase">Efectivo</span>
+                                <span id="totalEfectivo" class="text-2xl font-black">$0.00</span>
+                            </div>
+                            <div>
+                                <span class="block text-[10px] text-purple-400 font-bold uppercase">Digital (Y/P)</span>
+                                <span id="totalDigital" class="text-2xl font-black">$0.00</span>
+                            </div>
                         </div>
                     </div>
+                    <div class="hidden md:block text-4xl">📈</div>
                 </div>
-                <div class="hidden md:block text-4xl">📈</div>
-            </div>
         </div>
+
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div class="lg:col-span-2 bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden">

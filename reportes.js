@@ -83,7 +83,7 @@ async function cargarReporte() {
 function procesarYMostrarDatos(ventas, clientes, egresos) {
     let efectivo = 0, yape = 0, plin = 0, fiado = 0;
     
-    // 1. Sumamos las ventas del periodo seleccionado
+    // 1. Sumar ventas del historial
     ventas.forEach(v => {
         const monto = Number(v.total || 0);
         const metodo = (v.metodo_pago || "").toUpperCase();
@@ -94,30 +94,57 @@ function procesarYMostrarDatos(ventas, clientes, egresos) {
         else if (metodo === 'FIADO') fiado += monto;
     });
 
-    // 2. Calculamos totales claros
+    // 2. Definir totales para la interfaz
     const totalDigital = yape + plin;
-    const totalVentasBrutas = efectivo + totalDigital + fiado; // Todo lo que se vendió hoy
+    
+    // CAMBIO PROFESIONAL: La "Venta" principal ahora solo suma lo que entró a caja.
+    // El 'fiado' se queda como un registro aparte para no inflar tu efectivo.
+    const dineroRealEntrante = efectivo + totalDigital; 
+    
     const totalEgresos = egresos.reduce((acc, e) => acc + (Number(e.monto) || 0), 0);
     
-    // La utilidad es solo Dinero Real (Efectivo + Digital) menos Gastos
-    const gananciaReal = (efectivo + totalDigital) - totalEgresos;
-
-    // 3. Actualización de la Interfaz (IDs corregidos)
-    // Mostramos la VENTA TOTAL sin restar egresos para que veas lo del día
+    // 3. Actualizar los cuadros superiores
     if(document.getElementById('granTotal')) {
-        // Ahora el cuadro principal mostrará $75.00 y no el número negativo
-        document.getElementById('granTotal').textContent = `$${totalVentasHoy.toFixed(2)}`;
+        // Ahora mostrará $75.00 aunque hayas fiado $3.00 adicionales
+        document.getElementById('granTotal').textContent = `$${dineroRealEntrante.toFixed(2)}`;
+    }
+    if(document.getElementById('totalEfectivo')) {
+        document.getElementById('totalEfectivo').textContent = `$${efectivo.toFixed(2)}`;
+    }
+    if(document.getElementById('totalDigital')) {
+        document.getElementById('totalDigital').textContent = `$${totalDigital.toFixed(2)}`;
+    }
+    if(document.getElementById('totalEgresos')) {
+        document.getElementById('totalEgresos').textContent = `$${totalEgresos.toFixed(2)}`;
+    }
+    
+    // 4. Deuda Global (Lo que te deben todos los clientes actualmente)
+    const totalDeudaReal = clientes.reduce((acc, c) => acc + (Number(c.deuda) || 0), 0);
+    if(document.getElementById('totalPorCobrar')) {
+        document.getElementById('totalPorCobrar').textContent = `$${totalDeudaReal.toFixed(2)}`;
     }
 
-    if(document.getElementById('totalEfectivo')) document.getElementById('totalEfectivo').textContent = `$${efectivo.toFixed(2)}`;
-    if(document.getElementById('totalDigital')) document.getElementById('totalDigital').textContent = `$${totalDigital.toFixed(2)}`;
-    if(document.getElementById('totalEgresos')) document.getElementById('totalEgresos').textContent = `$${totalEgresos.toFixed(2)}`;
-    
-    // Deuda Global de clientes
-    const totalDeudaReal = clientes.reduce((acc, c) => acc + (Number(c.deuda) || 0), 0);
-    if(document.getElementById('totalPorCobrar')) document.getElementById('totalPorCobrar').textContent = `$${totalDeudaReal.toFixed(2)}`;
+    // ==========================================
+    // CÁLCULO DE UTILIDAD NETA (DINERO LIMPIO)
+    // ==========================================
+    // Se calcula restando egresos de lo que realmente cobraste
+    const gananciaReal = dineroRealEntrante - totalEgresos; 
 
+    if(document.getElementById('utilidadNeta')) {
+        document.getElementById('utilidadNeta').textContent = `$${gananciaReal.toFixed(2)}`;
+        
+        const elementoU = document.getElementById('utilidadNeta');
+        if (gananciaReal < 0) {
+            elementoU.style.color = "#e11d48"; // Rojo (Pérdida/Inversión)
+        } else {
+            elementoU.style.color = "#059669"; // Verde (Ganancia)
+        }
+    }
+    // ==========================================
+
+    // 5. Dibujar tabla y gráfica
     renderizarTabla(ventas);
+    // La gráfica seguirá mostrando el fiado como un sector pequeño para que sepas qué porcentaje das a crédito
     actualizarGrafica(efectivo, totalDigital, fiado);
 }
 

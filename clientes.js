@@ -88,18 +88,18 @@ async function guardarAbono() {
     if(!monto || monto <= 0) return alert("Ingresa un monto válido");
 
     try {
-        // 1. Registrar el abono en la tabla 'abonos' con el METODO DE PAGO
+        // A. Registrar en la tabla 'abonos' (Para tu control interno de deudas)
         const { error: errorAbono } = await _supabase.from('abonos').insert([
             { 
                 cliente_id: idCliente, 
                 monto: monto, 
                 user_id: user.id,
-                metodo_pago: metodo // Ahora guardamos si fue Yape, Plin o Efectivo
+                metodo_pago: metodo 
             }
         ]);
         if (errorAbono) throw errorAbono;
 
-        // 2. Obtener deuda actual y actualizarla
+        // B. Actualizar la deuda en la tabla 'clientes'
         const { data: cliente, error: errorCliente } = await _supabase
             .from('clientes')
             .select('deuda')
@@ -107,34 +107,30 @@ async function guardarAbono() {
             .single();
         
         if (errorCliente) throw errorCliente;
-
         const nuevaDeuda = Number(cliente.deuda || 0) - monto;
 
-        const { error: errorUpdate } = await _supabase
-            .from('clientes')
-            .update({ deuda: nuevaDeuda })
-            .eq('id', idCliente);
-        
-        if (errorUpdate) throw errorUpdate;
+        await _supabase.from('clientes').update({ deuda: nuevaDeuda }).eq('id', idCliente);
 
-        // 3. REGISTRAR EN VENTAS PARA QUE APAREZCA EN EL DESGLOSE DE CAJA
+        // C. REGISTRAR EN VENTAS (Para que tu caja diaria sume este dinero)
+        // Usamos un nombre de producto especial para que en el reporte sepas que fue un abono
         await _supabase.from('ventas').insert([{
             total: monto,
-            metodo_pago: metodo, // <--- AQUÍ ESTÁ LA MAGIA: Se sumará a Yape o Efectivo según elijas
+            metodo_pago: metodo, 
             estado_pago: 'pagado',
             cliente_id: idCliente,
             vendedor_id: user.id,
-            productos_vendidos: [{ nombre: `ABONO DEUDA: ${metodo}`, cantidad: 1 }]
+            productos_vendidos: [{ nombre: `PAGO DE DEUDA (${metodo})`, cantidad: 1 }]
         }]);
 
-        alert(`¡Pago de $${monto} por ${metodo} registrado con éxito!`);
+        alert(`¡Abono de $${monto.toFixed(2)} recibido! La deuda de ha actualizado.`);
         location.reload();
 
     } catch (error) {
-        console.error("Error procesando abono:", error);
-        alert("Hubo un error: " + error.message);
+        console.error("Error:", error);
+        alert("Hubo un error al procesar el pago.");
     }
 }
+
 
 // Abrir y cerrar historial
 window.cerrarModalHistorial = () => document.getElementById('modalHistorial').classList.add('hidden');
@@ -203,14 +199,18 @@ async function verHistorial(idCliente, nombre) {
             const esAbono = item.tipo === 'abono';
             const fila = document.createElement('tr');
             fila.className = "border-b border-gray-100 hover:bg-gray-50 transition-colors";
+            
+            // Cambiamos el diseño del monto para que sea más claro: verde con "-" para pagos, rojo con "+" para deudas.
             fila.innerHTML = `
                 <td class="py-4 text-gray-400 text-[10px] font-medium">${item.fecha.toLocaleDateString()}</td>
-                <td class="py-4 font-semibold ${esAbono ? 'text-green-600' : 'text-gray-700'} text-xs">${item.concepto}</td>
-                <td class="py-4 text-right font-black ${esAbono ? 'text-green-600' : 'text-red-600'} text-sm">
+                <td class="py-4 font-semibold ${esAbono ? 'text-emerald-600' : 'text-gray-700'} text-xs">
+                    ${esAbono ? '💰 ' : ''}${item.concepto}
+                </td>
+                <td class="py-4 text-right font-black ${esAbono ? 'text-emerald-600' : 'text-rose-600'} text-sm">
                     ${esAbono ? '-' : '+'}$${item.monto.toFixed(2)}
                 </td>
             `;
-            tabla.appendChild(fila);
+        tabla.appendChild(fila);
         });
 
     } catch (e) {

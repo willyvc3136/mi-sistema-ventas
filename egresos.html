@@ -2,66 +2,172 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Registro de Egresos</title>
+    <title>Gestión de Egresos - MinimarketPro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-slate-50 p-6">
-    <div class="max-w-md mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-        <h2 class="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-            <span>💸</span> Nuevo Egreso
-        </h2>
+<body class="bg-slate-50 p-4 md:p-8">
+    <div class="max-w-6xl mx-auto">
+        <header class="mb-8">
+            <h1 class="text-3xl font-black text-slate-800">Control de Gastos</h1>
+            <p class="text-slate-500">Registra y monitorea las salidas de dinero de tu negocio.</p>
+        </header>
 
-        <form id="formEgreso" class="space-y-4">
-            <div>
-                <label class="block text-sm font-semibold text-slate-600 mb-1">Monto ($)</label>
-                <input type="number" id="monto" step="0.01" required 
-                    class="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-[2rem] shadow-sm border border-slate-200 p-6 sticky top-8">
+                    <h2 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                        <span class="w-8 h-8 bg-emerald-100 flex items-center justify-center rounded-lg text-sm">➕</span>
+                        Nuevo Registro
+                    </h2>
+
+                    <form id="formEgreso" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Monto ($)</label>
+                            <input type="number" id="monto" step="0.01" required placeholder="0.00"
+                                class="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none font-bold text-lg text-slate-700">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Categoría</label>
+                            <select id="categoria" required class="w-full p-3 rounded-xl border border-slate-200 outline-none text-slate-600 bg-slate-50 cursor-pointer">
+                                <option value="Proveedores">📦 Proveedores (Mercadería)</option>
+                                <option value="Alquiler">🏠 Alquiler</option>
+                                <option value="Servicios">💡 Servicios (Luz/Agua)</option>
+                                <option value="Personal">👥 Personal / Sueldos</option>
+                                <option value="Varios">🛠️ Varios / Otros</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Método de Pago</label>
+                            <select id="metodo_pago" required class="w-full p-3 rounded-xl border border-slate-200 outline-none text-slate-600 bg-slate-50 cursor-pointer">
+                                <option value="Efectivo">💵 Efectivo</option>
+                                <option value="Yape">🟣 Yape</option>
+                                <option value="Plin">🔵 Plin</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Descripción</label>
+                            <textarea id="descripcion" rows="2" placeholder="Ej: Pago de internet Movistar"
+                                class="w-full p-3 rounded-xl border border-slate-200 outline-none text-slate-600 text-sm"></textarea>
+                        </div>
+
+                        <button type="submit" id="btnGuardar"
+                            class="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl hover:bg-emerald-600 transition-all shadow-lg active:scale-95">
+                            Guardar Egreso
+                        </button>
+                    </form>
+                </div>
             </div>
 
-            <div>
-                <label class="block text-sm font-semibold text-slate-600 mb-1">Categoría</label>
-                <select id="categoria" required class="w-full p-3 rounded-xl border border-slate-200 outline-none">
-                    <option value="Proveedores">Proveedores</option>
-                    <option value="Alquiler">Alquiler</option>
-                    <option value="Servicios">Servicios (Luz/Agua)</option>
-                    <option value="Personal">Personal / Sueldos</option>
-                    <option value="Varios">Varios / Otros</option>
-                </select>
-            </div>
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                        <h2 class="text-xl font-bold text-slate-800">Últimos Egresos</h2>
+                        <span class="text-xs font-medium px-3 py-1 bg-slate-100 text-slate-500 rounded-full">Recientes</span>
+                    </div>
 
-            <div>
-                <label class="block text-sm font-semibold text-slate-600 mb-1">Método de Pago</label>
-                <select id="metodo_pago" required class="w-full p-3 rounded-xl border border-slate-200 outline-none">
-                    <option value="Efectivo">Efectivo</option>
-                    <option value="Yape">Yape</option>
-                    <option value="Plin">Plin</option>
-                </select>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50/50">
+                                    <th class="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Fecha</th>
+                                    <th class="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Categoría</th>
+                                    <th class="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Descripción</th>
+                                    <th class="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Monto</th>
+                                    
+                                    <th class="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="listaEgresos" class="divide-y divide-slate-100">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-
-            <div>
-                <label class="block text-sm font-semibold text-slate-600 mb-1">Descripción</label>
-                <textarea id="descripcion" rows="2" placeholder="Ej: Pago de internet"
-                    class="w-full p-3 rounded-xl border border-slate-200 outline-none"></textarea>
-            </div>
-
-            <button type="submit" 
-                class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-100">
-                Guardar Egreso
-            </button>
-        </form>
+        </div>
     </div>
 
     <script>
+        // Configuración Supabase
         const supabaseUrl = 'https://ijyhkbiukiqiqjabpubm.supabase.co';
         const supabaseKey = 'sb_publishable_EpJx4G5egW9GZdj8P7oudw_kDWWsj6p';
         const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
+        // Cargar datos al iniciar
+        window.onload = cargarEgresos;
+
+        async function cargarEgresos() {
+            const lista = document.getElementById('listaEgresos');
+            lista.innerHTML = '';
+
+            const { data, error } = await _supabase
+                .from('egresos')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(10); // Solo los últimos 10
+
+            if (error) {
+                console.error(error);
+                return;
+            }
+
+            lista.innerHTML = '';
+            data.forEach(egreso => {
+                const fecha = new Date(egreso.created_at).toLocaleDateString('es-PE', { day:'2-digit', month:'short' });
+                lista.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition-colors group">
+                    <td class="p-4 text-sm text-slate-500 font-medium">${fecha}</td>
+                    <td class="p-4">
+                        <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase bg-slate-100 text-slate-600">
+                            ${egreso.categoria}
+                        </span>
+                    </td>
+                    <td class="p-4 text-sm text-slate-600">${egreso.descripcion || '-'}</td>
+                    <td class="p-4 text-right font-black text-slate-800">$${Number(egreso.monto).toFixed(2)}</td>
+                    <td class="p-4 text-right">
+                        <button onclick="eliminarEgreso(${egreso.id})" 
+                            class="opacity-0 group-hover:opacity-100 p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                            title="Eliminar registro">
+                            🗑️
+                        </button>
+                    </td>
+                </tr>
+            `;
+            });
+        }
+
+        // FUNCIÓN PARA ELIMINAR
+        async function eliminarEgreso(id) {
+            if (!confirm("¿Estás seguro de eliminar este gasto? Esto afectará tus reportes totales.")) return;
+
+            try {
+                const { error } = await _supabase
+                    .from('egresos')
+                    .delete()
+                    .eq('id', id);
+
+                if (error) {
+                    console.error("Error de Supabase:", error);
+                    alert("No se pudo eliminar: " + error.message);
+                } else {
+                    // ¡ESTA LÍNEA ES CLAVE! 
+                    // Vuelve a llamar a la función que dibuja la tabla
+                    await cargarEgresos(); 
+                    alert("Egreso eliminado correctamente.");
+                }
+            } catch (err) {
+                console.error("Error inesperado:", err);
+            }
+        }
+
         document.getElementById('formEgreso').onsubmit = async (e) => {
             e.preventDefault();
-            const btn = e.target.querySelector('button');
+            const btn = document.getElementById('btnGuardar');
             btn.disabled = true;
-            btn.innerText = 'Guardando...';
+            btn.innerText = 'Procesando...';
 
             const datos = {
                 monto: parseFloat(document.getElementById('monto').value),
@@ -75,8 +181,8 @@
             if (error) {
                 alert("Error: " + error.message);
             } else {
-                alert("Egreso registrado correctamente");
                 e.target.reset();
+                await cargarEgresos(); // Recargar la tabla automáticamente
             }
             btn.disabled = false;
             btn.innerText = 'Guardar Egreso';
