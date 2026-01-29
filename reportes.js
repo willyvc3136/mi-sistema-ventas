@@ -3,7 +3,8 @@ const supabaseKey = 'sb_publishable_EpJx4G5egW9GZdj8P7oudw_kDWWsj6p';
 const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 let miGrafica; 
-let ventasActualesParaExportar = []; 
+let ventasActualesParaExportar = [];
+let egresosActualesParaExportar = []; // Nueva variable para manejar egresos 
 
 async function inicializarReportes() {
     const { data: { session } } = await _supabase.auth.getSession();
@@ -56,7 +57,12 @@ async function cargarReporte() {
         .gte('created_at', desde.toISOString())
         .lte('created_at', hasta.toISOString())
         .order('created_at', { ascending: false }),
-    _supabase.from('clientes').select('deuda')
+    _supabase.from('clientes').select('deuda'),
+    _supabase
+            .from('egresos')
+            .select('*')
+            .gte('created_at', desde.toISOString())
+            .lte('created_at', hasta.toISOString())
 ]);
 
     if (resVentas.error) {
@@ -65,8 +71,8 @@ async function cargarReporte() {
     } else {
         ventasActualesParaExportar = resVentas.data || [];
     }
-
-    procesarYMostrarDatos(ventasActualesParaExportar, resClientes.data || []); 
+    egresosActualesParaExportar = resEgresos.data || [];
+    procesarYMostrarDatos(ventasActualesParaExportar, resClientes.data || [],egresosActualesParaExportar); 
 }
 
 function procesarYMostrarDatos(ventas, clientes) {
@@ -82,8 +88,10 @@ function procesarYMostrarDatos(ventas, clientes) {
         else if (metodo === 'FIADO') fiado += monto;
     });
 
+    const totalEgresos = egresos.reduce((acc, e) => acc + (Number(e.monto) || 0), 0);
     const totalDigital = yape + plin;
     const granTotalReal = efectivo + totalDigital;
+    const utilidadNeta = granTotalBruto - totalEgresos;
     const totalDeudaReal = clientes.reduce((acc, c) => acc + (Number(c.deuda) || 0), 0);
 
     document.getElementById('totalEfectivo').textContent = `$${efectivo.toFixed(2)}`;
@@ -91,8 +99,14 @@ function procesarYMostrarDatos(ventas, clientes) {
     document.getElementById('granTotal').textContent = `$${granTotalReal.toFixed(2)}`;
     document.getElementById('totalPorCobrar').textContent = `$${totalDeudaReal.toFixed(2)}`;
 
+    if(document.getElementById('totalEfectivo')) document.getElementById('totalEfectivo').textContent = `$${efectivo.toFixed(2)}`;
+    if(document.getElementById('totalDigital')) document.getElementById('totalDigital').textContent = `$${totalDigital.toFixed(2)}`;
+    if(document.getElementById('totalEgresos')) document.getElementById('totalEgresos').textContent = `$${totalEgresos.toFixed(2)}`;
+    if(document.getElementById('granTotal')) document.getElementById('granTotal').textContent = `$${utilidadNeta.toFixed(2)}`; // Ahora muestra Ganancia Real
+    if(document.getElementById('totalPorCobrar')) document.getElementById('totalPorCobrar').textContent = `$${totalDeudaReal.toFixed(2)}`;
+
     renderizarTabla(ventas);
-    actualizarGrafica(efectivo, totalDigital, totalDeudaReal);
+    actualizarGrafica(efectivo, totalDigital, totalEgresos);
 }
 
 function renderizarTabla(ventas) {
@@ -394,4 +408,32 @@ window.exportarPDF = () => {
     `);
     ventana.document.close();
 };
+
+async function cargarDatosFinancieros(fechaInicio, fechaFin) {
+    // 1. Traer Ventas (Lo que ya tienes)
+    const { data: ventas } = await _supabase
+        .from('ventas')
+        .select('*')
+        .gte('created_at', fechaInicio)
+        .lte('created_at', fechaFin);
+
+    // 2. Traer Egresos (Lo nuevo)
+    const { data: egresos } = await _supabase
+        .from('egresos')
+        .select('*')
+        .gte('created_at', fechaInicio)
+        .lte('created_at', fechaFin);
+
+    // 3. Sumar y mostrar
+    let sumaVentas = ventas.reduce((acc, v) => acc + Number(v.total), 0);
+    let sumaEgresos = egresos.reduce((acc, e) => acc + Number(e.monto), 0);
+    
+    document.getElementById('totalVentas').innerText = `$${sumaVentas.toFixed(2)}`;
+    document.getElementById('totalEgresos').innerText = `$${sumaEgresos.toFixed(2)}`;
+    
+    // La ganancia real es la resta
+    const gananciaReal = sumaVentas - sumaEgresos;
+    document.getElementById('utilidadNeta').innerText = `$${gananciaReal.toFixed(2)}`;
+}
+
 inicializarReportes();
