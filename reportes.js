@@ -80,9 +80,10 @@ async function cargarReporte() {
  
 }
 
-function procesarYMostrarDatos(ventas, clientes, egresos) { // Agregamos 'egresos' aquí
+function procesarYMostrarDatos(ventas, clientes, egresos) {
     let efectivo = 0, yape = 0, plin = 0, fiado = 0;
     
+    // 1. Sumamos las ventas del periodo seleccionado
     ventas.forEach(v => {
         const monto = Number(v.total || 0);
         const metodo = (v.metodo_pago || "").toUpperCase();
@@ -93,22 +94,31 @@ function procesarYMostrarDatos(ventas, clientes, egresos) { // Agregamos 'egreso
         else if (metodo === 'FIADO') fiado += monto;
     });
 
-    // Usamos la variable 'egresos' que viene por parámetro
-    const totalEgresos = egresos.reduce((acc, e) => acc + (Number(e.monto) || 0), 0);
+    // 2. Calculamos totales claros
     const totalDigital = yape + plin;
-    const granTotalVentas = efectivo + totalDigital; // Total que entró por ventas
-    const utilidadNeta = granTotalVentas - totalEgresos; // Ganancia Real
-    const totalDeudaReal = clientes.reduce((acc, c) => acc + (Number(c.deuda) || 0), 0);
+    const totalVentasBrutas = efectivo + totalDigital + fiado; // Todo lo que se vendió hoy
+    const totalEgresos = egresos.reduce((acc, e) => acc + (Number(e.monto) || 0), 0);
+    
+    // La utilidad es solo Dinero Real (Efectivo + Digital) menos Gastos
+    const gananciaReal = (efectivo + totalDigital) - totalEgresos;
 
-    // Actualización de la Interfaz
+    // 3. Actualización de la Interfaz (IDs corregidos)
+    // Mostramos la VENTA TOTAL sin restar egresos para que veas lo del día
+    if(document.getElementById('granTotal')) {
+        // Ahora el cuadro principal mostrará $75.00 y no el número negativo
+        document.getElementById('granTotal').textContent = `$${totalVentasHoy.toFixed(2)}`;
+    }
+
     if(document.getElementById('totalEfectivo')) document.getElementById('totalEfectivo').textContent = `$${efectivo.toFixed(2)}`;
     if(document.getElementById('totalDigital')) document.getElementById('totalDigital').textContent = `$${totalDigital.toFixed(2)}`;
     if(document.getElementById('totalEgresos')) document.getElementById('totalEgresos').textContent = `$${totalEgresos.toFixed(2)}`;
-    if(document.getElementById('granTotal')) document.getElementById('granTotal').textContent = `$${utilidadNeta.toFixed(2)}`;
+    
+    // Deuda Global de clientes
+    const totalDeudaReal = clientes.reduce((acc, c) => acc + (Number(c.deuda) || 0), 0);
     if(document.getElementById('totalPorCobrar')) document.getElementById('totalPorCobrar').textContent = `$${totalDeudaReal.toFixed(2)}`;
 
     renderizarTabla(ventas);
-    actualizarGrafica(efectivo, totalDigital, totalDeudaReal);
+    actualizarGrafica(efectivo, totalDigital, fiado);
 }
 
 function renderizarTabla(ventas) {
