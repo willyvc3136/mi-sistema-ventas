@@ -169,23 +169,40 @@
             btn.disabled = true;
             btn.innerText = 'Procesando...';
 
-            const datos = {
-                monto: parseFloat(document.getElementById('monto').value),
-                categoria: document.getElementById('categoria').value,
-                metodo_pago: document.getElementById('metodo_pago').value,
-                descripcion: document.getElementById('descripcion').value
-            };
+            try {
+                // 1. OBTENER EL USUARIO ACTUAL
+                const { data: { user } } = await _supabase.auth.getUser();
 
-            const { error } = await _supabase.from('egresos').insert([datos]);
+                if (!user) {
+                    alert("Sesión expirada. Por favor, inicia sesión de nuevo.");
+                    return;
+                }
 
-            if (error) {
-                alert("Error: " + error.message);
-            } else {
-                e.target.reset();
-                await cargarEgresos(); // Recargar la tabla automáticamente
+                // 2. PREPARAR LOS DATOS INCLUYENDO EL USER_ID
+                const datos = {
+                    monto: parseFloat(document.getElementById('monto').value),
+                    categoria: document.getElementById('categoria').value,
+                    metodo_pago: document.getElementById('metodo_pago').value,
+                    descripcion: document.getElementById('descripcion').value,
+                    user_id: user.id // <--- ESTO VINCULA EL GASTO AL USUARIO
+                };
+
+                // 3. INSERTAR EN SUPABASE
+                const { error } = await _supabase.from('egresos').insert([datos]);
+
+                if (error) {
+                    alert("Error: " + error.message);
+                } else {
+                    e.target.reset();
+                    await cargarEgresos(); // Recarga la tabla automáticamente
+                    alert("Egreso guardado correctamente.");
+                }
+            } catch (err) {
+                console.error("Error inesperado:", err);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = 'Guardar Egreso';
             }
-            btn.disabled = false;
-            btn.innerText = 'Guardar Egreso';
         };
     </script>
 </body>
