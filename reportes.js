@@ -475,4 +475,66 @@ async function cargarDatosFinancieros(fechaInicio, fechaFin) {
     document.getElementById('utilidadNeta').innerText = `$${gananciaReal.toFixed(2)}`;
 }
 
+// ==========================================
+// LÓGICA DE LA VENTANA DE CUADRE (Paso 3)
+// ==========================================
+
+// 1. Función para mostrar la ventana
+window.abrirModalAuditoria = () => {
+    const modal = document.getElementById('modalAuditoria');
+    if(modal) modal.classList.remove('hidden');
+};
+
+// 2. Función para cerrar la ventana
+window.cerrarModalAuditoria = () => {
+    const modal = document.getElementById('modalAuditoria');
+    if(modal) {
+        modal.classList.add('hidden');
+        // Limpiamos los campos al cerrar
+        document.getElementById('auditResultado').textContent = "$0.00";
+        document.getElementById('auditCantUnidades').textContent = "0 unidades encontradas";
+        document.getElementById('auditCategoria').value = "";
+    }
+};
+
+// 3. Función que hace los cálculos de la ventana flotante
+window.ejecutarAuditoria = () => {
+    const textoBusqueda = document.getElementById('auditCategoria').value.toLowerCase();
+    const metodoElegido = document.getElementById('auditMetodo').value;
+    
+    let totalDinero = 0;
+    let totalUnidades = 0;
+
+    // Usamos los datos que ya están en memoria (ventasActualesParaExportar)
+    if (typeof ventasActualesParaExportar !== 'undefined') {
+        ventasActualesParaExportar.forEach(venta => {
+            const metodoVenta = (venta.metodo_pago || "").toUpperCase();
+            
+            // Filtramos por el método de pago elegido en la ventana
+            if (metodoElegido === 'TODOS' || metodoVenta === metodoElegido) {
+                
+                // Revisamos los productos vendidos dentro de esa venta
+                if (venta.productos_vendidos && Array.isArray(venta.productos_vendidos)) {
+                    venta.productos_vendidos.forEach(p => {
+                        const nombreP = (p.nombre || "").toLowerCase();
+                        
+                        // Si el nombre del producto coincide con lo que escribiste (ej: Helado)
+                        if (nombreP.includes(textoBusqueda)) {
+                            const cant = Number(p.cantidadSeleccionada || 0);
+                            const precio = Number(p.precio || 0);
+                            
+                            totalDinero += (cant * precio);
+                            totalUnidades += cant;
+                        }
+                    });
+                }
+            }
+        });
+    }
+
+    // Dibujamos el resultado en la ventana flotante
+    document.getElementById('auditResultado').textContent = `$${totalDinero.toFixed(2)}`;
+    document.getElementById('auditCantUnidades').textContent = `${totalUnidades} unidades encontradas`;
+};
+
 inicializarReportes();
