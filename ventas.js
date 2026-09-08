@@ -418,35 +418,52 @@ async function finalizarVenta() {
         const { data: { user } } = await _supabase.auth.getUser();
         const totalVenta = parseFloat(document.getElementById('totalVenta').textContent.replace('$', ''));
 
-        // --- CORRECCIÓN CLAVE: Formato exacto para que el reporte lo entienda ---
+        // --- DEFINIR EL MÉTODO DE PAGO CORRECTO ---
+        let metodoPagoFinal = metodoSeleccionado;
+
+        if (esFiado) {
+            metodoPagoFinal = 'Fiado';
+        } else if (metodoSeleccionado === 'Mixto') {
+            // Asegúrate de que estos sean los IDs de los inputs dentro de tu modal mixto
+            const montoEfectivoMixto = parseFloat(document.getElementById('montoMixtoEfectivo')?.value) || 0;
+            const montoYapeMixto = parseFloat(document.getElementById('montoMixtoYape')?.value) || 0;
+            const montoPlinMixto = parseFloat(document.getElementById('montoMixtoPlin')?.value) || 0;
+
+            metodoPagoFinal = JSON.stringify({
+                tipo: 'MIXTO',
+                efectivo: montoEfectivoMixto,
+                yape: montoYapeMixto,
+                plin: montoPlinMixto
+            });
+        }
+
         const productosParaHistorial = carrito.map(p => ({
             id: p.id,
-            nombre: p.nombre, // Aseguramos que se guarde el nombre
-            cantidadSeleccionada: p.cantidadSeleccionada, // Coincidimos con reportes.js
-            precio: p.precio // Coincidimos con reportes.js
+            nombre: p.nombre,
+            cantidadSeleccionada: p.cantidadSeleccionada,
+            precio: p.precio
         }));
 
-        // 1. Insertar Venta (Enviamos el array directamente, Supabase lo manejará como JSONB)
+        // 1. Insertar Venta
         const { error: errorVenta } = await _supabase.from('ventas').insert([{
             total: totalVenta,
-            metodo_pago: esFiado ? 'Fiado' : metodoSeleccionado,
+            metodo_pago: metodoPagoFinal, // <--- Aquí guardamos el texto plano o el JSON mixto
             estado_pago: esFiado ? 'pendiente' : 'pagado',
             cliente_id: esFiado ? clienteId : null,
             vendedor_id: user.id, 
-            // ELIMINAMOS JSON.stringify para que Supabase lo guarde como objeto real
             productos_vendidos: productosParaHistorial 
         }]);
 
         if (errorVenta) throw errorVenta;
 
-        // 2. Actualizar Deuda si es Fiado (Tu lógica estaba bien)
+        // 2. Actualizar Deuda si es Fiado
         if (esFiado) {
             const { data: cl, error: errorCl } = await _supabase
                 .from('clientes')
                 .select('deuda')
                 .eq('id', clienteId)
                 .single();
-            
+        
             if (!errorCl) {
                 const deudaActual = parseFloat(cl.deuda) || 0;
                 const nuevaDeuda = deudaActual + totalVenta;
@@ -454,7 +471,7 @@ async function finalizarVenta() {
             }
         }
 
-        // 3. Actualizar Stock (Tu lógica estaba bien)
+        // 3. Actualizar Stock
         for (const item of carrito) {
             const original = productosBaseDeDatos.find(p => p.id === item.id);
             const nuevoStock = original.cantidad - item.cantidadSeleccionada;
