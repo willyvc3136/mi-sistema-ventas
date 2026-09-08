@@ -20,7 +20,7 @@
         }
     </style>
 </head>
-<body class="h-screen flex flex-col p-2 gap-2 overflow-hidden">
+<body class="h-screen flex flex-col p-2 gap-2 overflow-hidden" onkeydown="manejarAtajosGlobales(event)">
 
     <!-- Contenedor Principal POS -->
     <div class="bg-slate-900 flex-1 rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-800">
@@ -31,9 +31,18 @@
                 <span class="text-xl bg-white/10 p-1 rounded-lg">🛒</span>
                 <div>
                     <h1 class="text-xs font-black tracking-wider uppercase">Caja Registradora</h1>
-                    <p class="text-[9px] text-emerald-100 font-semibold">TERMINAL DE VENTA RÁPIDA</p>
+                    <p class="text-[9px] text-emerald-100 font-semibold">TERMINAL DE VENTA RÁPIDA (F2: Cobrar | F3: Buscar | F4: Vaciar)</p>
                 </div>
             </div>
+            
+            <!-- Bandeja de Tickets en Espera -->
+            <div class="flex items-center gap-1.5 bg-slate-950/40 p-1 rounded-xl border border-white/10">
+                <span class="text-[10px] font-bold text-emerald-200 px-1">En Espera:</span>
+                <div id="contenedorTicketsEspera" class="flex gap-1">
+                    <button onclick="guardarTicketEnEspera()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-[10px] px-2 py-0.5 rounded shadow transition">+ Pausar</button>
+                </div>
+            </div>
+
             <p class="text-xs font-bold uppercase bg-slate-950/30 px-3 py-1 rounded-lg border border-white/10" id="user-display">Verificando...</p>
         </div>
 
@@ -87,7 +96,7 @@
                     <span id="contadorItems" class="text-[9px] bg-emerald-500/10 text-emerald-400 font-extrabold px-2 py-0.5 rounded border border-emerald-500/20">Ticket Activo</span>
                 </div>
 
-                <!-- Lista de Carrito -->
+                <!-- Lista de Carrito con Control de Cantidad (+ / -) y Alerta de Stock -->
                 <div id="carritoItems" class="flex-1 overflow-y-auto custom-scroll space-y-1.5 pr-1 mb-1.5 text-white">
                     <p class="text-center text-slate-500 py-10 italic text-xs font-medium">Caja Vacía - Agregue productos</p>
                 </div>
@@ -109,7 +118,7 @@
                     <!-- Panel Vuelto / Pago Normal -->
                     <div id="panelVuelto" class="space-y-1 bg-slate-900/90 p-2 rounded-lg border border-slate-800 text-xs">
                         <div class="flex items-center justify-between">
-                            <span class="font-bold text-slate-400 uppercase text-[9px]">PAGA CON:</span>
+                            <span class="font-bold text-slate-400 uppercase text-[9px]">PAGA CON (F8):</span>
                             <input type="number" id="pagaCon" placeholder="0.00" class="w-20 bg-slate-950 border border-slate-700 text-right px-1.5 py-0.5 rounded font-bold text-emerald-400 text-xs outline-none">
                         </div>
                         <div class="flex items-center justify-between">
@@ -137,8 +146,8 @@
                         <span id="totalVenta" class="text-xl font-black text-emerald-400">$0.00</span>
                     </div>
 
-                    <button id="btnFinalizarVenta" class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 font-black py-2 rounded-xl shadow-lg transition transform active:scale-95 text-xs tracking-wide">
-                        FINALIZAR VENTA (F2)
+                    <button id="btnFinalizarVenta" onclick="finalizarVenta()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 font-black py-2 rounded-xl shadow-lg transition transform active:scale-95 text-xs tracking-wide">
+                        FINALIZAR VENTA (F2 / ENTER / ESPACIO)
                     </button>
                 </div>
 
@@ -147,7 +156,7 @@
         </div>
     </div>
 
-    <!-- VENTANA EMERGENTE (MODAL) CORREGIDA PARA PAGO MIXTO -->
+    <!-- VENTANA EMERGENTE (MODAL) PARA PAGO MIXTO -->
     <div id="modalMixto" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-purple-500/50 rounded-2xl w-full max-w-sm p-5 shadow-2xl space-y-4">
             <div class="flex items-center justify-between border-b border-slate-800 pb-2">
@@ -183,7 +192,43 @@
         </div>
     </div>
 
+    <!-- Scripts de Control y Atajos Avanzados -->
     <script>
+        // Foco automático pasivo para lector de barras (siempre enfoca la búsqueda si no estás escribiendo en otro input)
+        document.addEventListener('click', (e) => {
+            const inputBusqueda = document.getElementById('inputBusqueda');
+            if(inputBusqueda && !['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)) {
+                inputBusqueda.focus();
+            }
+        });
+
+        function manejarAtajosGlobales(e) {
+            const modalMixto = document.getElementById('modalMixto');
+            const esModalAbierto = modalMixto && !modalMixto.classList.contains('hidden');
+
+            if (e.key === 'F3') {
+                e.preventDefault();
+                document.getElementById('inputBusqueda').focus();
+            } else if (e.key === 'F2') {
+                e.preventDefault();
+                finalizarVenta();
+            } else if (e.key === 'F4') {
+                e.preventDefault();
+                vaciarCarritoRapido();
+            } else if (e.key === 'F8') {
+                e.preventDefault();
+                const inputPaga = document.getElementById('pagaCon');
+                if(inputPaga) inputPaga.focus();
+            } else if (e.key === 'Escape') {
+                if(esModalAbierto) cerrarModalMixto();
+                else document.getElementById('inputBusqueda').value = '';
+            } else if ((e.key === 'Enter' || e.key === ' ') && !['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON'].includes(document.activeElement.tagName)) {
+                // Si presiona Enter o Espacio globalmente, cobra la venta
+                e.preventDefault();
+                finalizarVenta();
+            }
+        }
+
         function seleccionarMetodo(metodo) {
             document.querySelectorAll('.metodo-pago').forEach(btn => {
                 btn.className = "metodo-pago border border-slate-800 bg-slate-900 text-slate-400 py-1 rounded-lg font-bold text-[11px] hover:bg-slate-800";
@@ -201,10 +246,8 @@
             });
             document.getElementById('btnMixto').className = "metodo-pago border border-purple-500 bg-purple-500/10 text-purple-400 py-1 rounded-lg font-bold text-[11px] shadow-sm";
             
-            // Sincronizar el total actual de la venta con el modal
             const totalTexto = document.getElementById('totalVenta').innerText;
             document.getElementById('modalTotalVenta').innerText = totalTexto;
-            
             document.getElementById('modalMixto').classList.remove('hidden');
         }
 
@@ -214,6 +257,19 @@
 
         function guardarPagoMixto() {
             cerrarModalMixto();
+        }
+
+        function finalizarVenta() {
+            // Conéctalo con tu función principal de cobro en ventas.js
+            console.log("Venta finalizada por atajo o botón.");
+        }
+
+        function vaciarCarritoRapido() {
+            console.log("Carrito vaciado por F4.");
+        }
+
+        function guardarTicketEnEspera() {
+            console.log("Ticket guardado en pausa.");
         }
     </script>
 
