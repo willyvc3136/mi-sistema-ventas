@@ -5,66 +5,78 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Control - Minimarket Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; overflow: hidden; }
-        .sidebar-item.active { background: #ecfdf5; color: #059669; border-right: 4px solid #059669; }
-        /* Ajuste para que el iframe sea fluido en móvil */
+        .sidebar-item.active { background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: white; box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3); }
         iframe { width: 100%; height: 100%; border: none; }
-        
-        /* Clase para mostrar el menú en móvil */
         .sidebar-open { transform: translateX(0) !important; }
+        /* Backdrop para cuando el menú se abre */
+        #backdrop { transition: opacity 0.3s ease; }
     </style>
 </head>
-<body class="bg-slate-50 flex h-screen">
+<body class="bg-slate-900 flex h-screen overflow-hidden">
 
-    <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 transform -translate-x-full transition-transform duration-300 md:relative md:translate-x-0 md:flex flex-col">
-        <div class="p-6 flex items-center justify-between">
+    <!-- Backdrop oscuro cuando el menú está abierto -->
+    <div id="backdrop" onclick="toggleMenu()" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-40 hidden"></div>
+
+    <!-- Menú lateral flotante y colapsable -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-2xl transform -translate-x-full transition-transform duration-300 flex flex-col border-r border-slate-100">
+        <div class="p-6 flex items-center justify-between bg-slate-50 border-b border-slate-100">
             <div class="flex items-center gap-3">
-                <div class="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center shadow-lg">
-                    <span class="text-white font-black text-sm">M</span>
+                <div class="w-10 h-10 bg-gradient-to-tr from-emerald-600 to-teal-400 rounded-xl flex items-center justify-center shadow-md shadow-emerald-500/20">
+                    <span class="text-white font-black text-lg">M</span>
                 </div>
-                <span class="text-lg font-black text-slate-800 tracking-tighter">Minimarket<span class="text-emerald-600">Pro</span></span>
+                <span class="text-xl font-black text-slate-800 tracking-tight">Minimarket<span class="text-emerald-600">Pro</span></span>
             </div>
-            <button onclick="toggleMenu()" class="md:hidden text-2xl text-slate-400">&times;</button>
+            <button onclick="toggleMenu()" class="w-8 h-8 rounded-full bg-slate-200/60 flex items-center justify-center text-slate-600 font-bold hover:bg-slate-200 transition">&times;</button>
         </div>
 
-        <nav class="flex-1 mt-4">
-            <button onclick="navegar('ventas.html', this)" class="sidebar-item active w-full flex items-center gap-4 px-6 py-4 font-bold text-slate-500 hover:bg-slate-50 transition-all">
-                <span>🛒</span> Caja Rápida
+        <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+            <button onclick="navegar('ventas.html', this)" class="sidebar-item active w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl font-bold text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 transition-all">
+                <span class="text-xl">🛒</span> Caja Rápida
             </button>
-            <button onclick="navegar('inventario.html', this)" class="sidebar-item w-full flex items-center gap-4 px-6 py-4 font-bold text-slate-500 hover:bg-slate-50 transition-all">
-                <span>📦</span> Inventario
+            <button onclick="navegar('inventario.html', this)" class="sidebar-item w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl font-bold text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 transition-all">
+                <span class="text-xl">📦</span> Inventario
             </button>
-            <button onclick="navegar('clientes.html', this)" class="sidebar-item w-full flex items-center gap-4 px-6 py-4 font-bold text-slate-500 hover:bg-slate-50 transition-all">
-                <span>👥</span> Clientes / Fiados
+            <button onclick="navegar('clientes.html', this)" class="sidebar-item w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl font-bold text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 transition-all">
+                <span class="text-xl">👥</span> Clientes / Fiados
             </button>
-            <button onclick="navegar('egresos.html', this)" class="sidebar-item w-full flex items-center gap-4 px-6 py-4 font-bold text-slate-500 hover:bg-slate-50 transition-all">
-                <span>💸</span> Egresos / Gastos
+            <button onclick="navegar('egresos.html', this)" class="sidebar-item w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl font-bold text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 transition-all">
+                <span class="text-xl">💸</span> Egresos / Gastos
             </button>
-            <button onclick="navegar('reportes.html', this)" class="sidebar-item w-full flex items-center gap-4 px-6 py-4 font-bold text-slate-500 hover:bg-slate-50 transition-all">
-                <span>📊</span> Reportes
+            <button onclick="navegar('reportes.html', this)" class="sidebar-item w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl font-bold text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 transition-all">
+                <span class="text-xl">📊</span> Reportes
             </button>
         </nav>
 
-        <div class="p-6 border-t border-slate-100">
-            <button onclick="cerrarSesion()" class="flex items-center gap-4 text-red-500 font-bold">
+        <div class="p-4 bg-slate-50 border-t border-slate-100">
+            <button onclick="cerrarSesion()" class="w-full flex items-center justify-center gap-2 py-3 bg-red-50 text-red-600 rounded-xl font-bold hover:bg-red-100 transition shadow-sm">
                 <span>🚪</span> Cerrar Sesión
             </button>
         </div>
     </aside>
 
-    <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6">
-            <button onclick="toggleMenu()" class="md:hidden text-2xl text-slate-600 focus:outline-none">☰</button>
-            
+    <!-- Contenido Principal con Pantalla Completa -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-100">
+        <header class="h-16 bg-white border-b border-slate-200/80 flex items-center justify-between px-6 shadow-sm z-30">
             <div class="flex items-center gap-4">
-                <span id="user-email" class="text-xs font-bold text-slate-400 uppercase">Cargando...</span>
-                <div class="w-8 h-8 bg-slate-100 rounded-full border border-slate-200"></div>
+                <button onclick="toggleMenu()" class="p-2 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition font-black flex items-center gap-2 text-sm">
+                    <span class="text-lg">☰</span> Menú
+                </button>
+                <div class="flex items-center gap-2">
+                    <div class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></div>
+                    <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Modo Staging</span>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-2xl border border-slate-200/60 shadow-inner">
+                <span id="user-email" class="text-xs font-bold text-slate-600">Cargando...</span>
+                <div class="w-7 h-7 bg-emerald-600 text-white rounded-full flex items-center justify-center font-black text-xs shadow-md">U</div>
             </div>
         </header>
 
-        <main class="flex-1 relative">
+        <main class="flex-1 relative overflow-hidden">
             <iframe src="ventas.html" id="visor" allow="camera; microphone"></iframe>
         </main>
     </div>
@@ -76,13 +88,20 @@
         const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
         function toggleMenu() {
-            document.getElementById('sidebar').classList.toggle('sidebar-open');
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('backdrop');
+            sidebar.classList.toggle('sidebar-open');
+            backdrop.classList.toggle('hidden');
         }
 
         async function verificarSesion() {
-            const { data: { user } } = await _supabase.auth.getUser();
-            if (!user) window.location.href = 'index.html';
-            else document.getElementById('user-email').textContent = user.email;
+            try {
+                const { data: { user } } = await _supabase.auth.getUser();
+                if (!user) window.location.href = 'index.html';
+                else document.getElementById('user-email').textContent = user.email;
+            } catch (e) {
+                console.error("Error de sesión", e);
+            }
         }
 
         function navegar(url, btn) {
@@ -92,8 +111,7 @@
             document.querySelectorAll('.sidebar-item').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             
-            // Cerrar menú en móvil tras click
-            if (window.innerWidth < 768) toggleMenu();
+            toggleMenu(); // Cierra el menú al navegar
         }
 
         async function cerrarSesion() {
