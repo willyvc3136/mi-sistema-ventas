@@ -3,86 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Caja Rápida - Minimarket Pro</title>
+    <title>Ventas - Minimarket Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f1f5f9; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; overflow: hidden; }
         .custom-scroll::-webkit-scrollbar { width: 6px; }
-        .custom-scroll::-webkit-scrollbar-track { background: #e2e8f0; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
     </style>
 </head>
-<body class="h-screen flex flex-col overflow-hidden p-3 gap-3">
+<body class="bg-slate-900 h-screen flex flex-col p-3 overflow-hidden">
 
-    <!-- TOP: Buscador y Catálogo Rápido -->
-    <div class="bg-white rounded-2xl shadow-md border border-slate-200 p-4 flex flex-col gap-3 flex-1 overflow-hidden">
-        <div class="flex items-center justify-between gap-4">
-            <div class="flex items-center gap-2 bg-slate-900 text-white px-4 py-2.5 rounded-xl shadow">
-                <span class="text-xl">🛒</span>
-                <span class="font-extrabold tracking-wide text-sm">CAJA REGISTRADORA</span>
-            </div>
-            <div class="flex-1 max-w-xl relative">
-                <input type="text" id="buscador" placeholder="Escribe para buscar producto o escanear código..." class="w-full bg-slate-100 border-2 border-slate-300 focus:border-emerald-600 focus:bg-white px-4 py-2.5 rounded-xl font-bold text-slate-800 outline-none transition shadow-inner text-sm">
-            </div>
-            <button onclick="activarCamara()" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 text-sm shadow transition">
-                <span>📷</span> Escáner
-            </button>
-        </div>
-
-        <!-- Lista de productos disponibles para añadir -->
-        <div class="flex-1 overflow-y-auto custom-scroll border border-slate-200 rounded-xl bg-slate-50 p-2">
-            <table class="w-full text-left border-collapse">
-                <thead class="bg-slate-200 text-slate-700 uppercase text-xs sticky top-0 font-extrabold">
-                    <tr>
-                        <th class="p-3 rounded-l-lg">Descripción</th>
-                        <th class="p-3">Precio</th>
-                        <th class="p-3">Stock</th>
-                        <th class="p-3 text-center rounded-r-lg">Acción</th>
-                    </tr>
-                </thead>
-                <tbody id="productos-lista" class="divide-y divide-slate-200 text-sm font-semibold text-slate-700">
-                    <!-- Inyectado por JS -->
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- BOTTOM: Resumen de Carrito y Cobro Estilo POS Profesional -->
-    <div class="bg-white rounded-2xl shadow-lg border border-slate-300 p-4 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+    <div class="bg-white flex-1 rounded-2xl shadow-xl flex flex-col overflow-hidden border border-slate-700">
         
-        <!-- Columna 1 y 2: Items seleccionados -->
-        <div class="md:col-span-2 flex flex-col bg-slate-900 rounded-xl p-3 border border-slate-800 h-40">
-            <div class="flex justify-between items-center text-slate-400 text-xs font-bold uppercase mb-2 border-b border-slate-800 pb-1">
-                <span>Productos en el Ticket</span>
-                <span id="contador-articulos" class="text-emerald-400">0 Artículos</span>
+        <!-- Cabecera de Caja Registradora -->
+        <div class="bg-gradient-to-r from-emerald-600 to-teal-600 p-4 flex items-center justify-between text-white shadow-md flex-shrink-0">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl">🛒</span>
+                <h1 class="text-lg font-black tracking-wider uppercase">Caja Registradora</h1>
             </div>
-            <div id="carritoItems" class="flex-1 overflow-y-auto custom-scroll space-y-2 pr-1">
-                <!-- Los productos agregados aparecerán aquí con buen contraste -->
-            </div>
+            <p class="text-xs font-bold uppercase bg-white/20 px-3 py-1.5 rounded-xl backdrop-blur-sm" id="user-display">Verificando...</p>
         </div>
 
-        <!-- Columna 3: Totales y Botón Cobrar Gigante -->
-        <div class="flex flex-col justify-between bg-slate-100 p-3 rounded-xl border border-slate-300 h-40">
-            <div class="flex items-center justify-between">
-                <span class="text-xs font-black text-slate-500 uppercase tracking-wider">TOTAL A PAGAR:</span>
-                <span id="total-pagar" class="text-2xl font-black text-emerald-600">$0.00</span>
+        <!-- Cuerpo Principal: Izquierda Buscador/Productos, Derecha Resumen -->
+        <div class="flex-1 grid grid-cols-1 lg:grid-cols-3 p-4 gap-4 overflow-hidden">
+            
+            <!-- Izquierda: Buscador y Tabla de Productos -->
+            <div class="lg:col-span-2 flex flex-col gap-3 overflow-hidden bg-slate-50 p-3 rounded-xl border border-slate-200">
+                
+                <!-- Buscador -->
+                <div class="flex items-center gap-3 bg-white p-2 rounded-xl border border-slate-300 shadow-sm flex-shrink-0">
+                    <div class="flex-1 relative flex items-center">
+                        <input type="text" id="buscador" placeholder="BUSCADOR O ESCÁNER" class="w-full bg-slate-100 px-4 py-2.5 rounded-xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500 text-sm">
+                    </div>
+                    <button onclick="activarCamara()" class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 shadow transition">
+                        <span>📷</span> Activar Cámara
+                    </button>
+                </div>
+
+                <!-- Tabla de Productos (Usa los IDs originales que tu JS busca) -->
+                <div class="flex-1 overflow-y-auto custom-scroll border border-slate-300 rounded-xl bg-white shadow-inner">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-slate-200 text-slate-700 uppercase text-xs sticky top-0 font-extrabold z-10">
+                            <tr>
+                                <th class="p-3">Descripción</th>
+                                <th class="p-3">Precio</th>
+                                <th class="p-3">Stock</th>
+                                <th class="p-3 text-center">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productos" class="divide-y divide-slate-200 text-sm font-semibold text-slate-700">
+                            <!-- Los productos volverán a cargarse aquí automáticamente -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
-            <div class="grid grid-cols-3 gap-1 my-1">
-                <button class="bg-emerald-600 text-white py-1 rounded font-bold text-xs shadow">Efectivo</button>
-                <button class="bg-slate-200 text-slate-700 py-1 rounded font-bold text-xs hover:bg-slate-300">Yape</button>
-                <button class="bg-slate-200 text-slate-700 py-1 rounded font-bold text-xs hover:bg-slate-300">Plin</button>
+            <!-- Derecha: Resumen de Cobro Fijo y Estilizado -->
+            <div class="bg-slate-900 text-white rounded-2xl p-4 flex flex-col justify-between shadow-lg border border-slate-800 overflow-hidden">
+                <div>
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-3">
+                        <span class="font-extrabold text-sm uppercase tracking-wide text-slate-300 flex items-center gap-2">
+                            <span>📄</span> RESUMEN
+                        </span>
+                        <span id="contadorItems" class="text-xs bg-emerald-500/20 text-emerald-400 font-bold px-2.5 py-1 rounded-lg">0 items</span>
+                    </div>
+
+                    <!-- Lista de Carrito (IDs originales) -->
+                    <div id="carritoItems" class="space-y-3 mb-4 overflow-y-auto custom-scroll max-h-[180px] pr-1">
+                        <!-- Items seleccionados -->
+                    </div>
+                </div>
+
+                <div class="space-y-3 pt-2 border-t border-slate-800 flex-shrink-0">
+                    <div>
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">MÉTODO DE PAGO:</span>
+                        <div class="grid grid-cols-3 gap-2 mt-1">
+                            <button type="button" class="bg-emerald-600 text-white py-1.5 rounded-xl font-bold text-xs shadow">EFECTIVO</button>
+                            <button type="button" class="bg-slate-800 text-slate-300 py-1.5 rounded-xl font-bold text-xs hover:bg-slate-700">YAPE</button>
+                            <button type="button" class="bg-slate-800 text-slate-300 py-1.5 rounded-xl font-bold text-xs hover:bg-slate-700">PLIN</button>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700 flex items-center justify-between">
+                        <span class="text-xs font-extrabold text-slate-400 uppercase">TOTAL:</span>
+                        <span id="totalPagar" class="text-2xl font-black text-emerald-400">$0.00</span>
+                    </div>
+
+                    <button onclick="finalizarVenta()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 font-black py-3.5 rounded-xl shadow-lg transition transform active:scale-95 text-sm">
+                        FINALIZAR VENTA (F2)
+                    </button>
+                </div>
             </div>
 
-            <button onclick="finalizarVenta()" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white py-3 rounded-xl font-extrabold text-base shadow-md shadow-emerald-600/30 transition transform active:scale-95 flex items-center justify-center gap-2">
-                <span>⚡ COBRAR (ESC)</span>
-            </button>
         </div>
-
     </div>
 
-    <!-- Script de lógica de ventas se mantiene o se conecta con tu supabase -->
     <script src="ventas.js"></script>
 </body>
 </html>
