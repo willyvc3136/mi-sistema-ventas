@@ -96,14 +96,14 @@
                 <!-- Bloque Inferior Completo -->
                 <div class="space-y-2 pt-1.5 border-t border-slate-800 flex-shrink-0">
                     
-                    <!-- Métodos de Pago (Incluyendo Pago Mixto) -->
+                    <!-- Métodos de Pago -->
                     <div>
                         <span class="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">MÉTODO DE PAGO:</span>
                         <div class="grid grid-cols-4 gap-1 mt-0.5">
                             <button type="button" id="btnEfectivo" onclick="seleccionarMetodo('Efectivo')" class="metodo-pago border border-emerald-500 bg-emerald-500/10 text-emerald-400 py-1 rounded-lg font-bold text-[11px] shadow-sm">EFECTIVO</button>
                             <button type="button" id="btnYape" onclick="seleccionarMetodo('Yape')" class="metodo-pago border border-slate-800 bg-slate-900 text-slate-400 py-1 rounded-lg font-bold text-[11px] hover:bg-slate-800">YAPE</button>
                             <button type="button" id="btnPlin" onclick="seleccionarMetodo('Plin')" class="metodo-pago border border-slate-800 bg-slate-900 text-slate-400 py-1 rounded-lg font-bold text-[11px] hover:bg-slate-800">PLIN</button>
-                            <button type="button" id="btnMixto" onclick="seleccionarMetodo('Mixto')" class="metodo-pago border border-slate-800 bg-slate-900 text-purple-400 py-1 rounded-lg font-bold text-[11px] hover:bg-slate-800">MIXTO</button>
+                            <button type="button" id="btnMixto" onclick="abrirModalMixto()" class="metodo-pago border border-slate-800 bg-slate-900 text-purple-400 py-1 rounded-lg font-bold text-[11px] hover:bg-slate-800">MIXTO</button>
                         </div>
                     </div>
 
@@ -116,22 +116,6 @@
                         <div class="flex items-center justify-between">
                             <span class="font-bold text-slate-400 uppercase text-[9px]">VUELTO:</span>
                             <span id="vuelto" class="font-black text-emerald-400 text-xs">$0.00</span>
-                        </div>
-                    </div>
-
-                    <!-- Panel Pago Mixto (Oculto por defecto, se muestra al elegir Mixto) -->
-                    <div id="panelMixto" class="hidden space-y-1 bg-purple-950/30 p-2 rounded-lg border border-purple-900/50 text-xs">
-                        <div class="flex items-center justify-between">
-                            <span class="font-bold text-purple-300 uppercase text-[9px]">EFECTIVO PARCIAL:</span>
-                            <input type="number" id="mixtoEfectivo" placeholder="0.00" class="w-20 bg-slate-950 border border-purple-700 text-right px-1.5 py-0.5 rounded font-bold text-emerald-400 text-xs outline-none">
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="font-bold text-purple-300 uppercase text-[9px]">YAPE / PLIN PARCIAL:</span>
-                            <input type="number" id="mixtoVirtual" placeholder="0.00" class="w-20 bg-slate-950 border border-purple-700 text-right px-1.5 py-0.5 rounded font-bold text-emerald-400 text-xs outline-none">
-                        </div>
-                        <div class="flex items-center justify-between pt-0.5 border-t border-purple-900/40">
-                            <span class="font-bold text-slate-400 uppercase text-[9px]">VUELTO EFECTIVO:</span>
-                            <span id="mixtoVuelto" class="font-black text-emerald-400 text-xs">$0.00</span>
                         </div>
                     </div>
 
@@ -164,27 +148,66 @@
         </div>
     </div>
 
-    <!-- Script complementario para manejar la vista del Pago Mixto en la interfaz -->
+    <!-- VENTANA EMERGENTE (MODAL) PARA PAGO MIXTO -->
+    <div id="modalMixto" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-purple-500/50 rounded-2xl w-full max-w-sm p-5 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                <h3 class="text-sm font-black text-purple-400 uppercase flex items-center gap-2">
+                    <span>💳</span> Registrar Pago Mixto
+                </h3>
+                <button onclick="cerrarModalMixto()" class="text-slate-400 hover:text-white font-bold text-sm">✕</button>
+            </div>
+            
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="text-slate-400 font-bold uppercase text-[10px]">Monto en Efectivo:</label>
+                    <input type="number" id="modalEfectivo" placeholder="0.00" class="w-full bg-slate-950 border border-slate-700 p-2 rounded-lg font-bold text-emerald-400 mt-1 outline-none focus:ring-2 focus:ring-purple-500">
+                </div>
+                <div>
+                    <label class="text-slate-400 font-bold uppercase text-[10px]">Monto en Yape / Plin:</label>
+                    <input type="number" id="modalVirtual" placeholder="0.00" class="w-full bg-slate-950 border border-slate-700 p-2 rounded-lg font-bold text-emerald-400 mt-1 outline-none focus:ring-2 focus:ring-purple-500">
+                </div>
+                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 flex justify-between items-center">
+                    <span class="text-slate-400 font-bold text-[10px]">VUELTO A ENTREGAR:</span>
+                    <span id="modalVuelto" class="font-black text-emerald-400 text-sm">$0.00</span>
+                </div>
+            </div>
+
+            <div class="flex gap-2 pt-2">
+                <button onclick="cerrarModalMixto()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2 rounded-xl text-xs transition">Cancelar</button>
+                <button onclick="guardarPagoMixto()" class="flex-1 bg-purple-600 hover:bg-purple-500 text-white font-black py-2 rounded-xl text-xs transition shadow-lg">Confirmar Mixto</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script de control para la ventana emergente -->
     <script>
         function seleccionarMetodo(metodo) {
-            // Limpiar estilos activos de botones
             document.querySelectorAll('.metodo-pago').forEach(btn => {
                 btn.className = "metodo-pago border border-slate-800 bg-slate-900 text-slate-400 py-1 rounded-lg font-bold text-[11px] hover:bg-slate-800";
             });
-
-            const panelVuelto = document.getElementById('panelVuelto');
-            const panelMixto = document.getElementById('panelMixto');
-
-            if (metodo === 'Mixto') {
-                document.getElementById('btnMixto').className = "metodo-pago border border-purple-500 bg-purple-500/10 text-purple-400 py-1 rounded-lg font-bold text-[11px] shadow-sm";
-                panelVuelto.classList.add('hidden');
-                panelMixto.classList.remove('hidden');
-            } else {
-                const btnActivo = document.getElementById('btn' + metodo);
+            const btnActivo = document.getElementById('btn' + metodo);
+            if(btnActivo) {
                 btnActivo.className = "metodo-pago border border-emerald-500 bg-emerald-500/10 text-emerald-400 py-1 rounded-lg font-bold text-[11px] shadow-sm";
-                panelVuelto.classList.remove('hidden');
-                panelMixto.classList.add('hidden');
             }
+            document.getElementById('panelVuelto').classList.remove('hidden');
+        }
+
+        function abrirModalMixto() {
+            document.querySelectorAll('.metodo-pago').forEach(btn => {
+                btn.className = "metodo-pago border border-slate-800 bg-slate-900 text-slate-400 py-1 rounded-lg font-bold text-[11px] hover:bg-slate-800";
+            });
+            document.getElementById('btnMixto').className = "metodo-pago border border-purple-500 bg-purple-500/10 text-purple-400 py-1 rounded-lg font-bold text-[11px] shadow-sm";
+            document.getElementById('modalMixto').classList.remove('hidden');
+        }
+
+        function cerrarModalMixto() {
+            document.getElementById('modalMixto').classList.add('hidden');
+        }
+
+        function guardarPagoMixto() {
+            // Aquí puedes capturar los valores ingresados en el modal para tu lógica en ventas.js
+            cerrarModalMixto();
         }
     </script>
 
