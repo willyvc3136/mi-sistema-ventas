@@ -7,146 +7,130 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; overflow: hidden; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0f172a; overflow: hidden; }
         .custom-scroll::-webkit-scrollbar { width: 6px; }
         .custom-scroll::-webkit-scrollbar-track { background: #1e293b; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
     </style>
 </head>
-<body class="bg-slate-900 h-screen flex flex-col p-3 overflow-hidden">
+<body class="h-screen flex flex-col p-2 gap-2 overflow-hidden">
 
-    <div class="bg-white flex-1 rounded-2xl shadow-xl flex flex-col overflow-hidden border border-slate-700">
+    <!-- Contenedor Principal en Pantalla Completa -->
+    <div class="bg-white flex-1 rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-700">
         
         <!-- Cabecera -->
-        <div class="bg-gradient-to-r from-emerald-600 to-teal-600 p-3.5 flex items-center justify-between text-white shadow-md flex-shrink-0">
-            <div class="flex items-center gap-3">
-                <span class="text-2xl">🛒</span>
-                <h1 class="text-lg font-black tracking-wider uppercase">Caja Registradora</h1>
+        <div class="bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2.5 flex items-center justify-between text-white shadow flex-shrink-0">
+            <div class="flex items-center gap-2">
+                <span class="text-xl">🛒</span>
+                <h1 class="text-base font-black tracking-wider uppercase">Caja Registradora</h1>
             </div>
-            <p class="text-xs font-bold uppercase bg-white/20 px-3 py-1.5 rounded-xl backdrop-blur-sm" id="user-display">Verificando...</p>
+            <p class="text-xs font-bold uppercase bg-white/20 px-3 py-1 rounded-xl backdrop-blur-sm" id="user-display">Verificando...</p>
         </div>
 
-        <!-- Contenido Principal -->
-        <div class="flex-1 grid grid-cols-1 lg:grid-cols-3 p-4 gap-4 overflow-hidden">
+        <!-- Layout de 2 Columnas -->
+        <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 p-3 gap-3 overflow-hidden">
             
-            <!-- Izquierda: Buscador y Tabla -->
-            <div class="lg:col-span-2 flex flex-col gap-3 overflow-hidden bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <!-- Izquierda: Buscador y Tabla de Inventario (Ocupa 7 columnas) -->
+            <div class="lg:col-span-7 flex flex-col gap-2.5 overflow-hidden bg-slate-50 p-3 rounded-xl border border-slate-200">
                 
                 <!-- Buscador -->
-                <div class="flex items-center gap-3 bg-white p-2 rounded-xl border border-slate-300 shadow-sm flex-shrink-0">
+                <div class="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-300 shadow-sm flex-shrink-0">
                     <div class="flex-1 relative flex items-center">
-                        <input type="text" id="inputBusqueda" placeholder="BUSCADOR O ESCÁNER DE PRODUCTOS..." class="w-full bg-slate-100 px-4 py-2.5 rounded-xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500 text-sm">
+                        <input type="text" id="inputBusqueda" placeholder="BUSCADOR O ESCÁNER DE PRODUCTOS..." class="w-full bg-slate-100 px-3.5 py-2 rounded-xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500 text-xs">
                     </div>
-                    <button id="btnCamara" onclick="toggleLector()" class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 shadow transition">
-                        <span>📷</span> Activar Cámara
+                    <button id="btnCamara" onclick="toggleLector()" class="bg-slate-900 hover:bg-slate-800 text-white px-3 py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 shadow transition">
+                        <span>📷</span> Cámara
                     </button>
                 </div>
 
-                <!-- Contenedor del lector de cámara -->
-                <div id="lectorContainer" class="hidden relative bg-black rounded-xl overflow-hidden h-40 flex-shrink-0">
+                <!-- Lector de Cámara -->
+                <div id="lectorContainer" class="hidden relative bg-black rounded-xl overflow-hidden h-32 flex-shrink-0">
                     <div id="reader" class="w-full h-full"></div>
                 </div>
 
                 <!-- Tabla de Productos -->
                 <div class="flex-1 overflow-y-auto custom-scroll border border-slate-300 rounded-xl bg-white shadow-inner">
                     <table class="w-full text-left border-collapse">
-                        <thead class="bg-slate-200 text-slate-700 uppercase text-xs sticky top-0 font-extrabold z-10">
+                        <thead class="bg-slate-200 text-slate-700 uppercase text-[11px] sticky top-0 font-extrabold z-10">
                             <tr>
-                                <th class="p-3">Descripción</th>
-                                <th class="p-3">Precio</th>
-                                <th class="p-3">Stock</th>
-                                <th class="p-3 text-center">Acción</th>
+                                <th class="p-2.5">Descripción</th>
+                                <th class="p-2.5">Precio</th>
+                                <th class="p-2.5">Stock</th>
+                                <th class="p-2.5 text-center">Acción</th>
                             </tr>
                         </thead>
-                        <tbody id="tablaResultados" class="divide-y divide-slate-200 text-sm font-semibold text-slate-700">
-                            <!-- Productos del inventario -->
+                        <tbody id="tablaResultados" class="divide-y divide-slate-200 text-xs font-semibold text-slate-700">
+                            <!-- Productos inyectados por ventas.js -->
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- Derecha: Resumen de Cobro con Distribución Optimizada -->
-            <div class="bg-slate-900 text-white rounded-2xl p-4 flex flex-col justify-between shadow-lg border border-slate-800 overflow-hidden">
-                <div class="flex flex-col h-full overflow-hidden">
-                    <div class="flex items-center justify-between border-b border-slate-800 pb-2.5 mb-2 flex-shrink-0">
-                        <span class="font-extrabold text-sm uppercase tracking-wide text-slate-300 flex items-center gap-2">
-                            <span>📄</span> RESUMEN
-                        </span>
-                        <span id="contadorItems" class="text-xs bg-emerald-500/20 text-emerald-400 font-bold px-2.5 py-1 rounded-lg">0 items</span>
-                    </div>
+            <!-- Derecha: Panel de Resumen y Cobro Fijo (Ocupa 5 columnas) -->
+            <div class="lg:col-span-5 bg-slate-900 text-white rounded-xl p-3 flex flex-col justify-between shadow-lg border border-slate-800 overflow-hidden">
+                
+                <!-- Cabecera Resumen -->
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-2 flex-shrink-0">
+                    <span class="font-extrabold text-xs uppercase tracking-wide text-slate-300 flex items-center gap-1.5">
+                        <span>📄</span> RESUMEN DE COMPRA
+                    </span>
+                    <span id="contadorItems" class="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2 py-0.5 rounded-lg">Ticket Activo</span>
+                </div>
 
-                    <!-- Lista de Carrito con altura flexible para que luzca amplia -->
-                    <div id="carritoItems" class="flex-1 overflow-y-auto custom-scroll space-y-2 pr-1 mb-3 min-h-[160px]">
-                        <p class="text-center text-slate-500 py-10 italic text-sm">Caja Vacía</p>
-                    </div>
+                <!-- Lista de Carrito (Con scroll propio y altura garantizada) -->
+                <div id="carritoItems" class="flex-1 overflow-y-auto custom-scroll space-y-2 pr-1 mb-2">
+                    <p class="text-center text-slate-500 py-8 italic text-xs">Caja Vacía</p>
+                </div>
 
-                    <!-- Controles inferiores fijos dentro del panel -->
-                    <div class="space-y-2.5 pt-2 border-t border-slate-800 flex-shrink-0">
-                        <div>
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">MÉTODO DE PAGO:</span>
-                            <div class="grid grid-cols-3 gap-1.5 mt-1">
-                                <button type="button" id="btnEfectivo" onclick="seleccionarMetodo('Efectivo')" class="metodo-pago border border-emerald-500 bg-emerald-50 text-emerald-700 py-1.5 rounded-xl font-bold text-xs shadow">EFECTIVO</button>
-                                <button type="button" id="btnYape" onclick="seleccionarMetodo('Yape')" class="metodo-pago border border-slate-800 bg-slate-800 text-slate-300 py-1.5 rounded-xl font-bold text-xs hover:bg-slate-700">YAPE</button>
-                                <button type="button" id="btnPlin" onclick="seleccionarMetodo('Plin')" class="metodo-pago border border-slate-800 bg-slate-800 text-slate-300 py-1.5 rounded-xl font-bold text-xs hover:bg-slate-700">PLIN</button>
-                            </div>
+                <!-- Bloque Inferior Fijo de Pagos y Cobro -->
+                <div class="space-y-2 pt-2 border-t border-slate-800 flex-shrink-0">
+                    <div>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">MÉTODO DE PAGO:</span>
+                        <div class="grid grid-cols-3 gap-1 mt-1">
+                            <button type="button" id="btnEfectivo" onclick="seleccionarMetodo('Efectivo')" class="metodo-pago border border-emerald-500 bg-emerald-50 text-emerald-700 py-1 rounded-lg font-bold text-xs shadow">EFECTIVO</button>
+                            <button type="button" id="btnYape" onclick="seleccionarMetodo('Yape')" class="metodo-pago border border-slate-800 bg-slate-800 text-slate-300 py-1 rounded-lg font-bold text-xs hover:bg-slate-700">YAPE</button>
+                            <button type="button" id="btnPlin" onclick="seleccionarMetodo('Plin')" class="metodo-pago border border-slate-800 bg-slate-800 text-slate-300 py-1 rounded-lg font-bold text-xs hover:bg-slate-700">PLIN</button>
                         </div>
+                    </div>
 
-                        <!-- Panel de Vuelto / Fiado compacto -->
-                        <div id="panelVuelto" class="space-y-1.5">
-                            <div class="flex items-center justify-between">
-                                <span class="text-[11px] font-bold text-slate-400 uppercase">PAGA CON:</span>
-                                <input type="number" id="pagaCon" placeholder="0.00" class="w-24 bg-slate-800 border border-slate-700 text-right px-2 py-1 rounded-lg font-bold text-emerald-400 text-sm outline-none focus:ring-1 focus:ring-emerald-500">
+                    <!-- Panel Vuelto / Fiado compacto -->
+                    <div id="panelVuelto" class="space-y-1 bg-slate-800/50 p-2 rounded-lg border border-slate-800">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="font-bold text-slate-400 uppercase text-[10px]">PAGA CON:</span>
+                            <input type="number" id="pagaCon" placeholder="0.00" class="w-20 bg-slate-800 border border-slate-700 text-right px-2 py-0.5 rounded font-bold text-emerald-400 text-xs outline-none">
+                        </div>
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="font-bold text-slate-400 uppercase text-[10px]">VUELTO:</span>
+                            <span id="vuelto" class="font-black text-emerald-400 text-xs">$0.00</span>
+                        </div>
+                        <div class="flex items-center justify-between pt-1">
+                            <div class="flex items-center gap-1.5">
+                                <input type="checkbox" id="esFiado" class="w-3.5 h-3.5 accent-emerald-500 rounded cursor-pointer">
+                                <label for="esFiado" class="text-[10px] font-bold text-slate-300 cursor-pointer">DAR FIADO</label>
                             </div>
-                            <div class="flex items-center justify-between text-xs">
-                                <span class="font-bold text-slate-400 uppercase">VUELTO:</span>
-                                <span id="vuelto" class="font-black text-emerald-400 text-sm">$0.00</span>
-                            </div>
-                            <div class="flex items-center gap-2 pt-0.5">
-                                <input type="checkbox" id="esFiado" class="w-4 h-4 accent-emerald-500 rounded cursor-pointer">
-                                <label for="esFiado" class="text-xs font-bold text-slate-300 cursor-pointer">DAR FIADO</label>
-                            </div>
-                            <div id="contenedorSelectorCliente" class="hidden">
-                                <select id="selectCliente" class="w-full bg-slate-800 border border-slate-700 text-white text-xs p-1.5 rounded-lg outline-none font-bold">
-                                    <option value="">-- Elige un cliente --</option>
+                            <div id="contenedorSelectorCliente" class="hidden flex-1 ml-2">
+                                <select id="selectCliente" class="w-full bg-slate-800 border border-slate-700 text-white text-[10px] p-1 rounded outline-none font-bold">
+                                    <option value="">-- Cliente --</option>
                                 </select>
                             </div>
                         </div>
-
-                        <div class="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700 flex items-center justify-between">
-                            <span class="text-xs font-extrabold text-slate-400 uppercase">TOTAL:</span>
-                            <span id="totalVenta" class="text-2xl font-black text-emerald-400">$0.00</span>
-                        </div>
-
-                        <button id="btnFinalizarVenta" class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 font-black py-3 rounded-xl shadow-lg transition transform active:scale-95 text-sm">
-                            FINALIZAR VENTA (F2)
-                        </button>
                     </div>
+
+                    <!-- Total y Botón de Cobro Gigante Siempre Visible -->
+                    <div class="bg-slate-800 p-2 rounded-xl border border-slate-700 flex items-center justify-between">
+                        <span class="text-[11px] font-extrabold text-slate-400 uppercase">TOTAL:</span>
+                        <span id="totalVenta" class="text-xl font-black text-emerald-400">$0.00</span>
+                    </div>
+
+                    <button id="btnFinalizarVenta" class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 font-black py-2.5 rounded-xl shadow-lg transition transform active:scale-95 text-xs">
+                        FINALIZAR VENTA (F2)
+                    </button>
                 </div>
+
             </div>
 
         </div>
     </div>
-
-    <!-- Script para actualizar el contador de items automáticamente -->
-    <script>
-        const observer = new MutationObserver(() => {
-            const carritoItems = document.getElementById('carritoItems');
-            const contador = document.getElementById('contadorItems');
-            if (carritoItems && contador) {
-                const totalItems = carritoItems.children.length;
-                const tieneVacia = carritoItems.querySelector('p');
-                if (tieneVacia || totalItems === 0) {
-                    contador.textContent = '0 items';
-                } else {
-                    contador.textContent = `${totalItems} item${totalItems > 1 ? 's' : ''}`;
-                }
-            }
-        });
-        window.addEventListener('DOMContentLoaded', () => {
-            const target = document.getElementById('carritoItems');
-            if (target) observer.observe(target, { childList: true });
-        });
-    </script>
 
     <!-- Scripts externos y lógica -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
