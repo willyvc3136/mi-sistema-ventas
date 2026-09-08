@@ -11,9 +11,14 @@
         .custom-scroll::-webkit-scrollbar { width: 6px; }
         .custom-scroll::-webkit-scrollbar-track { background: #0f172a; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-        /* Forzar color claro y nítido en las descripciones de los productos de la tabla */
-        #tablaResultados td { color: #f8fafc !important; }
-        #tablaResultados tr:hover td { color: #34d399 !important; }
+        
+        /* FUERZA BRUTA PARA EL TEXTO DE LA TABLA: Blanco brillante absoluto */
+        #tablaResultados, #tablaResultados *, #tablaResultados td, #tablaResultados span {
+            color: #ffffff !important;
+        }
+        #tablaResultados tr:hover td, #tablaResultados tr:hover span {
+            color: #34d399 !important; /* Se vuelve verdecito al pasar el mouse */
+        }
     </style>
 </head>
 <body class="h-screen flex flex-col p-2 gap-2 overflow-hidden">
