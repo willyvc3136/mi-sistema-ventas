@@ -6,54 +6,58 @@
     <title>Ventas - Minimarket Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
-    <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
+    <style>body { font-family: 'Plus Jakarta Sans', sans-serif; overflow: hidden; }</style>
 </head>
-<body class="bg-white p-4"> 
-    <div class="max-w-7xl mx-auto">
-        <div class="flex justify-between items-center mb-6 bg-emerald-50 p-4 rounded-2xl border border-emerald-100">
-            <h1 class="text-xl font-black text-emerald-800 tracking-tighter uppercase">🛒 Caja Registradora</h1>
+<body class="bg-slate-50 h-screen flex flex-col p-4 overflow-hidden"> 
+    <div class="max-w-7xl mx-auto w-full flex-1 flex flex-col overflow-hidden">
+        <div class="flex justify-between items-center mb-4 bg-emerald-50 p-3 rounded-2xl border border-emerald-100 flex-shrink-0">
+            <h1 class="text-lg font-black text-emerald-800 tracking-tighter uppercase">🛒 Caja Registradora</h1>
             <p class="text-[10px] text-emerald-600 font-bold uppercase bg-white px-3 py-1 rounded-full shadow-sm" id="user-display">Verificando sesión...</p>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="lg:col-span-2 space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 overflow-hidden">
+            <div class="lg:col-span-2 flex flex-col space-y-4 overflow-hidden">
                 <script src="https://unpkg.com/html5-qrcode"></script>
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                    <div class="flex justify-between items-center mb-4">
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex-shrink-0">
+                    <div class="flex justify-between items-center mb-2">
                         <label class="block text-xs font-black text-slate-400 uppercase">Buscador o Escáner</label>
-                        <button onclick="toggleLector()" id="btnCamara" class="text-xs bg-slate-900 text-white px-4 py-2 rounded-xl font-bold hover:bg-emerald-600 transition shadow-sm">📷 Activar Cámara</button>
+                        <button onclick="toggleLector()" id="btnCamara" class="text-xs bg-slate-900 text-white px-3 py-1.5 rounded-xl font-bold hover:bg-emerald-600 transition shadow-sm">📷 Activar Cámara</button>
                     </div>
                     
-                    <div id="lectorContainer" class="hidden mb-4 overflow-hidden rounded-xl border-2 border-emerald-500 bg-black relative">
+                    <div id="lectorContainer" class="hidden mb-3 overflow-hidden rounded-xl border-2 border-emerald-500 bg-black relative">
                         <div id="reader" class="w-full"></div>
                         <button onclick="toggleLector()" class="absolute top-2 right-2 bg-red-600 text-white p-2 rounded-full text-xs font-bold">✕ Cerrar</button>
                     </div>
 
                     <input type="text" id="inputBusqueda" placeholder="Escanea el código o escribe nombre..." 
-                        class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-emerald-500 focus:bg-white outline-none text-lg font-semibold transition-all">
+                        class="w-full p-3 bg-slate-50 border-2 border-slate-100 rounded-xl focus:border-emerald-500 focus:bg-white outline-none text-base font-semibold transition-all">
                 </div>
 
-                <div class="bg-white rounded-2xl shadow-sm overflow-hidden border border-slate-200">
-                    <table class="w-full text-left">
-                        <thead class="bg-slate-50 border-b">
+                <div class="bg-white rounded-2xl shadow-sm overflow-hidden border border-slate-200 flex-1 flex flex-col min-h-0">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-slate-50 border-b sticky top-0 z-10">
                             <tr class="text-[10px] font-black text-slate-400 uppercase">
-                                <th class="p-4">Descripción</th>
-                                <th class="p-4">Precio</th>
-                                <th class="p-4">Stock</th>
-                                <th class="p-4 text-center">Acción</th>
+                                <th class="p-3">Descripción</th>
+                                <th class="p-3">Precio</th>
+                                <th class="p-3">Stock</th>
+                                <th class="p-3 text-center">Acción</th>
                             </tr>
                         </thead>
-                        <tbody id="tablaResultados" class="divide-y divide-slate-50 text-slate-700"></tbody>
                     </table>
+                    <div class="overflow-y-auto flex-1">
+                        <table class="w-full text-left">
+                            <tbody id="tablaResultados" class="divide-y divide-slate-50 text-slate-700"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
-            <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100 flex flex-col h-fit sticky top-4">
-                <h2 class="text-lg font-black uppercase tracking-tight mb-4">📄 Resumen</h2>
+            <div class="bg-white p-5 rounded-3xl border border-slate-200 flex flex-col h-full shadow-sm overflow-hidden">
+                <h2 class="text-base font-black uppercase tracking-tight mb-3 flex-shrink-0">📄 Resumen</h2>
                 
-                <div id="carritoItems" class="space-y-3 mb-6 max-h-[300px] overflow-y-auto pr-2"></div>
+                <div id="carritoItems" class="space-y-3 mb-4 overflow-y-auto flex-1 pr-1"></div>
 
-                <div class="border-t-2 border-slate-200 border-dashed pt-4 space-y-4">
+                <div class="border-t-2 border-slate-100 border-dashed pt-3 space-y-3 flex-shrink-0">
                     <label class="text-[10px] font-black text-slate-400 uppercase">Método de Pago:</label>
                     <div class="grid grid-cols-3 gap-2">
                         <button id="btnEfectivo" onclick="seleccionarMetodo('Efectivo')" class="metodo-pago p-2 border-2 rounded-xl text-[10px] font-bold border-emerald-500 bg-emerald-50 text-emerald-700">EFECTIVO</button>
@@ -61,39 +65,38 @@
                         <button id="btnPlin" onclick="seleccionarMetodo('Plin')" class="metodo-pago p-2 border-2 rounded-xl text-[10px] font-bold border-slate-100 bg-white text-slate-500">PLIN</button>
                     </div>
 
-                    <div class="flex items-center gap-2 p-3 bg-white rounded-xl border border-slate-200">
+                    <div class="flex items-center gap-2 p-2.5 bg-slate-50 rounded-xl border border-slate-100">
                         <input type="checkbox" id="esFiado" onchange="toggleSelectorCliente()" class="w-4 h-4 accent-emerald-600">
                         <label for="esFiado" class="text-xs font-bold text-slate-600 uppercase">Dar Fiado</label>
                     </div>
 
-                    <div id="contenedorSelectorCliente" class="mt-3 hidden">
+                    <div id="contenedorSelectorCliente" class="hidden">
                         <label class="text-[10px] font-black text-slate-400 uppercase ml-1">Seleccionar Cliente:</label>
-                        <select id="selectCliente" class="w-full p-3 bg-gray-50 border-2 border-emerald-500 rounded-2xl font-bold text-slate-700 outline-none mt-1 shadow-sm focus:ring-2 ring-emerald-200 transition-all">
+                        <select id="selectCliente" class="w-full p-2.5 bg-gray-50 border-2 border-emerald-500 rounded-xl font-bold text-slate-700 outline-none text-xs mt-1">
                             <option value="">Cargando lista...</option>
                         </select>
-                        <p class="text-[9px] text-orange-500 mt-1 font-bold">* El monto se sumará a su deuda actual.</p>
                     </div>
 
-                    <div class="bg-white p-4 rounded-2xl border border-slate-100">
-                        <div class="flex justify-between items-center mb-2">
+                    <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                        <div class="flex justify-between items-center mb-1">
                             <span class="text-slate-400 font-bold text-[10px] uppercase">Total:</span>
-                            <span id="totalVenta" class="text-3xl font-black text-emerald-600 tracking-tighter">$0.00</span>
+                            <span id="totalVenta" class="text-2xl font-black text-emerald-600 tracking-tighter">$0.00</span>
                         </div>
-                        <div id="panelVuelto" class="space-y-3 pt-2 border-t border-slate-50">
+                        <div id="panelVuelto" class="space-y-2 pt-2 border-t border-slate-200/60">
                             <div class="flex justify-between items-center">
                                 <span class="text-[10px] font-bold text-slate-400 uppercase">Paga con:</span>
-                                <input type="number" id="pagaCon" placeholder="0.00" class="w-20 text-right font-bold text-emerald-600 outline-none border-b border-emerald-200">
+                                <input type="number" id="pagaCon" placeholder="0.00" class="w-20 text-right font-bold text-emerald-600 outline-none bg-transparent border-b border-emerald-200 text-sm">
                             </div>
                             <div class="flex justify-between items-center">
                                 <span class="text-[10px] font-bold text-slate-400 uppercase">Vuelto:</span>
-                                <span id="vuelto" class="font-black text-emerald-600">$0.00</span>
+                                <span id="vuelto" class="font-black text-emerald-600 text-sm">$0.00</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <button id="btnFinalizarVenta" disabled 
-                    class="w-full mt-6 bg-emerald-600 text-white font-black py-5 rounded-2xl shadow-xl hover:bg-emerald-700 disabled:bg-slate-200 transition-all uppercase tracking-widest text-xs">
+                    class="w-full mt-4 bg-emerald-600 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-emerald-700 disabled:bg-slate-200 transition-all uppercase tracking-widest text-xs flex-shrink-0">
                     Finalizar Venta (F2)
                 </button>
             </div>
