@@ -18,6 +18,25 @@
         #tablaResultados tr:hover td, #tablaResultados tr:hover span {
             color: #34d399 !important;
         }
+        /* Estilo mejorado para botones - / + del carrito */
+        .btn-qty {
+            background-color: #1e293b !important;
+            color: #ffffff !important;
+            border: 1px solid #475569 !important;
+            font-weight: 900 !important;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .btn-qty:hover {
+            background-color: #334155 !important;
+            border-color: #34d399 !important;
+            color: #34d399 !important;
+        }
     </style>
 </head>
 <body class="h-screen flex flex-col p-2 gap-2 overflow-hidden" onkeydown="manejarAtajosGlobales(event)">
@@ -31,7 +50,7 @@
                 <span class="text-xl bg-white/10 p-1 rounded-lg">🛒</span>
                 <div>
                     <h1 class="text-xs font-black tracking-wider uppercase">Caja Registradora</h1>
-                    <p class="text-[9px] text-emerald-100 font-semibold">TERMINAL DE VENTA RÁPIDA (F2: Cobrar | F3: Buscar | F4: Vaciar)</p>
+                    <p class="text-[9px] text-emerald-100 font-semibold">TERMINAL DE VENTA RÁPIDA (F3: Buscar | F4: Vaciar | Enter o Espacio: Cobrar)</p>
                 </div>
             </div>
             
@@ -96,7 +115,7 @@
                     <span id="contadorItems" class="text-[9px] bg-emerald-500/10 text-emerald-400 font-extrabold px-2 py-0.5 rounded border border-emerald-500/20">Ticket Activo</span>
                 </div>
 
-                <!-- Lista de Carrito con Control de Cantidad (+ / -) y Alerta de Stock -->
+                <!-- Lista de Carrito -->
                 <div id="carritoItems" class="flex-1 overflow-y-auto custom-scroll space-y-1.5 pr-1 mb-1.5 text-white">
                     <p class="text-center text-slate-500 py-10 italic text-xs font-medium">Caja Vacía - Agregue productos</p>
                 </div>
@@ -147,7 +166,7 @@
                     </div>
 
                     <button id="btnFinalizarVenta" onclick="finalizarVenta()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 font-black py-2 rounded-xl shadow-lg transition transform active:scale-95 text-xs tracking-wide">
-                        FINALIZAR VENTA (F2 / ENTER / ESPACIO)
+                        FINALIZAR VENTA (ENTER / ESPACIO)
                     </button>
                 </div>
 
@@ -192,12 +211,10 @@
         </div>
     </div>
 
-    <!-- Scripts de Control y Atajos Avanzados -->
     <script>
-        // Foco automático pasivo para lector de barras (siempre enfoca la búsqueda si no estás escribiendo en otro input)
         document.addEventListener('click', (e) => {
             const inputBusqueda = document.getElementById('inputBusqueda');
-            if(inputBusqueda && !['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)) {
+            if(inputBusqueda && !['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON'].includes(e.target.tagName)) {
                 inputBusqueda.focus();
             }
         });
@@ -209,9 +226,6 @@
             if (e.key === 'F3') {
                 e.preventDefault();
                 document.getElementById('inputBusqueda').focus();
-            } else if (e.key === 'F2') {
-                e.preventDefault();
-                finalizarVenta();
             } else if (e.key === 'F4') {
                 e.preventDefault();
                 vaciarCarritoRapido();
@@ -223,7 +237,6 @@
                 if(esModalAbierto) cerrarModalMixto();
                 else document.getElementById('inputBusqueda').value = '';
             } else if ((e.key === 'Enter' || e.key === ' ') && !['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON'].includes(document.activeElement.tagName)) {
-                // Si presiona Enter o Espacio globalmente, cobra la venta
                 e.preventDefault();
                 finalizarVenta();
             }
@@ -260,16 +273,15 @@
         }
 
         function finalizarVenta() {
-            // Conéctalo con tu función principal de cobro en ventas.js
-            console.log("Venta finalizada por atajo o botón.");
+            console.log("Venta finalizada.");
         }
 
         function vaciarCarritoRapido() {
-            console.log("Carrito vaciado por F4.");
+            console.log("Carrito vaciado.");
         }
 
         function guardarTicketEnEspera() {
-            console.log("Ticket guardado en pausa.");
+            console.log("Ticket en espera.");
         }
     </script>
 
