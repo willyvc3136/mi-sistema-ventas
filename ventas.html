@@ -19,12 +19,16 @@
             color: #34d399 !important;
         }
 
-        /* ESTILOS EXACTOS PARA LOS BOTONES DE CANTIDAD Y EL NÚMERO */
-        #carritoItems .bg-slate-900, #carritoItems div, #carritoItems span, #carritoItems p {
-            color: #ffffff;
+        /* CORRECCIÓN VISIBILIDAD EN TARJETAS DEL CARRITO */
+        #carritoItems > div {
+            background-color: #ffffff !important;
+            color: #0f172a !important;
+        }
+        #carritoItems h4, #carritoItems p, #carritoItems span:not(.btn-qty-num) {
+            color: #0f172a !important;
         }
         
-        /* Botones - y + oscuros con texto claro */
+        /* Botones - y + oscuros dentro de la tarjeta blanca */
         #carritoItems button:not(#btnFinalizarVenta) {
             background-color: #1e293b !important;
             color: #38bdf8 !important;
@@ -35,11 +39,6 @@
         #carritoItems button:not(#btnFinalizarVenta):hover {
             background-color: #334155 !important;
             border-color: #38bdf8 !important;
-        }
-
-        /* Número de cantidad central visible y destacado */
-        #carritoItems span.text-slate-900, #carritoItems .font-bold {
-            color: #ffffff !important;
         }
     </style>
 </head>
