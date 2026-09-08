@@ -9,8 +9,8 @@
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; overflow: hidden; }
         .custom-scroll::-webkit-scrollbar { width: 6px; }
-        .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #1e293b; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
     </style>
 </head>
 <body class="bg-slate-900 h-screen flex flex-col p-3 overflow-hidden">
@@ -18,7 +18,7 @@
     <div class="bg-white flex-1 rounded-2xl shadow-xl flex flex-col overflow-hidden border border-slate-700">
         
         <!-- Cabecera -->
-        <div class="bg-gradient-to-r from-emerald-600 to-teal-600 p-4 flex items-center justify-between text-white shadow-md flex-shrink-0">
+        <div class="bg-gradient-to-r from-emerald-600 to-teal-600 p-3.5 flex items-center justify-between text-white shadow-md flex-shrink-0">
             <div class="flex items-center gap-3">
                 <span class="text-2xl">🛒</span>
                 <h1 class="text-lg font-black tracking-wider uppercase">Caja Registradora</h1>
@@ -29,10 +29,10 @@
         <!-- Contenido Principal -->
         <div class="flex-1 grid grid-cols-1 lg:grid-cols-3 p-4 gap-4 overflow-hidden">
             
-            <!-- Izquierda: Buscador y Tabla con IDs originales de tu JS -->
+            <!-- Izquierda: Buscador y Tabla -->
             <div class="lg:col-span-2 flex flex-col gap-3 overflow-hidden bg-slate-50 p-3 rounded-xl border border-slate-200">
                 
-                <!-- Buscador (ID exacto: inputBusqueda) -->
+                <!-- Buscador -->
                 <div class="flex items-center gap-3 bg-white p-2 rounded-xl border border-slate-300 shadow-sm flex-shrink-0">
                     <div class="flex-1 relative flex items-center">
                         <input type="text" id="inputBusqueda" placeholder="BUSCADOR O ESCÁNER DE PRODUCTOS..." class="w-full bg-slate-100 px-4 py-2.5 rounded-xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500 text-sm">
@@ -47,7 +47,7 @@
                     <div id="reader" class="w-full h-full"></div>
                 </div>
 
-                <!-- Tabla de Productos (ID exacto: tablaResultados) -->
+                <!-- Tabla de Productos -->
                 <div class="flex-1 overflow-y-auto custom-scroll border border-slate-300 rounded-xl bg-white shadow-inner">
                     <table class="w-full text-left border-collapse">
                         <thead class="bg-slate-200 text-slate-700 uppercase text-xs sticky top-0 font-extrabold z-10">
@@ -59,74 +59,96 @@
                             </tr>
                         </thead>
                         <tbody id="tablaResultados" class="divide-y divide-slate-200 text-sm font-semibold text-slate-700">
-                            <!-- Los productos aparecerán aquí al escribir -->
+                            <!-- Productos del inventario -->
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- Derecha: Resumen de Cobro con IDs originales -->
+            <!-- Derecha: Resumen de Cobro con Distribución Optimizada -->
             <div class="bg-slate-900 text-white rounded-2xl p-4 flex flex-col justify-between shadow-lg border border-slate-800 overflow-hidden">
-                <div class="overflow-y-auto custom-scroll pr-1">
-                    <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-3">
+                <div class="flex flex-col h-full overflow-hidden">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-2.5 mb-2 flex-shrink-0">
                         <span class="font-extrabold text-sm uppercase tracking-wide text-slate-300 flex items-center gap-2">
                             <span>📄</span> RESUMEN
                         </span>
                         <span id="contadorItems" class="text-xs bg-emerald-500/20 text-emerald-400 font-bold px-2.5 py-1 rounded-lg">0 items</span>
                     </div>
 
-                    <!-- Lista de Carrito (ID exacto: carritoItems) -->
-                    <div id="carritoItems" class="space-y-3 mb-4">
-                        <!-- Items seleccionados -->
-                    </div>
-                </div>
-
-                <div class="space-y-3 pt-2 border-t border-slate-800 flex-shrink-0">
-                    <div>
-                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">MÉTODO DE PAGO:</span>
-                        <div class="grid grid-cols-3 gap-2 mt-1">
-                            <button type="button" id="btnEfectivo" onclick="seleccionarMetodo('Efectivo')" class="metodo-pago border border-emerald-500 bg-emerald-50 text-emerald-700 py-1.5 rounded-xl font-bold text-xs shadow">EFECTIVO</button>
-                            <button type="button" id="btnYape" onclick="seleccionarMetodo('Yape')" class="metodo-pago border border-slate-800 bg-slate-800 text-slate-300 py-1.5 rounded-xl font-bold text-xs hover:bg-slate-700">YAPE</button>
-                            <button type="button" id="btnPlin" onclick="seleccionarMetodo('Plin')" class="metodo-pago border border-slate-800 bg-slate-800 text-slate-300 py-1.5 rounded-xl font-bold text-xs hover:bg-slate-700">PLIN</button>
-                        </div>
+                    <!-- Lista de Carrito con altura flexible para que luzca amplia -->
+                    <div id="carritoItems" class="flex-1 overflow-y-auto custom-scroll space-y-2 pr-1 mb-3 min-h-[160px]">
+                        <p class="text-center text-slate-500 py-10 italic text-sm">Caja Vacía</p>
                     </div>
 
-                    <!-- Panel de Vuelto / Fiado -->
-                    <div id="panelVuelto" class="space-y-2">
-                        <div class="flex items-center justify-between">
-                            <span class="text-[11px] font-bold text-slate-400 uppercase">PAGA CON:</span>
-                            <input type="number" id="pagaCon" placeholder="0.00" class="w-24 bg-slate-800 border border-slate-700 text-right px-2 py-1 rounded-lg font-bold text-emerald-400 text-sm outline-none focus:ring-1 focus:ring-emerald-500">
+                    <!-- Controles inferiores fijos dentro del panel -->
+                    <div class="space-y-2.5 pt-2 border-t border-slate-800 flex-shrink-0">
+                        <div>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">MÉTODO DE PAGO:</span>
+                            <div class="grid grid-cols-3 gap-1.5 mt-1">
+                                <button type="button" id="btnEfectivo" onclick="seleccionarMetodo('Efectivo')" class="metodo-pago border border-emerald-500 bg-emerald-50 text-emerald-700 py-1.5 rounded-xl font-bold text-xs shadow">EFECTIVO</button>
+                                <button type="button" id="btnYape" onclick="seleccionarMetodo('Yape')" class="metodo-pago border border-slate-800 bg-slate-800 text-slate-300 py-1.5 rounded-xl font-bold text-xs hover:bg-slate-700">YAPE</button>
+                                <button type="button" id="btnPlin" onclick="seleccionarMetodo('Plin')" class="metodo-pago border border-slate-800 bg-slate-800 text-slate-300 py-1.5 rounded-xl font-bold text-xs hover:bg-slate-700">PLIN</button>
+                            </div>
                         </div>
-                        <div class="flex items-center justify-between text-xs">
-                            <span class="font-bold text-slate-400 uppercase">VUELTO:</span>
-                            <span id="vuelto" class="font-black text-emerald-400 text-sm">$0.00</span>
-                        </div>
-                        <div class="flex items-center gap-2 pt-1">
-                            <input type="checkbox" id="esFiado" class="w-4 h-4 accent-emerald-500 rounded cursor-pointer">
-                            <label for="esFiado" class="text-xs font-bold text-slate-300 cursor-pointer">DAR FIADO</label>
-                        </div>
-                        <div id="contenedorSelectorCliente" class="hidden">
-                            <select id="selectCliente" class="w-full bg-slate-800 border border-slate-700 text-white text-xs p-1.5 rounded-lg outline-none font-bold">
-                                <option value="">-- Elige un cliente --</option>
-                            </select>
-                        </div>
-                    </div>
 
-                    <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700 flex items-center justify-between">
-                        <span class="text-xs font-extrabold text-slate-400 uppercase">TOTAL:</span>
-                        <span id="totalVenta" class="text-2xl font-black text-emerald-400">$0.00</span>
-                    </div>
+                        <!-- Panel de Vuelto / Fiado compacto -->
+                        <div id="panelVuelto" class="space-y-1.5">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[11px] font-bold text-slate-400 uppercase">PAGA CON:</span>
+                                <input type="number" id="pagaCon" placeholder="0.00" class="w-24 bg-slate-800 border border-slate-700 text-right px-2 py-1 rounded-lg font-bold text-emerald-400 text-sm outline-none focus:ring-1 focus:ring-emerald-500">
+                            </div>
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="font-bold text-slate-400 uppercase">VUELTO:</span>
+                                <span id="vuelto" class="font-black text-emerald-400 text-sm">$0.00</span>
+                            </div>
+                            <div class="flex items-center gap-2 pt-0.5">
+                                <input type="checkbox" id="esFiado" class="w-4 h-4 accent-emerald-500 rounded cursor-pointer">
+                                <label for="esFiado" class="text-xs font-bold text-slate-300 cursor-pointer">DAR FIADO</label>
+                            </div>
+                            <div id="contenedorSelectorCliente" class="hidden">
+                                <select id="selectCliente" class="w-full bg-slate-800 border border-slate-700 text-white text-xs p-1.5 rounded-lg outline-none font-bold">
+                                    <option value="">-- Elige un cliente --</option>
+                                </select>
+                            </div>
+                        </div>
 
-                    <button id="btnFinalizarVenta" class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 font-black py-3 rounded-xl shadow-lg transition transform active:scale-95 text-sm">
-                        FINALIZAR VENTA (F2)
-                    </button>
+                        <div class="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700 flex items-center justify-between">
+                            <span class="text-xs font-extrabold text-slate-400 uppercase">TOTAL:</span>
+                            <span id="totalVenta" class="text-2xl font-black text-emerald-400">$0.00</span>
+                        </div>
+
+                        <button id="btnFinalizarVenta" class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 font-black py-3 rounded-xl shadow-lg transition transform active:scale-95 text-sm">
+                            FINALIZAR VENTA (F2)
+                        </button>
+                    </div>
                 </div>
             </div>
 
         </div>
     </div>
 
-    <!-- Script de lógica original -->
+    <!-- Script para actualizar el contador de items automáticamente -->
+    <script>
+        const observer = new MutationObserver(() => {
+            const carritoItems = document.getElementById('carritoItems');
+            const contador = document.getElementById('contadorItems');
+            if (carritoItems && contador) {
+                const totalItems = carritoItems.children.length;
+                const tieneVacia = carritoItems.querySelector('p');
+                if (tieneVacia || totalItems === 0) {
+                    contador.textContent = '0 items';
+                } else {
+                    contador.textContent = `${totalItems} item${totalItems > 1 ? 's' : ''}`;
+                }
+            }
+        });
+        window.addEventListener('DOMContentLoaded', () => {
+            const target = document.getElementById('carritoItems');
+            if (target) observer.observe(target, { childList: true });
+        });
+    </script>
+
+    <!-- Scripts externos y lógica -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="ventas.js"></script>
