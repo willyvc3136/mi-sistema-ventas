@@ -11,6 +11,9 @@
         .custom-scroll::-webkit-scrollbar { width: 6px; }
         .custom-scroll::-webkit-scrollbar-track { background: #0f172a; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        /* Forzar color claro y nítido en las descripciones de los productos de la tabla */
+        #tablaResultados td { color: #f8fafc !important; }
+        #tablaResultados tr:hover td { color: #34d399 !important; }
     </style>
 </head>
 <body class="h-screen flex flex-col p-2 gap-2 overflow-hidden">
@@ -33,7 +36,7 @@
         <!-- Layout de 2 Columnas -->
         <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 p-2.5 gap-2.5 overflow-hidden">
             
-            <!-- Izquierda: Buscador y Tabla de Inventario (Letras blancas y brillantes) -->
+            <!-- Izquierda: Buscador y Tabla de Inventario -->
             <div class="lg:col-span-7 flex flex-col gap-2 overflow-hidden bg-slate-950/50 p-2.5 rounded-xl border border-slate-800 shadow-inner">
                 
                 <!-- Buscador -->
@@ -51,7 +54,7 @@
                     <div id="reader" class="w-full h-full"></div>
                 </div>
 
-                <!-- Tabla de Productos con Contraste Alto y Texto Blanco -->
+                <!-- Tabla de Productos -->
                 <div class="flex-1 overflow-y-auto custom-scroll border border-slate-800 rounded-xl bg-slate-900 shadow-lg">
                     <table class="w-full text-left border-collapse">
                         <thead class="bg-slate-800 text-slate-200 uppercase text-[11px] sticky top-0 font-extrabold z-10 tracking-wider">
@@ -62,14 +65,14 @@
                                 <th class="p-2.5 text-center">Acción</th>
                             </tr>
                         </thead>
-                        <tbody id="tablaResultados" class="divide-y divide-slate-800 text-xs font-bold text-white">
+                        <tbody id="tablaResultados" class="divide-y divide-slate-800 text-xs font-bold">
                             <!-- Productos inyectados por ventas.js -->
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- Derecha: Panel de Resumen (Con métodos completos y carrito amplio) -->
+            <!-- Derecha: Panel de Resumen -->
             <div class="lg:col-span-5 bg-slate-950 text-white rounded-xl p-2.5 flex flex-col justify-between shadow-xl border border-slate-800 overflow-hidden">
                 
                 <!-- Cabecera Resumen -->
@@ -80,15 +83,15 @@
                     <span id="contadorItems" class="text-[9px] bg-emerald-500/10 text-emerald-400 font-extrabold px-2 py-0.5 rounded border border-emerald-500/20">Ticket Activo</span>
                 </div>
 
-                <!-- Lista de Carrito (Con todo el espacio vertical liberado) -->
+                <!-- Lista de Carrito -->
                 <div id="carritoItems" class="flex-1 overflow-y-auto custom-scroll space-y-1.5 pr-1 mb-1.5 text-white">
                     <p class="text-center text-slate-500 py-10 italic text-xs font-medium">Caja Vacía - Agregue productos</p>
                 </div>
 
-                <!-- Bloque Inferior Completo (Métodos de pago + Vuelto + Totales) -->
+                <!-- Bloque Inferior Completo -->
                 <div class="space-y-2 pt-1.5 border-t border-slate-800 flex-shrink-0">
                     
-                    <!-- Métodos de Pago Completos -->
+                    <!-- Métodos de Pago -->
                     <div>
                         <span class="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">MÉTODO DE PAGO:</span>
                         <div class="grid grid-cols-3 gap-1 mt-0.5">
