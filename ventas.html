@@ -17,7 +17,7 @@
             color: #ffffff !important;
         }
         #tablaResultados tr:hover td, #tablaResultados tr:hover span {
-            color: #34d399 !important; /* Se vuelve verdecito al pasar el mouse */
+            color: #34d399 !important;
         }
     </style>
 </head>
@@ -47,7 +47,7 @@
                 <!-- Buscador -->
                 <div class="flex items-center gap-2 bg-slate-900 p-2 rounded-xl border border-slate-700 shadow-md flex-shrink-0">
                     <div class="flex-1 relative flex items-center">
-                        <input type="text" id="inputBusqueda" placeholder="🔍 BUSCAR PRODUCTO O ESCANEAR CÓDIGO..." class="w-full bg-slate-950 px-3 py-2 rounded-lg font-bold text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-emerald-500 text-xs">
+                        <input type="text" id="inputBusqueda" placeholder="🔍 BUSCAR PRODUCTO O ESCANEAR CÓDIGO (F3)..." class="w-full bg-slate-950 px-3 py-2 rounded-lg font-bold text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-emerald-500 text-xs">
                     </div>
                     <button id="btnCamara" onclick="toggleLector()" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1 shadow transition">
                         <span>📷</span> Cámara
@@ -96,17 +96,18 @@
                 <!-- Bloque Inferior Completo -->
                 <div class="space-y-2 pt-1.5 border-t border-slate-800 flex-shrink-0">
                     
-                    <!-- Métodos de Pago -->
+                    <!-- Métodos de Pago (Incluyendo Pago Mixto) -->
                     <div>
                         <span class="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">MÉTODO DE PAGO:</span>
-                        <div class="grid grid-cols-3 gap-1 mt-0.5">
-                            <button type="button" id="btnEfectivo" onclick="seleccionarMetodo('Efectivo')" class="metodo-pago border border-emerald-500 bg-emerald-500/10 text-emerald-400 py-1 rounded-lg font-bold text-xs shadow-sm">EFECTIVO</button>
-                            <button type="button" id="btnYape" onclick="seleccionarMetodo('Yape')" class="metodo-pago border border-slate-800 bg-slate-900 text-slate-400 py-1 rounded-lg font-bold text-xs hover:bg-slate-800">YAPE</button>
-                            <button type="button" id="btnPlin" onclick="seleccionarMetodo('Plin')" class="metodo-pago border border-slate-800 bg-slate-900 text-slate-400 py-1 rounded-lg font-bold text-xs hover:bg-slate-800">PLIN</button>
+                        <div class="grid grid-cols-4 gap-1 mt-0.5">
+                            <button type="button" id="btnEfectivo" onclick="seleccionarMetodo('Efectivo')" class="metodo-pago border border-emerald-500 bg-emerald-500/10 text-emerald-400 py-1 rounded-lg font-bold text-[11px] shadow-sm">EFECTIVO</button>
+                            <button type="button" id="btnYape" onclick="seleccionarMetodo('Yape')" class="metodo-pago border border-slate-800 bg-slate-900 text-slate-400 py-1 rounded-lg font-bold text-[11px] hover:bg-slate-800">YAPE</button>
+                            <button type="button" id="btnPlin" onclick="seleccionarMetodo('Plin')" class="metodo-pago border border-slate-800 bg-slate-900 text-slate-400 py-1 rounded-lg font-bold text-[11px] hover:bg-slate-800">PLIN</button>
+                            <button type="button" id="btnMixto" onclick="seleccionarMetodo('Mixto')" class="metodo-pago border border-slate-800 bg-slate-900 text-purple-400 py-1 rounded-lg font-bold text-[11px] hover:bg-slate-800">MIXTO</button>
                         </div>
                     </div>
 
-                    <!-- Panel Vuelto y Fiado -->
+                    <!-- Panel Vuelto / Pago Normal -->
                     <div id="panelVuelto" class="space-y-1 bg-slate-900/90 p-2 rounded-lg border border-slate-800 text-xs">
                         <div class="flex items-center justify-between">
                             <span class="font-bold text-slate-400 uppercase text-[9px]">PAGA CON:</span>
@@ -116,16 +117,34 @@
                             <span class="font-bold text-slate-400 uppercase text-[9px]">VUELTO:</span>
                             <span id="vuelto" class="font-black text-emerald-400 text-xs">$0.00</span>
                         </div>
-                        <div class="flex items-center justify-between pt-0.5">
-                            <div class="flex items-center gap-1">
-                                <input type="checkbox" id="esFiado" class="w-3 h-3 accent-emerald-500 rounded cursor-pointer">
-                                <label for="esFiado" class="text-[9px] font-bold text-slate-300 cursor-pointer">DAR FIADO</label>
-                            </div>
-                            <div id="contenedorSelectorCliente" class="hidden flex-1 ml-2">
-                                <select id="selectCliente" class="w-full bg-slate-950 border border-slate-700 text-white text-[9px] p-0.5 rounded outline-none font-bold">
-                                    <option value="">-- Cliente --</option>
-                                </select>
-                            </div>
+                    </div>
+
+                    <!-- Panel Pago Mixto (Oculto por defecto, se muestra al elegir Mixto) -->
+                    <div id="panelMixto" class="hidden space-y-1 bg-purple-950/30 p-2 rounded-lg border border-purple-900/50 text-xs">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-purple-300 uppercase text-[9px]">EFECTIVO PARCIAL:</span>
+                            <input type="number" id="mixtoEfectivo" placeholder="0.00" class="w-20 bg-slate-950 border border-purple-700 text-right px-1.5 py-0.5 rounded font-bold text-emerald-400 text-xs outline-none">
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-purple-300 uppercase text-[9px]">YAPE / PLIN PARCIAL:</span>
+                            <input type="number" id="mixtoVirtual" placeholder="0.00" class="w-20 bg-slate-950 border border-purple-700 text-right px-1.5 py-0.5 rounded font-bold text-emerald-400 text-xs outline-none">
+                        </div>
+                        <div class="flex items-center justify-between pt-0.5 border-t border-purple-900/40">
+                            <span class="font-bold text-slate-400 uppercase text-[9px]">VUELTO EFECTIVO:</span>
+                            <span id="mixtoVuelto" class="font-black text-emerald-400 text-xs">$0.00</span>
+                        </div>
+                    </div>
+
+                    <!-- Checkbox de Fiado -->
+                    <div class="flex items-center justify-between px-1">
+                        <div class="flex items-center gap-1">
+                            <input type="checkbox" id="esFiado" class="w-3 h-3 accent-emerald-500 rounded cursor-pointer">
+                            <label for="esFiado" class="text-[9px] font-bold text-slate-300 cursor-pointer">DAR FIADO</label>
+                        </div>
+                        <div id="contenedorSelectorCliente" class="hidden flex-1 ml-2">
+                            <select id="selectCliente" class="w-full bg-slate-950 border border-slate-700 text-white text-[9px] p-0.5 rounded outline-none font-bold">
+                                <option value="">-- Cliente --</option>
+                            </select>
                         </div>
                     </div>
 
@@ -144,6 +163,30 @@
 
         </div>
     </div>
+
+    <!-- Script complementario para manejar la vista del Pago Mixto en la interfaz -->
+    <script>
+        function seleccionarMetodo(metodo) {
+            // Limpiar estilos activos de botones
+            document.querySelectorAll('.metodo-pago').forEach(btn => {
+                btn.className = "metodo-pago border border-slate-800 bg-slate-900 text-slate-400 py-1 rounded-lg font-bold text-[11px] hover:bg-slate-800";
+            });
+
+            const panelVuelto = document.getElementById('panelVuelto');
+            const panelMixto = document.getElementById('panelMixto');
+
+            if (metodo === 'Mixto') {
+                document.getElementById('btnMixto').className = "metodo-pago border border-purple-500 bg-purple-500/10 text-purple-400 py-1 rounded-lg font-bold text-[11px] shadow-sm";
+                panelVuelto.classList.add('hidden');
+                panelMixto.classList.remove('hidden');
+            } else {
+                const btnActivo = document.getElementById('btn' + metodo);
+                btnActivo.className = "metodo-pago border border-emerald-500 bg-emerald-500/10 text-emerald-400 py-1 rounded-lg font-bold text-[11px] shadow-sm";
+                panelVuelto.classList.remove('hidden');
+                panelMixto.classList.add('hidden');
+            }
+        }
+    </script>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
