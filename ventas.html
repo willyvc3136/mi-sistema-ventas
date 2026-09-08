@@ -19,16 +19,27 @@
             color: #34d399 !important;
         }
 
-        /* FORZAR ESTILOS OSCUROS PARA LOS BOTONES - / + EN EL CARRITO */
-        #carritoItems button, .btn-qty {
-            background-color: #0f172a !important;
-            color: #38bdf8 !important;
-            border: 1px solid #334155 !important;
-            font-weight: 900 !important;
+        /* ESTILOS EXACTOS PARA LOS BOTONES DE CANTIDAD Y EL NÚMERO */
+        #carritoItems .bg-slate-900, #carritoItems div, #carritoItems span, #carritoItems p {
+            color: #ffffff;
         }
-        #carritoItems button:hover {
+        
+        /* Botones - y + oscuros con texto claro */
+        #carritoItems button:not(#btnFinalizarVenta) {
             background-color: #1e293b !important;
+            color: #38bdf8 !important;
+            border: 1px solid #475569 !important;
+            font-weight: 900 !important;
+            border-radius: 8px !important;
+        }
+        #carritoItems button:not(#btnFinalizarVenta):hover {
+            background-color: #334155 !important;
             border-color: #38bdf8 !important;
+        }
+
+        /* Número de cantidad central visible y destacado */
+        #carritoItems span.text-slate-900, #carritoItems .font-bold {
+            color: #ffffff !important;
         }
     </style>
 </head>
