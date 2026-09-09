@@ -94,12 +94,10 @@ function configurarEventosFiado() {
 
     checkFiado.addEventListener('change', async () => {
         if (checkFiado.checked) {
-            // Mostrar selector de clientes y OCULTAR panel de vuelto
             if (contenedorSelector) contenedorSelector.classList.remove('hidden');
             if (panelVuelto) panelVuelto.classList.add('hidden');
             await cargarClientesAlSelector();
         } else {
-            // Ocultar selector y MOSTRAR vuelto solo si el método es Efectivo
             if (contenedorSelector) contenedorSelector.classList.add('hidden');
             if (metodoSeleccionado === 'Efectivo' && panelVuelto) {
                 panelVuelto.classList.remove('hidden');
@@ -376,7 +374,6 @@ window.seleccionarMetodo = (metodo) => {
     const btnActivo = document.getElementById(`btn${metodo}`);
     if(btnActivo) btnActivo.classList.add('border-emerald-500', 'bg-emerald-50', 'text-emerald-700');
     
-    // Solo mostrar vuelto si el método es Efectivo y NO está en modo Fiado
     if (metodo === 'Efectivo' && (!checkFiado || !checkFiado.checked)) {
         panelVuelto.classList.remove('hidden');
     } else {
@@ -391,7 +388,10 @@ function actualizarVuelto() {
     vueltoElem.textContent = pagaCon >= total ? `$${(pagaCon - total).toFixed(2)}` : "$0.00";
 }
 
-document.getElementById('pagaCon').addEventListener('input', actualizarVuelto);
+const inputPagaCon = document.getElementById('pagaCon');
+if(inputPagaCon) {
+    inputPagaCon.addEventListener('input', actualizarVuelto);
+}
 
 // ==========================================
 // FINALIZACIÓN DE VENTA
@@ -418,22 +418,18 @@ async function finalizarVenta() {
         const { data: { user } } = await _supabase.auth.getUser();
         const totalVenta = parseFloat(document.getElementById('totalVenta').textContent.replace('$', ''));
 
-        // --- DEFINIR EL MÉTODO DE PAGO CORRECTO ---
         let metodoPagoFinal = metodoSeleccionado;
 
         if (esFiado) {
             metodoPagoFinal = 'Fiado';
         } else if (metodoSeleccionado === 'Mixto') {
-            // Asegúrate de que estos sean los IDs de los inputs dentro de tu modal mixto
-            const montoEfectivoMixto = parseFloat(document.getElementById('montoMixtoEfectivo')?.value) || 0;
-            const montoYapeMixto = parseFloat(document.getElementById('montoMixtoYape')?.value) || 0;
-            const montoPlinMixto = parseFloat(document.getElementById('montoMixtoPlin')?.value) || 0;
+            const mixtoData = window.pagoMixtoConfig || { efectivo: 0, yape: 0, plin: 0 };
 
             metodoPagoFinal = JSON.stringify({
                 tipo: 'MIXTO',
-                efectivo: montoEfectivoMixto,
-                yape: montoYapeMixto,
-                plin: montoPlinMixto
+                efectivo: mixtoData.efectivo,
+                yape: mixtoData.yape,
+                plin: mixtoData.plin || 0
             });
         }
 
@@ -444,10 +440,9 @@ async function finalizarVenta() {
             precio: p.precio
         }));
 
-        // 1. Insertar Venta
         const { error: errorVenta } = await _supabase.from('ventas').insert([{
             total: totalVenta,
-            metodo_pago: metodoPagoFinal, // <--- Aquí guardamos el texto plano o el JSON mixto
+            metodo_pago: metodoPagoFinal,
             estado_pago: esFiado ? 'pendiente' : 'pagado',
             cliente_id: esFiado ? clienteId : null,
             vendedor_id: user.id, 
@@ -456,7 +451,6 @@ async function finalizarVenta() {
 
         if (errorVenta) throw errorVenta;
 
-        // 2. Actualizar Deuda si es Fiado
         if (esFiado) {
             const { data: cl, error: errorCl } = await _supabase
                 .from('clientes')
@@ -471,7 +465,6 @@ async function finalizarVenta() {
             }
         }
 
-        // 3. Actualizar Stock
         for (const item of carrito) {
             const original = productosBaseDeDatos.find(p => p.id === item.id);
             const nuevoStock = original.cantidad - item.cantidadSeleccionada;
@@ -501,25 +494,21 @@ if(inputBusq) {
     });
 }
 
-// Función para que el escáner siempre encuentre el buscador
 document.addEventListener('keydown', (e) => {
     const inputBusqPrincipal = document.getElementById('inputBusqueda');
-    const inputModalInventario = document.getElementById('codigoBarrasNuevo'); // Asegúrate que este sea el ID de tu input en el modal
+    const inputModalInventario = document.getElementById('codigoBarrasNuevo'); 
 
-    // Si estamos escribiendo en cualquier otro lado manualmente, no hacemos nada
     if (document.activeElement.tagName === 'TEXTAREA' || 
        (document.activeElement.tagName === 'INPUT' && document.activeElement.type !== 'search' && document.activeElement.id !== 'inputBusqueda')) return;
 
-    // Detectamos cuál es el buscador que debe recibir el foco
-    // Si el modal está visible, mandamos el foco al input del modal
-    const modalRegistro = document.getElementById('modalNuevoRegistro'); // El ID de tu modal
+    const modalRegistro = document.getElementById('modalNuevoRegistro'); 
     const inputDestino = (modalRegistro && !modalRegistro.classList.contains('hidden')) 
                          ? inputModalInventario 
                          : inputBusqPrincipal;
 
     if (inputDestino && document.activeElement !== inputDestino) {
         if (e.key.length === 1 || e.key === 'Enter') {
-            inputDestino.value = ''; // <--- LIMPIEZA: Borra lo anterior para que no se duplique
+            inputDestino.value = ''; 
             inputDestino.focus();
         }
     }
