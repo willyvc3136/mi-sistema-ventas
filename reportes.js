@@ -4,33 +4,44 @@ const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 let miGrafica; 
 let ventasActualesParaExportar = [];
-let egresosActualesParaExportar = []; // Nueva variable para manejar egresos 
+let egresosActualesParaExportar = []; 
 
+// 1. INICIALIZACIÓN ÚNICA DE SESIÓN Y EVENTOS
 async function inicializarReportes() {
     const { data: { session } } = await _supabase.auth.getSession();
+    
     if (session && session.user) {
-        document.getElementById('filtroTiempo').addEventListener('change', () => {
-            document.getElementById('fechaInicio').value = "";
-            document.getElementById('fechaFin').value = "";
-            cargarReporte();
-        });
+        // Configuramos los eventos una sola vez de manera limpia
+        const filtroTiempo = document.getElementById('filtroTiempo');
+        const fechaInicio = document.getElementById('fechaInicio');
+        const fechaFin = document.getElementById('fechaFin');
+
+        if (filtroTiempo) {
+            filtroTiempo.addEventListener('change', () => {
+                if (fechaInicio) fechaInicio.value = "";
+                if (fechaFin) fechaFin.value = "";
+                cargarReporte();
+            });
+        }
         
-        document.getElementById('fechaInicio').addEventListener('change', cargarReporte);
-        document.getElementById('fechaFin').addEventListener('change', cargarReporte);
+        if (fechaInicio) fechaInicio.addEventListener('change', cargarReporte);
+        if (fechaFin) fechaFin.addEventListener('change', cargarReporte);
         
+        // Carga inicial de los datos
         cargarReporte(); 
     } else {
         window.location.href = 'index.html';
     }
 }
 
+// 2. FUNCIÓN DE CARGA DE REPORTES LIMPIA DE VERIFICACIONES DE SESIÓN
 async function cargarReporte() {
     const tabla = document.getElementById('listaVentas');
     if(tabla) tabla.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-slate-400 italic">Buscando datos...</td></tr>';
 
-    const filtro = document.getElementById('filtroTiempo').value;
-    const fInicio = document.getElementById('fechaInicio').value;
-    const fFin = document.getElementById('fechaFin').value;
+    const filtro = document.getElementById('filtroTiempo')?.value || 'diario';
+    const fInicio = document.getElementById('fechaInicio')?.value || "";
+    const fFin = document.getElementById('fechaFin')?.value || "";
     
     let desde = new Date();
     desde.setHours(0, 0, 0, 0);
@@ -49,9 +60,6 @@ async function cargarReporte() {
         else if (filtro === 'anual') { desde.setMonth(0); desde.setDate(1); }
     }
 
-    // CONSULTA CORREGIDA: Eliminamos 'venta_detalles' porque tus productos están en 'productos_vendidos'
-    // ... dentro de cargarReporte
-    // CONSULTA CORREGIDA
     const [resVentas, resClientes, resEgresos] = await Promise.all([
         _supabase
             .from('ventas')
@@ -74,10 +82,8 @@ async function cargarReporte() {
         ventasActualesParaExportar = resVentas.data || [];
     }
 
-    // Ahora resEgresos ya existe porque lo pusimos arriba
     egresosActualesParaExportar = resEgresos.data || [];
     procesarYMostrarDatos(ventasActualesParaExportar, resClientes.data || [], egresosActualesParaExportar); 
- 
 }
 
 function procesarYMostrarDatos(ventas, clientes, egresos) {
