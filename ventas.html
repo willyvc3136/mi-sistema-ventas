@@ -272,6 +272,32 @@
         }
 
         function guardarPagoMixto() {
+            const totalVenta = parseFloat(document.getElementById('totalVenta').innerText.replace('$', '')) || 0;
+            const montoVirtual = parseFloat(document.getElementById('modalVirtual').value) || 0; // Yape / Plin
+            const montoEfectivo = parseFloat(document.getElementById('modalEfectivo').value) || 0;
+
+            if ((montoVirtual + montoEfectivo) < totalVenta) {
+                alert("⚠️ El monto total ingresado es menor al total de la venta.");
+                return;
+            }
+
+            // Asignar los montos a la variable global que procesa ventas.js
+            window.pagoMixtoConfig = {
+                efectivo: montoEfectivo,
+                yape: montoVirtual,
+                plin: 0
+            };
+
+            metodoSeleccionado = 'Mixto';
+
+            document.querySelectorAll('.metodo-pago').forEach(btn => {
+                btn.className = "metodo-pago border border-slate-800 bg-slate-900 text-slate-400 py-1 rounded-lg font-bold text-[11px] hover:bg-slate-800";
+            });
+            const btnMixto = document.getElementById('btnMixto');
+            if(btnMixto) {
+                btnMixto.className = "metodo-pago border border-purple-500 bg-purple-500/10 text-purple-400 py-1 rounded-lg font-bold text-[11px] shadow-sm";
+            }
+
             cerrarModalMixto();
         }
 
